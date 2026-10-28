@@ -21,10 +21,10 @@ window.__ModuleLoader__.load({
     let localeCtx = null
 
     const dictZh = {
-      trigger: '技能',
+      trigger: '卷轴馆',
       open: '打开技能工厂',
-      title: 'Ronge 技能工作室',
-      subtitle: 'Ronge · 上下文感知推荐 · 正在使用 · 一键新建',
+      title: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
+      subtitle: '可沉浸式体验 · 上下文感知 · 正在使用 · 一键新建',
       recommend: '推荐',
       recommendHint: '根据当前会话内容',
       basedOn: '基于：',
@@ -47,7 +47,7 @@ window.__ModuleLoader__.load({
       tabDiscover: '发现',
       tabTools: '工具',
       tabLibrary: '卷轴馆',
-      libraryTitle: '荣哥技能卷轴收藏馆',
+      libraryTitle: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
       libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和评级浏览',
       all: '全部',
       loadMore: '加载更多',
@@ -113,10 +113,10 @@ window.__ModuleLoader__.load({
     }
 
     const dictEn = {
-      trigger: 'Skills',
+      trigger: 'Scrolls',
       open: 'Open Skill Factory',
-      title: 'Ronge Skill Studio',
-      subtitle: 'Context-aware recommendations, active skills, one-click create',
+      title: "Ronge's Skill Scroll Archive (Immersive Edition)",
+      subtitle: 'Immersive edition · context-aware · active skills · one-click create',
       recommend: 'Recommended',
       recommendHint: 'From the current session',
       basedOn: 'Based on: ',
@@ -139,7 +139,7 @@ window.__ModuleLoader__.load({
       tabDiscover: 'Discover',
       tabTools: 'Tools',
       tabLibrary: 'Scrolls',
-      libraryTitle: "Ronge's Scroll Library",
+      libraryTitle: "Ronge's Skill Scroll Archive (Immersive Edition)",
       libraryHint: 'Index of public GitHub SKILL.md files, by category and rating',
       all: 'All',
       loadMore: 'Load more',
@@ -1410,7 +1410,7 @@ window.__ModuleLoader__.load({
 .sf-drawer{position:fixed;top:0;right:0;bottom:0;z-index:71;display:flex;flex-direction:column;width:min(404px,94vw);background:var(--dsw-alias-bg-layer-1);border-left:1px solid var(--dsw-alias-border-l1);box-shadow:-18px 0 40px rgba(0,0,0,.22);color:var(--dsw-alias-label-primary);pointer-events:auto}
 .sf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 12px;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .sf-head-main{min-width:0}
-.sf-title-row{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.sf-title-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
 .sf-subtitle{margin-top:4px;color:var(--dsw-alias-label-secondary);font-size:12px;line-height:1.5}
 .sf-head-actions{display:flex;gap:4px}
 .sf-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}

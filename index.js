@@ -1,5 +1,5 @@
 /**
- * Ronge Skill Studio — Host half.
+ * 荣哥技能卷轴收藏馆（可沉浸式体验版本） — Host half.
  *
  * One bundle, three jobs:
  *   1. GET  /skill-studio/catalog.json?sessionId=... → catalog + recommendations + active skills
@@ -24,10 +24,10 @@ const DEFAULT_CHIME = '/System/Library/Sounds/Glass.aiff'
 const CHIME_COOLDOWN_MS = 1500
 
 const MODE_TEXT = {
-  plan: `## Ronge Skill Studio plan mode
+  plan: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） plan mode
 
 Plan mode is ON. Before acting, inspect the request and the installed skills, then present a short plan that names the 1–3 relevant skills and what you will do, and ask the user to confirm before proceeding. Do not execute or load skills until the user confirms. The point of the question is approval to proceed, not a choice between single and combined skills.`,
-  immersive: `## Ronge Skill Studio immersive mode
+  immersive: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） immersive mode
 
 Immersive mode is ON. Do not ask the user to confirm. Inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, execute the task, and state which skills you used and why.`,
 }
@@ -633,9 +633,9 @@ const SOURCE_ORDER = {
   bundled: 5,
 }
 
-const ROUTING_SECTION = `## Ronge Skill Studio routing
+const ROUTING_SECTION = `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） routing
 
-The session header has a Ronge Skill Studio panel ("技能") with context-aware skill recommendations, active-skill tracking, and a completion chime. The session skill catalog stays authoritative; before starting a task, call the \`skill\` tool when a matching skill exists. Common routes: video / motion / HyperFrames → beat-promo-director, hyperframes, hyperframes-cli, hyperframes-registry, media-use; Office documents → office, office-docx, office-xlsx, office-pptx, office-render, office-export-pdf, office-recalculate; Harness plugins or UI → cordis-plugin-development, cordis-composition-reference; agent presets or compositions → editing-cordis-compositions; tool and skill design → agent-experience.`
+The session header has a 荣哥技能卷轴收藏馆（可沉浸式体验版本） panel ("技能") with context-aware skill recommendations, active-skill tracking, and a completion chime. The session skill catalog stays authoritative; before starting a task, call the \`skill\` tool when a matching skill exists. Common routes: video / motion / HyperFrames → beat-promo-director, hyperframes, hyperframes-cli, hyperframes-registry, media-use; Office documents → office, office-docx, office-xlsx, office-pptx, office-render, office-export-pdf, office-recalculate; Harness plugins or UI → cordis-plugin-development, cordis-composition-reference; agent presets or compositions → editing-cordis-compositions; tool and skill design → agent-experience.`
 
 function playChime() {
   const sound = process.env.DSH_TASK_CHIME_SOUND || DEFAULT_CHIME

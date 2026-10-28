@@ -1,4 +1,4 @@
-# ronge-skill-studio · Ronge 技能工作室
+# 荣哥技能卷轴收藏馆（可沉浸式体验版本）
 
 [![check](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml)
 
@@ -25,7 +25,7 @@
 
 ## 为什么是「上下文感知」
 
-大多数技能面板只列目录。Ronge Skill Studio 会回答三个更实际的问题：
+大多数技能面板只列目录。荣哥技能卷轴收藏馆（可沉浸式体验版本） 会回答三个更实际的问题：
 
 1. **现在这个项目/这句话，适合用哪个 skill？**
 2. **这个 skill 为什么适合？**（显示匹配到的关键词/项目名）
@@ -259,4 +259,4 @@ MIT。见 [LICENSE](./LICENSE)。
 
 ## English
 
-**Ronge Skill Studio** is a context-aware skill cockpit for DeepSeek Harness. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.
+**荣哥技能卷轴收藏馆（可沉浸式体验版本）** is a context-aware skill cockpit for DeepSeek Harness. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.2 — 2026-10-28
+
+- Renamed the product to **荣哥技能卷轴收藏馆（可沉浸式体验版本）** / **Ronge's Skill Scroll Archive (Immersive Edition)**.
+- Panel title, header button («卷轴馆»), locale metadata, README, icon and docs updated.
+
 ## v1.4.1 — 2026-10-28
 
 - Ignore background-job notification messages when deriving the language/context, so Chinese sessions keep Chinese skill intros and better recommendations.

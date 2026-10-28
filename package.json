@@ -1,7 +1,7 @@
 {
   "name": "ronge-skill-studio",
-  "version": "1.4.1",
-  "description": "Ronge Skill Studio: context-aware skill recommendations, remote Discover/install, MCP tool directory, plan/immersive modes, experience memory + feedback, and a completion chime for DeepSeek Harness.",
+  "version": "1.4.2",
+  "description": "荣哥技能卷轴收藏馆（可沉浸式体验版本）: 6,399 public skills, context-aware recommendations, remote Discover/install, MCP tools, plan/immersive modes, experience memory + feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
