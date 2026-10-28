@@ -578,6 +578,52 @@ async function searchMcpServers(query) {
   return { ok: true, servers, query: query || '', source: MCP_REGISTRY_URL }
 }
 
+
+let libraryCache = null
+
+function loadLibraryIndex() {
+  if (libraryCache) return libraryCache
+  const file = path.join(PACKAGE_DIR, 'library', 'skills-index.json')
+  const data = readJsonFile(file, null)
+  libraryCache = data && Array.isArray(data.entries) ? data : null
+  return libraryCache
+}
+
+function searchLibrary(query, category, minRating, page, limit) {
+  const library = loadLibraryIndex()
+  if (!library) return { ok: false, error: 'library index is not installed' }
+  const q = String(query || '').trim().toLowerCase()
+  const categoryFilter = String(category || '').trim()
+  const threshold = Number(minRating) || 0
+  const pageNumber = Math.max(1, Number(page) || 1)
+  const pageSize = Math.min(80, Math.max(1, Number(limit) || 40))
+  const filtered = library.entries.filter((entry) => {
+    if (categoryFilter && entry.category !== categoryFilter) return false
+    if (threshold && Number(entry.rating || 0) < threshold) return false
+    if (!q) return true
+    return [entry.name, entry.description, entry.whenToUse, entry.repo, entry.path, entry.category]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(q)
+  })
+  const total = filtered.length
+  const start = (pageNumber - 1) * pageSize
+  const entries = filtered.slice(start, start + pageSize).map((entry) => ({
+    ...entry,
+    installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
+  }))
+  return {
+    ok: true,
+    total,
+    page: pageNumber,
+    pageSize,
+    categories: library.categories || {},
+    generatedAt: library.generatedAt || null,
+    entries,
+  }
+}
+
 const SOURCE_ORDER = {
   'project-dsh': 0,
   'project-agents': 1,
@@ -1322,6 +1368,25 @@ export function apply(ctx, config = {}) {
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const result = await checkSkillUpdates()
+        sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/library',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        const url = new URL(req.url || '/', 'http://127.0.0.1')
+        const result = searchLibrary(
+          url.searchParams.get('q') || '',
+          url.searchParams.get('category') || '',
+          url.searchParams.get('minRating') || 0,
+          url.searchParams.get('page') || 1,
+          url.searchParams.get('limit') || 40,
+        )
+        if (result.ok === false) throw new HttpError(503, result.error)
         sendJson(res, 200, result)
       }),
     }),

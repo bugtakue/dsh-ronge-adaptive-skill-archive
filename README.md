@@ -4,7 +4,7 @@
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
-一个 bundle，八个能力：
+一个 bundle，九个能力：
 
 - 🧠 **Skill Radar · 智能推荐**：根据当前会话最近的内容和项目目录，给技能打分排序，显示 Top 4 与匹配原因。
 - 🟢 **Now Using · 正在使用**：从会话的 `skill` 工具调用里读出当前 turn 正在用的技能；不在运行时显示「最近使用」。
@@ -16,6 +16,7 @@
 - 🌐 **Localized intro · 双语简介**：根据上下文语言自动显示中文或英文的一句话简介，一眼看懂 skill 干什么。
 - 🌐 **Discover · 远程发现**：从精选 GitHub 源搜索 SKILL.md，预览后安装；记录来源/哈希，支持更新检查。
 - 🧰 **Tools · MCP 目录**：浏览官方 MCP registry 里的服务器；工具和 skill 分开展示。
+- 📚 **Scroll Library · 荣哥技能卷轴收藏馆**：GitHub 公开 SKILL.md 的分类 + 评级索引，按分类/评分浏览、预览、安装。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
 
 ![技能入口](docs/header-button.png)
@@ -97,6 +98,20 @@
 
 ---
 
+## 荣哥技能卷轴收藏馆
+
+面板「卷轴馆」tab：
+
+- 已收录 **6,399 条** GitHub 公开可检索的 `SKILL.md` 候选（5,398 条带 frontmatter 描述；数据快照在 `library/skills-index.json`）；
+- 自动分类：AI 2,070 / 编程 789 / 设计 663 / 数据 512 / 写作 155 / 视频 163 / 其他 1,662 等 14 类；
+- 评级 1–5：官方组织、描述完整度、路径规范、frontmatter 完整度综合；
+- 按搜索、分类、最低评分筛选，分页浏览；
+- 预览全文后安装（复用 Discover 的安装管线，记录来源 + SHA-256）。
+
+数据由 `scripts/collect_github_skills.py` + `scripts/build_library.py` 生成；这不是「全网所有 skill」，而是 GitHub 上**公开、可检索、可安装**的 SKILL.md 快照。
+
+---
+
 ## 安装
 
 ### 前置
@@ -171,6 +186,7 @@ Host (index.js)
   POST /skill-studio/discover/install      -> 安装到 ~/.dsh/skills
   GET  /skill-studio/discover/updates      -> 更新检查
   GET  /skill-studio/tools?q=...           -> MCP registry 目录
+  GET  /skill-studio/library?q=&category=&minRating=&page= -> 卷轴馆索引
   session/event 监听
        -> 主会话 turn/end completed：afplay + 写 experience.md/json
   ctx.systemPrompt.section('skill-studio')      -> 技能路由提示

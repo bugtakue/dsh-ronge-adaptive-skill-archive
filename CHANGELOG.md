@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.0 — 2026-10-28
+
+- **荣哥技能卷轴收藏馆**: a categorized, rated index of public GitHub SKILL.md files, bundled as `library/skills-index.json`.
+- New panel tab **卷轴馆** with search, category chips, rating filter, pagination, preview and install.
+- Collection/build scripts included for reproducibility.
+
 ## v1.3.0 — 2026-10-28
 
 - **Discover**: remote skill search over a curated GitHub index (`anthropics/skills` built in), SKILL.md preview, install with source metadata + SHA-256, update checks, and index refresh via the GitHub API.

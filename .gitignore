@@ -3,3 +3,11 @@ node_modules/
 .profile-backup/
 verification/
 *.log
+
+library/raw-results.json
+library/frontmatter-cache.json
+library/collect.log
+library/collect.out
+library/build-progress.log
+
+library/build.out

@@ -46,6 +46,13 @@ window.__ModuleLoader__.load({
       tabSkills: '技能',
       tabDiscover: '发现',
       tabTools: '工具',
+      tabLibrary: '卷轴馆',
+      libraryTitle: '荣哥技能卷轴收藏馆',
+      libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和评级浏览',
+      all: '全部',
+      loadMore: '加载更多',
+      noLibrary: '没有匹配的卷轴',
+      ratingLabel: '评级',
       discoverTitle: '发现远程技能',
       toolsTitle: 'MCP / Tools 目录',
       searchBtn: '搜索',
@@ -131,6 +138,13 @@ window.__ModuleLoader__.load({
       tabSkills: 'Skills',
       tabDiscover: 'Discover',
       tabTools: 'Tools',
+      tabLibrary: 'Scrolls',
+      libraryTitle: "Ronge's Scroll Library",
+      libraryHint: 'Index of public GitHub SKILL.md files, by category and rating',
+      all: 'All',
+      loadMore: 'Load more',
+      noLibrary: 'No matching scrolls',
+      ratingLabel: 'Rating',
       discoverTitle: 'Discover remote skills',
       toolsTitle: 'MCP / Tools directory',
       searchBtn: 'Search',
@@ -267,6 +281,173 @@ window.__ModuleLoader__.load({
     function SkillButton(props) {
       const state = useStore()
       const t = useT()
+      const renderLibrary = () =>
+        h(
+          React.Fragment,
+          null,
+          h(
+            'div',
+            { className: 'sf-subhead' },
+            h('button', { type: 'button', className: 'sf-icon-btn', onClick: () => setView('skills') }, '←'),
+            h('strong', null, t('libraryTitle')),
+            libraryMeta ? h('span', { className: 'sf-source' }, String(libraryMeta.total) + ' ' + t('count')) : null,
+          ),
+          h(
+            'div',
+            { className: 'sf-toolbar' },
+            h('input', {
+              className: 'sf-input',
+              type: 'search',
+              value: libraryQuery,
+              placeholder: t('searchRemote'),
+              onChange: (event) => setLibraryQuery(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') loadLibrary(1, false)
+              },
+            }),
+            h('button', { type: 'button', className: 'sf-secondary', onClick: () => loadLibrary(1, false) }, t('searchBtn')),
+          ),
+          h('div', { className: 'sf-subhint' }, t('libraryHint')),
+          h(
+            'div',
+            { className: 'sf-chips' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: libraryCategory === '' ? 'sf-chip sf-chip-active' : 'sf-chip',
+                onClick: () => {
+                  setLibraryCategory('')
+                  loadLibrary(1, false, { category: '' })
+                },
+              },
+              t('all'),
+            ),
+            Object.entries((libraryMeta && libraryMeta.categories) || {}).map(([category, count]) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  key: category,
+                  className: libraryCategory === category ? 'sf-chip sf-chip-active' : 'sf-chip',
+                  onClick: () => {
+                    setLibraryCategory(category)
+                    loadLibrary(1, false, { category })
+                  },
+                },
+                category + ' ' + count,
+              ),
+            ),
+          ),
+          h(
+            'div',
+            { className: 'sf-chips' },
+            h('span', { className: 'sf-mode-label' }, t('ratingLabel')),
+            [0, 3, 4, 4.5].map((value) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  key: value,
+                  className: libraryMinRating === value ? 'sf-chip sf-chip-active' : 'sf-chip',
+                  onClick: () => {
+                    setLibraryMinRating(value)
+                    loadLibrary(1, false, { minRating: value })
+                  },
+                },
+                value === 0 ? t('all') : '★ ' + value + '+',
+              ),
+            ),
+          ),
+          remoteInstall
+            ? h(
+                'div',
+                { className: 'sf-install-note' },
+                remoteInstall.name + ': ' +
+                  (remoteInstall.status === 'installing'
+                    ? t('installing')
+                    : remoteInstall.status === 'installed'
+                      ? t('installed') + ' ' + (remoteInstall.path || '')
+                      : remoteInstall.error || ''),
+              )
+            : null,
+          libraryLoading ? h('div', { className: 'sf-empty' }, t('loading')) : null,
+          libraryError ? h('div', { className: 'sf-empty sf-error' }, t('error') + ': ' + libraryError) : null,
+          !libraryLoading && !libraryError && libraryResults.length === 0
+            ? h('div', { className: 'sf-empty' }, t('noLibrary'))
+            : null,
+          h(
+            'div',
+            { className: 'sf-list' },
+            libraryResults.map((entry) =>
+              h(
+                'div',
+                { className: 'sf-remote-card', key: entry.repo + '::' + entry.path },
+                h(
+                  'div',
+                  { className: 'sf-remote-head' },
+                  h('strong', { className: 'sf-name' }, entry.name),
+                  h('span', { className: 'sf-source' }, '★ ' + entry.rating + ' · ' + entry.category),
+                ),
+                h('p', { className: 'sf-desc' }, entry.description || ''),
+                h('div', { className: 'sf-remote-meta' }, (entry.repo || '') + ' · ' + (entry.path || '')),
+                h(
+                  'div',
+                  { className: 'sf-remote-actions' },
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary',
+                      onClick: () => openRemotePreview({ ...entry, url: entry.rawUrl || entry.url }),
+                    },
+                    t('preview'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-primary',
+                      disabled: entry.installed,
+                      onClick: () => installRemote({ ...entry, url: entry.rawUrl || entry.url }),
+                    },
+                    entry.installed ? t('installed') : t('install'),
+                  ),
+                ),
+              ),
+            ),
+            remotePreview
+              ? h(
+                  'div',
+                  { className: 'sf-preview' },
+                  h(
+                    'div',
+                    { className: 'sf-preview-head' },
+                    h('strong', null, remotePreview.entry.name),
+                    h('button', { type: 'button', className: 'sf-icon-btn', onClick: () => setRemotePreview(null) }, '✕'),
+                  ),
+                  remotePreview.loading
+                    ? h('div', { className: 'sf-empty' }, t('loading'))
+                    : remotePreview.error
+                      ? h('div', { className: 'sf-empty sf-error' }, remotePreview.error)
+                      : h('pre', { className: 'sf-preview-code' }, String(remotePreview.content || '').slice(0, 6000)),
+                  h(
+                    'button',
+                    { type: 'button', className: 'sf-primary', onClick: () => installRemote(remotePreview.entry) },
+                    t('install'),
+                  ),
+                )
+              : null,
+            libraryMeta && libraryResults.length < libraryMeta.total && !libraryLoading
+              ? h(
+                  'button',
+                  { type: 'button', className: 'sf-new-btn', onClick: () => loadLibrary(libraryPage + 1, true) },
+                  t('loadMore'),
+                )
+              : null,
+          ),
+        )
+
       return h(
         React.Fragment,
         null,
@@ -402,6 +583,14 @@ window.__ModuleLoader__.load({
       const [toolsResults, setToolsResults] = React.useState([])
       const [toolsLoading, setToolsLoading] = React.useState(false)
       const [toolsError, setToolsError] = React.useState(null)
+      const [libraryQuery, setLibraryQuery] = React.useState('')
+      const [libraryCategory, setLibraryCategory] = React.useState('')
+      const [libraryMinRating, setLibraryMinRating] = React.useState(0)
+      const [libraryResults, setLibraryResults] = React.useState([])
+      const [libraryMeta, setLibraryMeta] = React.useState(null)
+      const [libraryLoading, setLibraryLoading] = React.useState(false)
+      const [libraryError, setLibraryError] = React.useState(null)
+      const [libraryPage, setLibraryPage] = React.useState(1)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
 
@@ -572,6 +761,31 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const loadLibrary = async (page = 1, append = false, filters = {}) => {
+        setLibraryLoading(true)
+        setLibraryError(null)
+        try {
+          const params = new URLSearchParams({
+            q: filters.q !== undefined ? filters.q : libraryQuery,
+            category: filters.category !== undefined ? filters.category : libraryCategory,
+            minRating: String(filters.minRating !== undefined ? filters.minRating : libraryMinRating),
+            page: String(page),
+            limit: '40',
+          })
+          const response = await fetch('/skill-studio/library?' + params.toString(), { cache: 'no-store' })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setLibraryMeta({ total: payload.total, categories: payload.categories || {}, generatedAt: payload.generatedAt })
+          setLibraryPage(page)
+          setLibraryResults((current) => (append ? current.concat(payload.entries || []) : payload.entries || []))
+        } catch (err) {
+          setLibraryError(err instanceof Error ? err.message : String(err))
+          if (!append) setLibraryResults([])
+        } finally {
+          setLibraryLoading(false)
+        }
+      }
+
       const openRemotePreview = async (entry) => {
         setRemotePreview({ entry, content: '', loading: true, error: null })
         try {
@@ -628,6 +842,7 @@ window.__ModuleLoader__.load({
         setView(next)
         if (next === 'discover' && remoteResults.length === 0) loadRemote('')
         if (next === 'tools' && toolsResults.length === 0) loadTools('')
+        if (next === 'library' && libraryResults.length === 0) loadLibrary(1, false)
       }
 
       const submitCreate = async (event) => {        event.preventDefault()
@@ -910,6 +1125,15 @@ window.__ModuleLoader__.load({
               'button',
               {
                 type: 'button',
+                className: view === 'library' ? 'sf-tab sf-tab-active' : 'sf-tab',
+                onClick: () => changeView('library'),
+              },
+              t('tabLibrary'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
                 className: view === 'discover' ? 'sf-tab sf-tab-active' : 'sf-tab',
                 onClick: () => changeView('discover'),
               },
@@ -1170,7 +1394,7 @@ window.__ModuleLoader__.load({
             ? h(
                 'div',
                 { className: 'sf-subview' },
-                view === 'discover' ? renderDiscover() : renderTools(),
+                view === 'discover' ? renderDiscover() : view === 'tools' ? renderTools() : renderLibrary(),
               )
             : null,
         ),
@@ -1191,6 +1415,10 @@ window.__ModuleLoader__.load({
 .sf-head-actions{display:flex;gap:4px}
 .sf-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}
 .sf-icon-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+".sf-chips{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:0 18px 8px}
+.sf-chip{padding:2px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:10px;cursor:pointer}
+.sf-chip:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
+.sf-chip-active{color:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-2)}
 .sf-tabs{display:flex;gap:4px;padding:8px 18px 0}
 .sf-tab{padding:5px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;cursor:pointer}
 .sf-tab:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2)}
