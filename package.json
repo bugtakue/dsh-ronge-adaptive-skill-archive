@@ -1,15 +1,15 @@
 {
-  "name": "dsh-skill-studio",
-  "version": "1.0.0",
-  "description": "Skill Studio: context-aware skill recommendations with localized intros, plan/immersive modes, active-skill tracking, experience memory with feedback, and a completion chime for DeepSeek Harness.",
+  "name": "ronge-skill-studio",
+  "version": "1.0.1",
+  "description": "Ronge Skill Studio: context-aware skill recommendations with localized intros, plan/immersive modes, active-skill tracking, experience memory with feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bugtakue/skill-studio.git"
+    "url": "git+https://github.com/bugtakue/ronge-skill-studio.git"
   },
-  "homepage": "https://github.com/bugtakue/skill-studio#readme",
+  "homepage": "https://github.com/bugtakue/ronge-skill-studio#readme",
   "bugs": {
-    "url": "https://github.com/bugtakue/skill-studio/issues"
+    "url": "https://github.com/bugtakue/ronge-skill-studio/issues"
   },
   "author": "bugtakue",
   "keywords": [

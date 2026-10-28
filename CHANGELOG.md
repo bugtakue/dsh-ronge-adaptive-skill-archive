@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.1 — 2026-10-28
+
+- Renamed the project to **ronge-skill-studio** (Ronge Skill Studio).
+- Package, repository, panel title, icon and docs updated; data paths stay compatible (`~/.dsh/skill-studio`).
+
 ## v1.0.0 — 2026-10-28
 
 - Default mode is now **Plan**: the agent asks for confirmation before executing.

@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'dsh-skill-studio',
+  id: 'ronge-skill-studio',
   factory(require) {
     const React = require('react')
     const h = React.createElement
@@ -23,8 +23,8 @@ window.__ModuleLoader__.load({
     const dictZh = {
       trigger: '技能',
       open: '打开技能工厂',
-      title: '技能工作室',
-      subtitle: '上下文感知推荐 · 正在使用 · 一键新建',
+      title: 'Ronge 技能工作室',
+      subtitle: 'Ronge · 上下文感知推荐 · 正在使用 · 一键新建',
       recommend: '推荐',
       recommendHint: '根据当前会话内容',
       basedOn: '基于：',
@@ -85,7 +85,7 @@ window.__ModuleLoader__.load({
     const dictEn = {
       trigger: 'Skills',
       open: 'Open Skill Factory',
-      title: 'Skill Studio',
+      title: 'Ronge Skill Studio',
       subtitle: 'Context-aware recommendations, active skills, one-click create',
       recommend: 'Recommended',
       recommendHint: 'From the current session',
@@ -911,7 +911,7 @@ window.__ModuleLoader__.load({
           ctx.slots.register(
             {
               name: 'conversation.session.header.utilities',
-              id: 'skill-studio',
+              id: 'ronge-skill-studio',
               order: -3,
             },
             SkillButton,
@@ -922,7 +922,7 @@ window.__ModuleLoader__.load({
           ctx.slots.register(
             {
               name: 'shell.overlay',
-              id: 'skill-studio-drawer',
+              id: 'ronge-skill-studio-drawer',
               order: 30,
             },
             SkillDrawer,

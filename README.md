@@ -1,6 +1,6 @@
-# Skill Studio · 技能工作室
+# ronge-skill-studio · Ronge 技能工作室
 
-[![check](https://github.com/bugtakue/skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/skill-studio/actions/workflows/check.yml)
+[![check](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml)
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
@@ -22,7 +22,7 @@
 
 ## 为什么是「上下文感知」
 
-大多数技能面板只列目录。Skill Studio 会回答三个更实际的问题：
+大多数技能面板只列目录。Ronge Skill Studio 会回答三个更实际的问题：
 
 1. **现在这个项目/这句话，适合用哪个 skill？**
 2. **这个 skill 为什么适合？**（显示匹配到的关键词/项目名）
@@ -84,12 +84,12 @@
 
 ```bash
 # 在 Harness 里执行（profile 级，所有会话生效）
-plugin_manager install_bundle target=/absolute/path/to/skill-studio
+plugin_manager install_bundle target=/absolute/path/to/ronge-skill-studio
 ```
 
 安装后打开任意会话，会话头部右侧会出现「技能」按钮；点开就是右侧抽屉。
 
-> 本地开发用包名 `dsh-skill-studio`；发布到 npm 前改成你自己的 scope，例如 `@yourname/dsh-skill-studio`。
+> 包名是 `ronge-skill-studio`；发布到 npm 前可改成自己的 scope，例如 `@yourname/ronge-skill-studio`。数据目录沿用兼容路径 `~/.dsh/skill-studio/`。
 
 ---
 
@@ -213,4 +213,4 @@ MIT。见 [LICENSE](./LICENSE)。
 
 ## English
 
-**Skill Studio** is a context-aware skill cockpit for DeepSeek Harness. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.
+**Ronge Skill Studio** is a context-aware skill cockpit for DeepSeek Harness. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.

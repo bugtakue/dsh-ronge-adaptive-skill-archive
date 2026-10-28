@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for trying Skill Studio.
+Thanks for trying Ronge Skill Studio.
 
 ## Development
 
