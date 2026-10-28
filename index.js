@@ -20,6 +20,148 @@ export const inject = ['webServer', 'skills']
 const DEFAULT_CHIME = '/System/Library/Sounds/Glass.aiff'
 const CHIME_COOLDOWN_MS = 1500
 
+const MODE_TEXT = {
+  plan: `## Skill Studio plan mode
+
+Plan mode is ON. Before acting, inspect the request and the installed skills. Identify the 1–3 most relevant skills, present a short plan naming them and why, and ask the user to confirm whether to use a single skill or a combination. Load skills only after confirmation.`,
+  immersive: `## Skill Studio immersive mode
+
+Immersive mode is ON. For every task, inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, and continue without asking for permission. State which skills you used and why.`,
+}
+
+let studioMode = 'off'
+let memory = { version: 1, updatedAt: null, entries: [], skills: {} }
+let lastChimeAt = 0
+const turnStates = new Map()
+
+function studioDir() {
+  return path.join(dshHome(), 'skill-studio')
+}
+
+function memoryFile() {
+  return path.join(studioDir(), 'experience.json')
+}
+
+function memoryMarkdownFile() {
+  return path.join(studioDir(), 'experience.md')
+}
+
+function modeFile() {
+  return path.join(studioDir(), 'config.json')
+}
+
+function ensureStudioDir() {
+  fs.mkdirSync(studioDir(), { recursive: true })
+}
+
+function loadStudioState() {
+  try {
+    const config = JSON.parse(fs.readFileSync(modeFile(), 'utf8'))
+    if (config && ['off', 'plan', 'immersive'].includes(config.mode)) studioMode = config.mode
+  } catch {
+    studioMode = 'off'
+  }
+  try {
+    const saved = JSON.parse(fs.readFileSync(memoryFile(), 'utf8'))
+    if (saved && Array.isArray(saved.entries) && saved.skills && typeof saved.skills === 'object') {
+      memory = {
+        version: 1,
+        updatedAt: saved.updatedAt || null,
+        entries: saved.entries.slice(-1000),
+        skills: saved.skills,
+      }
+    }
+  } catch {
+    memory = { version: 1, updatedAt: null, entries: [], skills: {} }
+  }
+}
+
+function saveStudioMode(next) {
+  studioMode = next
+  try {
+    ensureStudioDir()
+    fs.writeFileSync(modeFile(), JSON.stringify({ mode: next, updatedAt: new Date().toISOString() }, null, 2))
+  } catch {
+    // Mode still applies for this process even when persistence fails.
+  }
+}
+
+function saveMemory() {
+  try {
+    ensureStudioDir()
+    memory.updatedAt = new Date().toISOString()
+    fs.writeFileSync(memoryFile(), JSON.stringify(memory, null, 2))
+  } catch {
+    // Memory is best-effort; never affect a turn.
+  }
+}
+
+function appendMemoryMarkdown(entry) {
+  try {
+    ensureStudioDir()
+    const file = memoryMarkdownFile()
+    if (!fs.existsSync(file)) {
+      fs.writeFileSync(
+        file,
+        '# Skill Studio · 经验记忆\n\n每次主任务完成后自动追加：任务、使用的 skills、结果摘要。\n',
+      )
+    }
+    const lines = [
+      '',
+      `## ${entry.time} · ${entry.task.slice(0, 60) || '未命名任务'}`,
+      `- Skills: ${entry.skills.map((name) => '`' + name + '`').join(', ')}`,
+      `- Outcome: ${entry.outcome.slice(0, 300) || '（无摘要）'}`,
+      `- Session: ${entry.sessionId}`,
+      entry.durationMs ? `- Duration: ${Math.round(entry.durationMs / 1000)}s` : '',
+      '',
+    ].filter(Boolean)
+    fs.appendFileSync(file, lines.join('\n'))
+  } catch {
+    // Best-effort.
+  }
+}
+
+function recordExperience(sessionId, header, state) {
+  const skills = [...state.skills].filter(Boolean)
+  if (skills.length === 0) return
+  const task = (state.userTexts.find((text) => text && text.length > 1) || '').slice(0, 240)
+  const outcome = (state.assistant || '').slice(0, 500)
+  const entry = {
+    time: new Date().toISOString(),
+    sessionId: String(sessionId),
+    cwd: header?.cwd || null,
+    task,
+    skills,
+    outcome,
+    durationMs: Date.now() - state.start,
+  }
+  memory.entries.push(entry)
+  if (memory.entries.length > 1000) memory.entries = memory.entries.slice(-1000)
+  for (const name of skills) {
+    const previous = memory.skills[name] || { uses: 0, successes: 0, lastUsed: null }
+    memory.skills[name] = {
+      uses: previous.uses + 1,
+      successes: previous.successes + 1,
+      lastUsed: entry.time,
+    }
+  }
+  saveMemory()
+  appendMemoryMarkdown(entry)
+}
+
+function experienceSnapshot() {
+  const topSkills = Object.entries(memory.skills)
+    .map(([name, stat]) => ({ name, ...stat }))
+    .sort((left, right) => right.uses - left.uses)
+    .slice(0, 8)
+  return {
+    topSkills,
+    recent: memory.entries.slice(-5).reverse(),
+    totalEntries: memory.entries.length,
+    path: memoryMarkdownFile(),
+  }
+}
+
 const SOURCE_ORDER = {
   'project-dsh': 0,
   'project-agents': 1,
@@ -392,7 +534,7 @@ function analyzeSession(ctx, sessionId, cwd) {
   }
 }
 
-function recommendSkills(skills, contextText) {
+function recommendSkills(skills, contextText, skillStats = {}) {
   if (!contextText) return []
   const contextTokens = tokenize(contextText)
   const contextLower = contextText.toLowerCase()
@@ -416,6 +558,11 @@ function recommendSkills(skills, contextText) {
       if (!contextLower.includes(cue.toLowerCase())) continue
       score += 0.6
       if (reasons.length < 6 && !reasons.includes(cue)) reasons.push(cue)
+    }
+    const stat = skillStats[skill.name]
+    if (stat && stat.uses > 0) {
+      score += Math.min(4, stat.uses * 0.8)
+      if (reasons.length < 6) reasons.push(`经验×${stat.uses}`)
     }
     if (score > 0) {
       scored.push({
@@ -494,7 +641,7 @@ async function buildCatalog(ctx, config, sessionId) {
   const summaries = sortSkills([...merged.values()])
   const analysis = analyzeSession(ctx, sessionId, cwd)
   const recommendations = analysis.contextText
-    ? recommendSkills(summaries, analysis.contextText)
+    ? recommendSkills(summaries, analysis.contextText, memory.skills)
     : []
   return {
     ok: true,
@@ -511,6 +658,8 @@ async function buildCatalog(ctx, config, sessionId) {
     recentSkills: analysis.recentSkills,
     running: analysis.running,
     contextPreview: analysis.lastUserText.slice(0, 160),
+    mode: studioMode,
+    experience: experienceSnapshot(),
   }
 }
 
@@ -568,6 +717,7 @@ function route(handler) {
 }
 
 export function apply(ctx, config = {}) {
+  loadStudioState()
   const disposers = []
   disposers.push(
     ctx.webServer.register({
@@ -601,6 +751,22 @@ export function apply(ctx, config = {}) {
       }),
     }),
   )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/mode',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const next = String(payload?.mode ?? '')
+        if (!['off', 'plan', 'immersive'].includes(next)) {
+          throw new HttpError(400, 'mode must be off, plan, or immersive')
+        }
+        saveStudioMode(next)
+        sendJson(res, 200, { ok: true, mode: next })
+      }),
+    }),
+  )
   ctx.effect(() => () => {
     for (const dispose of disposers) dispose()
   })
@@ -614,19 +780,74 @@ export function apply(ctx, config = {}) {
         text: ROUTING_SECTION,
       }),
     )
+    ctx.effect(() =>
+      systemPrompt.section({
+        name: 'skill-studio-mode',
+        order: 881,
+        text: () => MODE_TEXT[studioMode] || '',
+      }),
+    )
   }
 
-  let lastChimeAt = 0
   ctx.effect(() =>
     ctx.on('session/event', (session, event) => {
-      if (!event || event.type !== 'turn/end') return
-      if (event.data?.reason?.kind !== 'completed') return
-      const header = session?.header
-      if (!header || header.parentSession || header.origin === 'subagent') return
-      const now = Date.now()
-      if (now - lastChimeAt < CHIME_COOLDOWN_MS) return
-      lastChimeAt = now
-      playChime()
+      if (!event || !session) return
+      const header = session.header
+      if (!header) return
+      const topLevel = !header.parentSession && header.origin !== 'subagent'
+      const sid = String(session.id)
+
+      if (event.type === 'turn/start') {
+        turnStates.set(sid, {
+          turn: Number(event.data?.turn) || 0,
+          start: Date.now(),
+          userTexts: [],
+          skills: new Set(),
+          assistant: '',
+        })
+        return
+      }
+
+      if (event.type === 'user/message') {
+        let state = turnStates.get(sid)
+        if (!state) {
+          state = { turn: 0, start: Date.now(), userTexts: [], skills: new Set(), assistant: '' }
+          turnStates.set(sid, state)
+        }
+        const text = cleanUserText(collectTexts(event.data))
+        if (text) state.userTexts.push(text.slice(0, 1200))
+        return
+      }
+
+      if (event.type === 'tool/call' && event.data?.name === 'skill') {
+        const state = turnStates.get(sid)
+        if (!state) return
+        const args = parseSkillArguments(event.data.arguments)
+        const name = args?.name || args?.skill || args?.id
+        if (typeof name === 'string' && name) state.skills.add(name)
+        return
+      }
+
+      if (event.type === 'assistant/message') {
+        const state = turnStates.get(sid)
+        if (!state) return
+        const text = cleanUserText(collectTexts(event.data))
+        if (text) state.assistant = text
+        return
+      }
+
+      if (event.type !== 'turn/end') return
+      const state = turnStates.get(sid)
+      const completed = event.data?.reason?.kind === 'completed'
+      if (topLevel && completed) {
+        if (state) recordExperience(sid, header, state)
+        const now = Date.now()
+        if (now - lastChimeAt >= CHIME_COOLDOWN_MS) {
+          lastChimeAt = now
+          playChime()
+        }
+      }
+      turnStates.delete(sid)
     }),
   )
 }

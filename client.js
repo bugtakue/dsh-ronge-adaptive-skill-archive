@@ -31,6 +31,15 @@ window.__ModuleLoader__.load({
       noRecommend: '暂无推荐，先聊几句或点刷新',
       activeNow: '正在使用',
       recentUsed: '最近使用',
+      mode: '模式',
+      planMode: '计划模式',
+      immersiveMode: '沉浸模式',
+      planHint: '会先问你要单个还是组合',
+      immersiveHint: '自动匹配并协同',
+      experience: '经验',
+      lastTask: '上次：',
+      memory: '记忆文件',
+      modeBusy: '切换中…',
       search: '搜索技能、描述、用途…',
       refresh: '刷新',
       close: '关闭',
@@ -81,6 +90,15 @@ window.__ModuleLoader__.load({
       noRecommend: 'No recommendation yet — chat a little, then refresh',
       activeNow: 'In use',
       recentUsed: 'Recently used',
+      mode: 'Mode',
+      planMode: 'Plan',
+      immersiveMode: 'Immersive',
+      planHint: 'Asks single vs combination first',
+      immersiveHint: 'Auto-match and orchestrate',
+      experience: 'Experience',
+      lastTask: 'Last: ',
+      memory: 'Memory file',
+      modeBusy: 'Switching…',
       search: 'Search skills, descriptions, usage…',
       refresh: 'Refresh',
       close: 'Close',
@@ -318,6 +336,7 @@ window.__ModuleLoader__.load({
       const [createBusy, setCreateBusy] = React.useState(false)
       const [createError, setCreateError] = React.useState(null)
       const [createdPath, setCreatedPath] = React.useState(null)
+      const [modeBusy, setModeBusy] = React.useState(false)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
 
@@ -384,6 +403,8 @@ window.__ModuleLoader__.load({
       const activeSkills = data && Array.isArray(data.activeSkills) ? data.activeSkills : []
       const recentSkills = data && Array.isArray(data.recentSkills) ? data.recentSkills : []
       const shownSkills = activeSkills.length ? activeSkills : recentSkills
+      const currentMode = data && data.mode ? data.mode : 'off'
+      const experience = data && data.experience ? data.experience : null
       const normalized = query.trim().toLowerCase()
       const filtered = normalized
         ? skills.filter((skill) =>
@@ -405,6 +426,26 @@ window.__ModuleLoader__.load({
         }
         setCopied(name)
         setTimeout(() => setCopied((current) => (current === name ? null : current)), 1200)
+      }
+
+      const changeMode = async (next) => {
+        const target = currentMode === next ? 'off' : next
+        setModeBusy(true)
+        setError(null)
+        try {
+          const response = await fetch('/skill-studio/mode', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ mode: target }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          await load(state.sessionId, true)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setModeBusy(false)
+        }
       }
 
       const submitCreate = async (event) => {
@@ -503,6 +544,36 @@ window.__ModuleLoader__.load({
               filtered.length + ' ' + t('count'),
             ),
           ),
+          h(
+            'div',
+            { className: 'sf-modebar' },
+            h('span', { className: 'sf-mode-label' }, t('mode')),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: currentMode === 'plan' ? 'sf-mode sf-mode-active' : 'sf-mode',
+                disabled: modeBusy,
+                onClick: () => changeMode('plan'),
+              },
+              t('planMode'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: currentMode === 'immersive' ? 'sf-mode sf-mode-active' : 'sf-mode',
+                disabled: modeBusy,
+                onClick: () => changeMode('immersive'),
+              },
+              t('immersiveMode'),
+            ),
+            h(
+              'span',
+              { className: 'sf-mode-hint' },
+              currentMode === 'plan' ? t('planHint') : currentMode === 'immersive' ? t('immersiveHint') : '',
+            ),
+          ),
           activeSkills.length || recentSkills.length
             ? h(
                 'div',
@@ -511,6 +582,23 @@ window.__ModuleLoader__.load({
                 shownSkills.map((skill) =>
                   h('span', { key: skill.name, className: 'sf-active-chip' }, skill.name),
                 ),
+              )
+            : null,
+          experience && experience.topSkills && experience.topSkills.length
+            ? h(
+                'div',
+                { className: 'sf-xp', title: experience.path || '' },
+                h('span', { className: 'sf-xp-label' }, t('experience')),
+                experience.topSkills.slice(0, 5).map((stat) =>
+                  h('span', { key: stat.name, className: 'sf-xp-chip' }, stat.name + ' ×' + stat.uses),
+                ),
+                experience.recent && experience.recent[0]
+                  ? h(
+                      'span',
+                      { className: 'sf-xp-last' },
+                      t('lastTask') + String(experience.recent[0].task || '').slice(0, 36),
+                    )
+                  : null,
               )
             : null,
           h(
@@ -661,6 +749,17 @@ window.__ModuleLoader__.load({
 .sf-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}
 .sf-icon-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .sf-toolbar{display:flex;align-items:center;gap:10px;padding:12px 18px}
+.sf-modebar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 8px}
+.sf-mode-label{color:var(--dsw-alias-label-secondary);font-size:10px;margin-right:2px}
+.sf-mode{padding:3px 9px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;cursor:pointer}
+.sf-mode:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
+.sf-mode-active{color:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-2)}
+.sf-mode:disabled{opacity:.55;cursor:default}
+.sf-mode-hint{color:var(--dsw-alias-label-secondary);font-size:10px;margin-left:2px}
+.sf-xp{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
+.sf-xp-label{color:var(--dsw-alias-state-success-primary);font-size:11px;font-weight:600;margin-right:2px}
+.sf-xp-chip{padding:2px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
+.sf-xp-last{color:var(--dsw-alias-label-secondary);font-size:10px;opacity:.85;overflow-wrap:anywhere}
 .sf-active{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
 .sf-active-label{color:var(--dsw-alias-brand-primary);font-size:11px;font-weight:600;margin-right:2px}
 .sf-active-chip{padding:2px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}

@@ -1,11 +1,15 @@
 # Skill Studio · 技能工作室
 
-> 一个给 DeepSeek Harness 的上下文感知技能面板：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，并实时显示「正在用哪些 Skill」；任务完成时还会响一声。**
+> 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
-一个 bundle，三个能力：
+一个 bundle，五个能力：
 
 - 🧠 **Skill Radar · 智能推荐**：根据当前会话最近的内容和项目目录，给技能打分排序，显示 Top 4 与匹配原因。
 - 🟢 **Now Using · 正在使用**：从会话的 `skill` 工具调用里读出当前 turn 正在用的技能；不在运行时显示「最近使用」。
+- 🧭 **Smart Modes · 智能模式**：
+  - **计划模式**：Agent 先给方案，并问你用单个还是组合 skill，确认后再加载；
+  - **沉浸模式**：根据上下文自动匹配 1–3 个 skill 并协同工作，不再逐次询问。
+- 📈 **Experience · 经验记忆**：每次主任务完成，自动把「任务 / 用了哪些 skill / 结果摘要」写进 `experience.md`；使用次数反过来提升推荐权重。
 - 🔔 **Done Chime · 完成提示音**：主任务完成时播放一声轻提示音；子智能体、fork 会话不响。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
 
@@ -30,6 +34,38 @@
 - 面板打开时每 10 秒静默刷新一次，不打断输入。
 
 > 它不替代 Agent 自己的 skill catalog，只是把「该用哪个」变成一眼可见。
+
+---
+
+## 两种智能模式
+
+面板顶部可切换（全局配置，写入 `~/.dsh/skill-studio/config.json`）：
+
+| 模式 | 行为 |
+|---|---|
+| **计划模式 Plan** | 下一次任务开始前，Agent 先给出 1–3 个推荐 skill 和理由，并问你：**单用一个，还是组合使用？** 你确认后才加载 skill。 |
+| **沉浸模式 Immersive** | 不再逐次询问：Agent 根据上下文自动选 1–3 个 skill、组合它们的工作流，并说明用了哪些、为什么。 |
+
+> 计划模式通过 prompt 约束 Agent 先征询；沉浸模式通过 prompt 约束 Agent 自动编排。它们不是硬编码的固定管线，而是把「怎么用 skill」变成 Agent 的默认行为。
+
+---
+
+## 经验记忆
+
+每次**主会话**任务成功完成、且使用了至少一个 skill，Host 会写一条经验：
+
+- `~/.dsh/skill-studio/experience.md` — 人读的 Markdown：时间、任务、Skills、结果摘要、耗时；
+- `~/.dsh/skill-studio/experience.json` — 机器读的统计：每个 skill 的 `uses` / `successes` / `lastUsed`。
+
+推荐算法会把熟练度算进去：`score += min(4, uses × 0.8)`，并在理由里显示「经验×N」。所以用得越多、越稳定有效的 skill，越容易被优先推荐——这就是「越做越好」的经验值。
+
+```md
+## 2026-10-28T12:00:00.000Z · 为宣传片写分镜
+- Skills: `beat-promo-director`, `media-use`
+- Outcome: 输出了 65 秒分镜表和 3 个测试镜头…
+- Session: session-...
+- Duration: 320s
+```
 
 ---
 
@@ -96,15 +132,20 @@ Host (index.js)
   GET  /skill-studio/catalog.json?sessionId=...
        -> ctx.skills 会话级注册表 + 文件系统扫描
        -> Session 事件分析：最近用户消息、skill 工具调用、当前 turn
-       -> 推荐打分 + active/recent
+       -> 推荐打分（含经验加权）+ active/recent + 经验快照
   POST /skill-studio/create
        -> ~/.dsh/skills/<name>/SKILL.md
-  session/event 监听 -> 主会话 turn/end completed -> afplay
-  ctx.systemPrompt.section('skill-studio') -> 技能路由提示
+  POST /skill-studio/mode
+       -> ~/.dsh/skill-studio/config.json { mode: off|plan|immersive }
+  session/event 监听
+       -> 主会话 turn/end completed：afplay + 写 experience.md/json
+  ctx.systemPrompt.section('skill-studio')      -> 技能路由提示
+  ctx.systemPrompt.section('skill-studio-mode') -> 当前模式的行为约束
 
 Client (client.js)
   conversation.session.header.utilities -> 「技能」按钮
-  shell.overlay                        -> 右侧抽屉（推荐/正在使用/目录/新建）
+  shell.overlay                        -> 右侧抽屉
+    推荐 / 基于当前会话 / 正在使用 / 经验 / 模式切换 / 目录 / 新建
 ```
 
 - Host 只依赖 Node 内置模块，可直接作为本地 bundle 安装。

@@ -1,7 +1,7 @@
 {
   "name": "dsh-skill-studio",
-  "version": "0.1.0",
-  "description": "Skill Studio: context-aware skill recommendations, active-skill tracking, and a completion chime for DeepSeek Harness.",
+  "version": "0.2.0",
+  "description": "Skill Studio: context-aware skill recommendations, plan/immersive modes, active-skill tracking, experience memory and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
