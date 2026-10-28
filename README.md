@@ -1,10 +1,12 @@
 # 荣哥技能卷轴收藏馆（可沉浸式体验版本）
 
+> **English name: Ronge's Adaptive Skill Cockpit (Immersive Edition)** — a context-aware, self-evolving skill cockpit for DeepSeek Harness. （旧英文名：Ronge's Skill Scroll Archive）
+
 [![check](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml)
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
-一个 bundle，十三个能力：
+一个 bundle，十四个能力：
 
 - 🧠 **Skill Radar · 智能推荐**：根据当前会话最近的内容和项目目录，给技能打分排序，显示 Top 4 与匹配原因。
 - 🟢 **Now Using · 正在使用**：从会话的 `skill` 工具调用里读出当前 turn 正在用的技能；不在运行时显示「最近使用」。
@@ -20,6 +22,7 @@
 - 🛡️ **Safety Radar · 安装前安全提示**：本地静态扫描 shell 执行 / 下载后直接执行 / 动态解码 / 提示注入 / 网络访问 / 凭据路径 / 过宽 `allowed-tools`，给出低/中/高风险与命中行号；同时解析 `license` 与来源信任级别（official / verified / community / local / unknown）。不联网、不上传、不执行。
 - 🔄 **Update Center · 更新与回滚**：`skills-lock.json` 记录来源 / 哈希 / 信任 / 许可证；检查更新时返回**内容 diff**；支持单条更新、一键全部更新（更新前自动备份到 `~/.dsh/skill-studio/backups/<skill>/`）与回滚。
 - 🧪 **Recommendation Eval · 推荐评估**：推荐理由升级为结构化 `reasonsDetail`（名称 / 关键词 / 类别 / 经验四类）；内置离线金标集与 `npm run eval:recommend`（Recall@K）；面板可对推荐点「采用 / 👍 / 👎」，写入 `rec-feedback.json`。
+- 🧬 **Self-evolution · 自进化推荐**：推荐权重（名称 / 关键词 / 类别 / 经验）是可学习参数——按反馈归因（哪类理由带来的推荐被采用/好评/差评）以小步长自动微调，带上下界、样本门槛、变更日志与一键回滚；全部本地完成。面板「自进化」区可查看当前权重、成功率与最近调整。
 - 📊 **Experience+ · 经验深化**：跨会话成功率、平均耗时、连续失败；健康报告（长期不用 / 连续失败 / 从未使用 / 许可证未知）；经验支持 JSON 导出 / 导入。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
 
@@ -81,6 +84,15 @@
 ```
 
 ---
+
+## 自进化推荐（v1.6.0）
+
+推荐打分不再是写死的常数：`token / name / category / experience` 四个权重是**可学习参数**（默认 1 / 8 / 0.6 / 1，带上下界 0.5–2 / 4–14 / 0.2–1.5 / 0.4–2）。
+
+- **反馈归因**：每条推荐都带结构化 `reasonsDetail`；面板上的「复制 /skill」= adopt、👍/👎 = good/bad，会把结果记到**产生该推荐的 top 理由类型**上（经验条目的 👍/👎 也会按同一归因记录）。
+- **自评估**：累计 10 条反馈后自动评估一次；某类理由的 `good/(good+bad)` ≥ 70% 时该权重 ×1.1，≤ 40% 时 ×0.9，样本 < 8 不动；每次改动记录 `before/after/证据/原因` 到 `~/.dsh/skill-studio/evolution.json`（最多 50 条历史）。
+- **可解释 + 可回滚**：`GET /skill-studio/evolution` 查看权重、成功率、待评估反馈与最近调整；`POST /evolution/evaluate` 手动评估、`/evolution/rollback` 回滚上一次调整、`/evolution/reset` 重置默认。
+- **护栏**：全部本地、无网络/无模型；步长 10%、有上下界；不自动回滚、不删数据；冷启动（样本不足）完全不动权重。
 
 ## 安装前安全提示（v1.5.0）
 
@@ -311,4 +323,4 @@ MIT。见 [LICENSE](./LICENSE)。
 
 ## English
 
-**荣哥技能卷轴收藏馆（可沉浸式体验版本）** is a context-aware skill cockpit for DeepSeek Harness. v1.5.0 adds a local pre-install safety scan, trust/license badges, update diff + update-all + rollback, structured recommendation reasons with an offline Recall@K eval, and cross-session experience stats with export/import. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.
+**Ronge's Adaptive Skill Cockpit (Immersive Edition)** (荣哥技能卷轴收藏馆) is a context-aware, self-evolving skill cockpit for DeepSeek Harness. v1.5.0 adds a local pre-install safety scan, trust/license badges, update diff + update-all + rollback, structured recommendation reasons with an offline Recall@K eval, cross-session experience stats with export/import, and v1.6.0 self-evolution: feedback-attributed, bounded, rollback-able recommendation weight tuning. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.

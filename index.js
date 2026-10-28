@@ -243,6 +243,9 @@ function recordExperience(sessionId, header, state) {
   }
   saveMemory()
   appendMemoryMarkdown(entry)
+  const evolution = loadEvolution()
+  evolution.stats.tasks = Number(evolution.stats.tasks || 0) + 1
+  saveEvolution()
 }
 
 function recordFailedTurn(sessionId, header, state) {
@@ -291,6 +294,9 @@ function recordFeedback(id, rating) {
   }
   saveMemory()
   appendFeedbackMarkdown(entry, rating)
+  noteExperienceFeedback(entry.skills, rating)
+  saveEvolution()
+  maybeEvolve()
   return entry
 }
 
@@ -646,7 +652,7 @@ function loadRecFeedback() {
   return { version: 1, updatedAt: null, skills: {} }
 }
 
-function recordRecommendationFeedback(name, verdict) {
+function recordRecommendationFeedback(name, verdict, kind) {
   const skillName = String(name || '').trim()
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(skillName)) {
     throw new HttpError(400, 'skillName must be kebab-case')
@@ -661,7 +667,14 @@ function recordRecommendationFeedback(name, verdict) {
   feedback.skills[skillName] = stat
   feedback.updatedAt = stat.lastAt
   writeJsonFile(recFeedbackFile(), feedback)
-  return { stats: stat, updatedAt: feedback.updatedAt }
+  noteRecommendationOutcome(String(kind || ''), verdict)
+  saveEvolution()
+  const evolved = maybeEvolve()
+  return {
+    stats: stat,
+    updatedAt: feedback.updatedAt,
+    evolution: evolved ? { changed: evolved.changed, changes: evolved.changes } : null,
+  }
 }
 
 function evaluateRecommendations(cases, skills, skillStats = {}, k = 4) {
@@ -829,6 +842,307 @@ function importExperience(payload) {
     mergedSkills: merged.mergedSkills,
     mergedFeedback: merged.mergedFeedback,
   }
+}
+
+
+// --- Self-evolution (v1.6.0) -----------------------------------------------
+// The recommendation weights are learnable parameters: feedback outcomes are
+// attributed to the reason kind that produced the recommendation, and the
+// engine nudges the corresponding weight in small, bounded steps. Everything
+// stays local and explainable: every change is logged with its evidence and
+// can be rolled back.
+const EVOLUTION_DEFAULT_WEIGHTS = { token: 1, name: 8, category: 0.6, experience: 1, completion: 1 }
+const EVOLUTION_BOUNDS = {
+  token: [0.5, 2],
+  name: [4, 14],
+  category: [0.2, 1.5],
+  experience: [0.4, 2],
+}
+const EVOLUTION_KIND_WEIGHT = { keyword: 'token', name: 'name', category: 'category', experience: 'experience' }
+const EVOLUTION_CONTENT_LABELS = { token: '关键词', name: '名称', category: '类别', experience: '经验' }
+const EVOLUTION_MIN_SAMPLES = 8
+const EVOLUTION_STEP = 0.1
+const EVOLUTION_EVAL_EVERY = 10
+const EVOLUTION_HISTORY_MAX = 50
+const EVOLUTION_KIND_MEMORY_MAX = 300
+
+let evolutionState = null
+
+function evolutionFile() {
+  return path.join(studioDir(), 'evolution.json')
+}
+
+function roundWeight(value) {
+  return Math.round(value * 100) / 100
+}
+
+function clampWeight(key, value) {
+  const bounds = EVOLUTION_BOUNDS[key]
+  const number = Number(value)
+  const safe = Number.isFinite(number) ? number : EVOLUTION_DEFAULT_WEIGHTS[key]
+  if (!bounds) return roundWeight(safe)
+  return roundWeight(Math.min(bounds[1], Math.max(bounds[0], safe)))
+}
+
+function resolveEvolutionWeights(weights) {
+  const source = weights && typeof weights === 'object' ? weights : {}
+  const merged = {}
+  for (const key of Object.keys(EVOLUTION_DEFAULT_WEIGHTS)) {
+    merged[key] = clampWeight(key, source[key] ?? EVOLUTION_DEFAULT_WEIGHTS[key])
+  }
+  return merged
+}
+
+function emptyEvolutionStats() {
+  return {
+    exposures: 0,
+    tasks: 0,
+    observations: 0,
+    good: 0,
+    bad: 0,
+    byKind: {
+      name: { adopt: 0, good: 0, bad: 0 },
+      keyword: { adopt: 0, good: 0, bad: 0 },
+      category: { adopt: 0, good: 0, bad: 0 },
+      experience: { adopt: 0, good: 0, bad: 0 },
+    },
+  }
+}
+
+function normalizeEvolutionState(saved) {
+  const base = {
+    version: 1,
+    updatedAt: null,
+    weights: resolveEvolutionWeights(null),
+    stats: emptyEvolutionStats(),
+    kindBySkill: {},
+    observationsSinceEval: 0,
+    lastEvaluatedAt: null,
+    history: [],
+  }
+  if (!saved || typeof saved !== 'object') return base
+  const stats = saved.stats && typeof saved.stats === 'object' ? saved.stats : {}
+  const byKind = stats.byKind && typeof stats.byKind === 'object' ? stats.byKind : {}
+  return {
+    version: 1,
+    updatedAt: saved.updatedAt || null,
+    weights: resolveEvolutionWeights(saved.weights),
+    stats: {
+      exposures: Number(stats.exposures || 0),
+      tasks: Number(stats.tasks || 0),
+      observations: Number(stats.observations || 0),
+      good: Number(stats.good || 0),
+      bad: Number(stats.bad || 0),
+      byKind: {
+        name: { ...emptyEvolutionStats().byKind.name, ...(byKind.name || {}) },
+        keyword: { ...emptyEvolutionStats().byKind.keyword, ...(byKind.keyword || {}) },
+        category: { ...emptyEvolutionStats().byKind.category, ...(byKind.category || {}) },
+        experience: { ...emptyEvolutionStats().byKind.experience, ...(byKind.experience || {}) },
+      },
+    },
+    kindBySkill: saved.kindBySkill && typeof saved.kindBySkill === 'object' ? saved.kindBySkill : {},
+    observationsSinceEval: Number(saved.observationsSinceEval || 0),
+    lastEvaluatedAt: saved.lastEvaluatedAt || null,
+    history: Array.isArray(saved.history) ? saved.history.slice(-EVOLUTION_HISTORY_MAX) : [],
+  }
+}
+
+function loadEvolution() {
+  if (evolutionState) return evolutionState
+  evolutionState = normalizeEvolutionState(readJsonFile(evolutionFile(), null))
+  return evolutionState
+}
+
+function saveEvolution() {
+  const state = loadEvolution()
+  try {
+    ensureStudioDir()
+    state.updatedAt = new Date().toISOString()
+    fs.writeFileSync(evolutionFile(), JSON.stringify(state, null, 2))
+  } catch {
+    // Evolution is best-effort; never affect a turn or a request.
+  }
+}
+
+function evolutionSnapshot() {
+  const state = loadEvolution()
+  const byKind = state.stats.byKind
+  const totalGood = Object.values(byKind).reduce((sum, entry) => sum + Number(entry.good || 0), 0)
+  const totalBad = Object.values(byKind).reduce((sum, entry) => sum + Number(entry.bad || 0), 0)
+  return {
+    weights: state.weights,
+    defaults: { ...EVOLUTION_DEFAULT_WEIGHTS },
+    bounds: EVOLUTION_BOUNDS,
+    contentLabels: EVOLUTION_CONTENT_LABELS,
+    stats: {
+      exposures: state.stats.exposures,
+      tasks: state.stats.tasks,
+      observations: state.stats.observations,
+      good: totalGood,
+      bad: totalBad,
+      successRate: totalGood + totalBad > 0 ? Math.round((totalGood / (totalGood + totalBad)) * 100) / 100 : null,
+      byKind,
+    },
+    observationsSinceEval: state.observationsSinceEval,
+    lastEvaluatedAt: state.lastEvaluatedAt,
+    recentHistory: state.history.slice(-3).map((entry) => ({
+      at: entry.at,
+      reason: entry.reason,
+      changes: entry.changes,
+    })),
+    canRollback: state.history.length > 0,
+    path: evolutionFile(),
+  }
+}
+
+function evaluateEvolutionState(state, options = {}) {
+  const current = normalizeEvolutionState(state)
+  const minSamples = Number(options.minSamples || EVOLUTION_MIN_SAMPLES)
+  const step = Number(options.step || EVOLUTION_STEP)
+  const reason = String(options.reason || 'auto')
+  const changes = []
+  const nextWeights = { ...current.weights }
+  for (const [kind, weightKey] of Object.entries(EVOLUTION_KIND_WEIGHT)) {
+    const stat = current.stats.byKind[kind]
+    if (!stat) continue
+    const good = Number(stat.good || 0)
+    const bad = Number(stat.bad || 0)
+    const sample = good + bad
+    if (sample < minSamples) continue
+    const rate = good / sample
+    let factor = 1
+    let why = ''
+    if (rate >= 0.7) {
+      factor = 1 + step
+      why = '好评为 ' + good + '/' + sample
+    } else if (rate <= 0.4) {
+      factor = 1 - step
+      why = '差评为 ' + bad + '/' + sample
+    }
+    if (factor === 1) continue
+    const from = nextWeights[weightKey]
+    const to = clampWeight(weightKey, from * factor)
+    if (to === from) continue
+    nextWeights[weightKey] = to
+    changes.push({
+      kind,
+      weight: weightKey,
+      label: EVOLUTION_CONTENT_LABELS[weightKey] || weightKey,
+      from,
+      to,
+      rate: Math.round(rate * 100) / 100,
+      sample,
+      reason: why,
+    })
+  }
+  if (changes.length === 0) {
+    return { state: { ...current, lastEvaluatedAt: new Date().toISOString() }, changes: [] }
+  }
+  const at = new Date().toISOString()
+  const history = current.history.concat({
+    at,
+    reason,
+    changes,
+    before: { ...current.weights },
+    after: { ...nextWeights },
+  })
+  return {
+    state: {
+      ...current,
+      updatedAt: at,
+      weights: nextWeights,
+      observationsSinceEval: 0,
+      lastEvaluatedAt: at,
+      history: history.slice(-EVOLUTION_HISTORY_MAX),
+    },
+    changes,
+  }
+}
+
+function runEvolution(reason) {
+  const report = evaluateEvolutionState(loadEvolution(), { reason })
+  evolutionState = report.state
+  saveEvolution()
+  return {
+    ok: true,
+    reason,
+    changed: report.changes.length,
+    changes: report.changes,
+    snapshot: evolutionSnapshot(),
+  }
+}
+
+function maybeEvolve() {
+  const state = loadEvolution()
+  if (state.observationsSinceEval < EVOLUTION_EVAL_EVERY) return null
+  return runEvolution('auto')
+}
+
+function noteRecommendationExposure(recommendations) {
+  if (!Array.isArray(recommendations) || recommendations.length === 0) return
+  const state = loadEvolution()
+  state.stats.exposures = Number(state.stats.exposures || 0) + recommendations.length
+  const at = new Date().toISOString()
+  for (const item of recommendations) {
+    if (!item || !item.name) continue
+    const top = Array.isArray(item.reasonsDetail) ? item.reasonsDetail.find((reason) => reason && reason.kind) : null
+    if (!top || !EVOLUTION_KIND_WEIGHT[top.kind]) continue
+    state.kindBySkill[item.name] = { kind: top.kind, at }
+  }
+  const names = Object.keys(state.kindBySkill)
+  if (names.length > EVOLUTION_KIND_MEMORY_MAX) {
+    for (const name of names.slice(0, names.length - EVOLUTION_KIND_MEMORY_MAX)) delete state.kindBySkill[name]
+  }
+}
+
+function noteRecommendationOutcome(kind, verdict) {
+  if (!EVOLUTION_KIND_WEIGHT[kind] || !['adopt', 'good', 'bad'].includes(verdict)) return
+  const state = loadEvolution()
+  const bucket = state.stats.byKind[kind]
+  bucket[verdict] = Number(bucket[verdict] || 0) + 1
+  state.stats.observations = Number(state.stats.observations || 0) + 1
+  state.observationsSinceEval = Number(state.observationsSinceEval || 0) + 1
+  if (verdict === 'good') state.stats.good = Number(state.stats.good || 0) + 1
+  if (verdict === 'bad') state.stats.bad = Number(state.stats.bad || 0) + 1
+}
+
+function noteExperienceFeedback(skills, rating) {
+  if (!Array.isArray(skills) || !rating) return
+  const state = loadEvolution()
+  const at = new Date().toISOString()
+  for (const name of skills) {
+    const hint = state.kindBySkill[name]
+    if (!hint || !EVOLUTION_KIND_WEIGHT[hint.kind]) continue
+    const bucket = state.stats.byKind[hint.kind]
+    bucket[rating] = Number(bucket[rating] || 0) + 1
+    state.stats.observations = Number(state.stats.observations || 0) + 1
+    state.observationsSinceEval = Number(state.observationsSinceEval || 0) + 1
+    if (rating === 'good') state.stats.good = Number(state.stats.good || 0) + 1
+    if (rating === 'bad') state.stats.bad = Number(state.stats.bad || 0) + 1
+    state.kindBySkill[name] = { kind: hint.kind, at }
+  }
+}
+
+function rollbackEvolution() {
+  const state = loadEvolution()
+  if (state.history.length === 0) throw new HttpError(409, 'no evolution history to roll back')
+  const last = state.history[state.history.length - 1]
+  evolutionState = {
+    ...state,
+    weights: resolveEvolutionWeights(last.before),
+    history: state.history.slice(0, -1),
+    observationsSinceEval: 0,
+    lastEvaluatedAt: new Date().toISOString(),
+  }
+  saveEvolution()
+  return { ok: true, rolledBack: last.at, weights: evolutionState.weights, snapshot: evolutionSnapshot() }
+}
+
+function resetEvolution() {
+  const state = loadEvolution()
+  evolutionState = { ...state, weights: resolveEvolutionWeights(null), observationsSinceEval: 0, lastEvaluatedAt: null }
+  saveEvolution()
+  return { ok: true, weights: evolutionState.weights, snapshot: evolutionSnapshot() }
 }
 
 
@@ -1605,8 +1919,9 @@ function analyzeSession(ctx, sessionId, cwd) {
   }
 }
 
-function recommendSkills(skills, contextText, skillStats = {}) {
+function recommendSkills(skills, contextText, skillStats = {}, weights = EVOLUTION_DEFAULT_WEIGHTS) {
   if (!contextText) return []
+  const resolvedWeights = resolveEvolutionWeights(weights)
   const contextTokens = tokenize(contextText)
   const contextLower = contextText.toLowerCase()
   const scored = []
@@ -1628,30 +1943,33 @@ function recommendSkills(skills, contextText, skillStats = {}) {
     }
     for (const token of skillTokens) {
       if (!contextTokens.has(token)) continue
-      score += 1
-      addReason('keyword', token, '上下文命中「' + token + '」', 1)
+      score += resolvedWeights.token
+      addReason('keyword', token, '上下文命中「' + token + '」', resolvedWeights.token)
     }
     if (skill.name && contextLower.includes(skill.name.toLowerCase())) {
-      score += 8
+      score += resolvedWeights.name
       reasonsDetail.unshift({
         kind: 'name',
         label: skill.name,
         detail: '请求里直接提到了这个技能',
-        weight: 8,
+        weight: resolvedWeights.name,
       })
     }
     const category = categoryOf(skill.name)
     for (const cue of CATEGORY_CUES[category] || []) {
       if (!contextLower.includes(cue.toLowerCase())) continue
-      score += 0.6
-      addReason('category', cue, '类别线索「' + cue + '」', 0.6)
+      score += resolvedWeights.category
+      addReason('category', cue, '类别线索「' + cue + '」', resolvedWeights.category)
     }
     const stat = skillStats[skill.name]
     if (stat && stat.uses > 0) {
       const good = Number(stat.good || 0)
       const bad = Number(stat.bad || 0)
-      const completion = good + bad === 0 ? Math.min(2, (stat.successes || stat.uses) * 0.25) : 0
-      const boost = Math.min(4, good * 0.8) - Math.min(2, bad * 0.5) + completion
+      const completion =
+        (good + bad === 0 ? Math.min(2, (stat.successes || stat.uses) * 0.25) : 0) *
+        resolvedWeights.completion
+      const boost =
+        (Math.min(4, good * 0.8) - Math.min(2, bad * 0.5)) * resolvedWeights.experience + completion
       score += boost
       const label = good > 0 ? `好评×${good}` : bad > 0 ? `差评×${bad}` : `完成×${stat.successes || stat.uses}`
       addReason(
@@ -1746,9 +2064,11 @@ async function buildCatalog(ctx, config, sessionId, lang) {
   const summaries = sortSkills([...merged.values()])
     .map((skill) => localizeSkill(skill, language))
     .map((skill) => ({ ...skill, ...securityForSkill(skill) }))
+  const evolution = loadEvolution()
   const recommendations = analysis.contextText
-    ? recommendSkills(summaries, analysis.contextText, memory.skills)
+    ? recommendSkills(summaries, analysis.contextText, memory.skills, evolution.weights)
     : []
+  noteRecommendationExposure(recommendations)
   return {
     ok: true,
     count: summaries.length,
@@ -1767,6 +2087,7 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     contextPreview: analysis.lastUserText.slice(0, 160),
     mode: studioMode,
     experience: experienceSnapshot(cwd),
+    evolution: evolutionSnapshot(),
   }
 }
 
@@ -2033,8 +2354,14 @@ export function apply(ctx, config = {}) {
         const result = recordRecommendationFeedback(
           String(payload?.skillName ?? ''),
           String(payload?.verdict ?? ''),
+          String(payload?.kind ?? ''),
         )
-        sendJson(res, 200, { ok: true, stats: result.stats, updatedAt: result.updatedAt })
+        sendJson(res, 200, {
+          ok: true,
+          stats: result.stats,
+          updatedAt: result.updatedAt,
+          evolution: result.evolution,
+        })
       }),
     }),
   )
@@ -2070,6 +2397,46 @@ export function apply(ctx, config = {}) {
         const url = new URL(req.url || '/', 'http://127.0.0.1')
         const cwd = url.searchParams.get('cwd') || config?.cwd || process.cwd()
         sendJson(res, 200, { ok: true, ...experienceHealth(memory.skills, cwd) })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/evolution',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, { ok: true, ...evolutionSnapshot() })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/evolution/evaluate',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, runEvolution('manual'))
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/evolution/rollback',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, rollbackEvolution())
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/evolution/reset',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, resetEvolution())
       }),
     }),
   )
@@ -2193,15 +2560,18 @@ export function apply(ctx, config = {}) {
 }
 
 export {
+  EVOLUTION_DEFAULT_WEIGHTS,
   aggregateSkillStats,
   classifyTrust,
   detectLang,
   diffSkillLines,
+  evaluateEvolutionState,
   evaluateRecommendations,
   localizeSkill,
   mergeExperienceData,
   parseSkillArguments,
   recommendSkills,
+  resolveEvolutionWeights,
   scanSkillText,
   tokenize,
 }

@@ -24,7 +24,7 @@ window.__ModuleLoader__.load({
       trigger: '卷轴馆',
       open: '打开技能工厂',
       title: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
-      subtitle: '可沉浸式体验 · 上下文感知 · 正在使用 · 一键新建',
+      subtitle: '可沉浸式体验 · 上下文感知 · 自进化推荐 · 正在使用 · 一键新建',
       recommend: '推荐',
       recommendHint: '根据当前会话内容',
       basedOn: '基于：',
@@ -132,6 +132,25 @@ window.__ModuleLoader__.load({
       rollbackOk: '已回滚：',
       actionFailed: '操作失败',
       experienceHealth: '技能健康',
+      evolution: '自进化',
+      evolutionHint: '按反馈自动微调推荐权重 · 本地 · 可回滚',
+      evolutionWeights: '当前权重',
+      evolutionRate: '反馈成功率',
+      evolutionObs: '待评估反馈',
+      evolutionHistory: '最近调整',
+      evolutionNone: '还没有自动调整（攒够 10 条反馈后自动评估）',
+      weightToken: '关键词',
+      weightName: '名称',
+      weightCategory: '类别',
+      weightExperience: '经验',
+      evaluateEvolution: '立即评估',
+      rollbackEvolution: '回滚',
+      resetEvolution: '重置',
+      evolutionBusy: '评估中…',
+      evolutionDone: '已评估',
+      evolutionRolledBack: '已回滚上一次调整',
+      evolutionReset: '权重已重置',
+      noEvolution: '暂无自进化数据',
       healthStale: '陈旧',
       healthFailing: '连续失败',
       healthNeverUsed: '从未使用',
@@ -152,8 +171,8 @@ window.__ModuleLoader__.load({
     const dictEn = {
       trigger: 'Scrolls',
       open: 'Open Skill Factory',
-      title: "Ronge's Skill Scroll Archive (Immersive Edition)",
-      subtitle: 'Immersive edition · context-aware · active skills · one-click create',
+      title: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
+      subtitle: 'Adaptive · self-evolving recommendations · context-aware · active skills · one-click create',
       recommend: 'Recommended',
       recommendHint: 'From the current session',
       basedOn: 'Based on: ',
@@ -176,7 +195,7 @@ window.__ModuleLoader__.load({
       tabDiscover: 'Discover',
       tabTools: 'Tools',
       tabLibrary: 'Scrolls',
-      libraryTitle: "Ronge's Skill Scroll Archive (Immersive Edition)",
+      libraryTitle: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
       libraryHint: 'Index of public GitHub SKILL.md files, by category and rating',
       all: 'All',
       loadMore: 'Load more',
@@ -261,6 +280,25 @@ window.__ModuleLoader__.load({
       rollbackOk: 'Rolled back: ',
       actionFailed: 'Action failed',
       experienceHealth: 'Skill health',
+      evolution: 'Self-evolution',
+      evolutionHint: 'Auto-tunes recommendation weights from feedback · local · rollback-able',
+      evolutionWeights: 'Weights',
+      evolutionRate: 'Feedback success',
+      evolutionObs: 'Pending feedback',
+      evolutionHistory: 'Recent changes',
+      evolutionNone: 'No auto-change yet (evaluates after 10 feedback signals)',
+      weightToken: 'Keyword',
+      weightName: 'Name',
+      weightCategory: 'Category',
+      weightExperience: 'Experience',
+      evaluateEvolution: 'Evaluate now',
+      rollbackEvolution: 'Roll back',
+      resetEvolution: 'Reset',
+      evolutionBusy: 'Evaluating…',
+      evolutionDone: 'Evaluated',
+      evolutionRolledBack: 'Rolled back the last change',
+      evolutionReset: 'Weights reset',
+      noEvolution: 'No self-evolution data yet',
       healthStale: 'Stale',
       healthFailing: 'Failing',
       healthNeverUsed: 'Never used',
@@ -613,6 +651,8 @@ window.__ModuleLoader__.load({
       const [recoBusy, setRecoBusy] = React.useState(null)
       const [xpBusy, setXpBusy] = React.useState(null)
       const [xpStatus, setXpStatus] = React.useState(null)
+      const [evolutionBusy, setEvolutionBusy] = React.useState(null)
+      const [evolutionNotice, setEvolutionNotice] = React.useState(null)
       const [toolsQuery, setToolsQuery] = React.useState('')
       const [toolsResults, setToolsResults] = React.useState([])
       const [toolsLoading, setToolsLoading] = React.useState(false)
@@ -724,14 +764,20 @@ window.__ModuleLoader__.load({
         setTimeout(() => setCopied((current) => (current === name ? null : current)), 1200)
       }
 
-      const sendRecommendFeedback = async (skillName, verdict) => {
+      const topReasonKind = (item) => {
+        if (!item || !Array.isArray(item.reasonsDetail)) return ''
+        const first = item.reasonsDetail.find((reason) => reason && reason.kind)
+        return first ? String(first.kind) : ''
+      }
+
+      const sendRecommendFeedback = async (skillName, verdict, kind) => {
         if (!skillName || recoBusy) return
         setRecoBusy({ name: skillName, verdict })
         try {
           const response = await fetch('/skill-studio/recommend-feedback', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ skillName, verdict }),
+            body: JSON.stringify({ skillName, verdict, kind: kind || undefined }),
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
@@ -743,12 +789,12 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const copyCommand = (name) => {
+      const copyCommand = (name, kind) => {
         if (!name) return
         writeClipboardText('/skill ' + name)
         setCopied(name)
         setTimeout(() => setCopied((current) => (current === name ? null : current)), 1500)
-        sendRecommendFeedback(name, 'adopt')
+        sendRecommendFeedback(name, 'adopt', kind)
       }
 
       const changeMode = async (next) => {
@@ -1029,6 +1075,42 @@ window.__ModuleLoader__.load({
           })
         } finally {
           setXpBusy(null)
+        }
+      }
+
+      const runEvolutionAction = async (action) => {
+        if (evolutionBusy) return
+        const endpoints = {
+          evaluate: '/skill-studio/evolution/evaluate',
+          rollback: '/skill-studio/evolution/rollback',
+          reset: '/skill-studio/evolution/reset',
+        }
+        const doneKeys = {
+          evaluate: 'evolutionDone',
+          rollback: 'evolutionRolledBack',
+          reset: 'evolutionReset',
+        }
+        const endpoint = endpoints[action]
+        if (!endpoint) return
+        setEvolutionBusy(action)
+        setEvolutionNotice(null)
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({}),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setEvolutionNotice({ kind: 'ok', text: t(doneKeys[action]) })
+          await load(state.sessionId, true)
+        } catch (err) {
+          setEvolutionNotice({
+            kind: 'error',
+            text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+          })
+        } finally {
+          setEvolutionBusy(null)
         }
       }
 
@@ -1409,6 +1491,97 @@ window.__ModuleLoader__.load({
         )
       }
 
+      const renderEvolution = () => {
+        const evolution = data && data.evolution && typeof data.evolution === 'object' ? data.evolution : null
+        if (!evolution) return null
+        const weights = evolution.weights && typeof evolution.weights === 'object' ? evolution.weights : {}
+        const labels = {
+          token: t('weightToken'),
+          name: t('weightName'),
+          category: t('weightCategory'),
+          experience: t('weightExperience'),
+        }
+        const chips = Object.keys(labels)
+          .filter((key) => Number.isFinite(Number(weights[key])))
+          .map((key) =>
+            h('span', { className: 'sf-xp-chip', key: 'weight-' + key }, labels[key] + ' ×' + weights[key]),
+          )
+        const rate = evolution.stats && Number.isFinite(Number(evolution.stats.successRate))
+          ? Math.round(Number(evolution.stats.successRate) * 100)
+          : null
+        const sinceEval = Number(evolution.observationsSinceEval || 0)
+        const history = Array.isArray(evolution.recentHistory) ? evolution.recentHistory : []
+        const changeRows = history
+          .slice(-3)
+          .reverse()
+          .flatMap((entry) =>
+            (Array.isArray(entry.changes) ? entry.changes : []).slice(0, 3).map((change, index) =>
+              h(
+                'div',
+                { className: 'sf-health-row', key: 'evolution-' + String(entry.at) + '-' + index },
+                h(
+                  'span',
+                  { className: 'sf-health-label' },
+                  (change.label || change.weight || '') + ' ' + change.from + ' → ' + change.to,
+                ),
+                h('span', { className: 'sf-health-names' }, change.reason || ''),
+              ),
+            ),
+          )
+        return h(
+          'div',
+          { className: 'sf-health sf-evolution' },
+          h('div', { className: 'sf-health-title' }, t('evolution')),
+          h('div', { className: 'sf-health-row' }, h('span', { className: 'sf-health-label' }, t('evolutionHint'))),
+          h(
+            'div',
+            { className: 'sf-health-row' },
+            h('span', { className: 'sf-health-label' }, t('evolutionWeights')),
+            h('span', { className: 'sf-health-names' }, chips),
+          ),
+          h(
+            'div',
+            { className: 'sf-health-row' },
+            h('span', { className: 'sf-health-label' }, t('evolutionRate')),
+            h(
+              'span',
+              { className: 'sf-health-names' },
+              (rate === null ? '—' : rate + '%') + ' · ' + t('evolutionObs') + ' ' + sinceEval,
+            ),
+          ),
+          changeRows.length
+            ? h('div', { className: 'sf-health-row' }, h('span', { className: 'sf-health-label' }, t('evolutionHistory')), h('span', { className: 'sf-health-names' }, changeRows.length + ' 条'))
+            : h('div', { className: 'sf-health-row' }, h('span', { className: 'sf-health-label' }, t('evolutionNone'))),
+          changeRows,
+          h(
+            'div',
+            { className: 'sf-xp-tools' },
+            h(
+              'button',
+              { type: 'button', className: 'sf-fb', disabled: Boolean(evolutionBusy), onClick: () => runEvolutionAction('evaluate') },
+              evolutionBusy === 'evaluate' ? t('evolutionBusy') : t('evaluateEvolution'),
+            ),
+            h(
+              'button',
+              { type: 'button', className: 'sf-fb', disabled: Boolean(evolutionBusy) || !evolution.canRollback, onClick: () => runEvolutionAction('rollback') },
+              t('rollbackEvolution'),
+            ),
+            h(
+              'button',
+              { type: 'button', className: 'sf-fb', disabled: Boolean(evolutionBusy), onClick: () => runEvolutionAction('reset') },
+              t('resetEvolution'),
+            ),
+          ),
+          evolutionNotice
+            ? h(
+                'div',
+                { className: evolutionNotice.kind === 'error' ? 'sf-xp-status sf-error' : 'sf-xp-status sf-ok' },
+                evolutionNotice.text,
+              )
+            : null,
+        )
+      }
+
       const renderDiscover = () =>
         h(
           React.Fragment,
@@ -1748,7 +1921,7 @@ window.__ModuleLoader__.load({
                       className: copied === item.name ? 'sf-chip sf-chip-active' : 'sf-chip',
                       title: t('copySkill'),
                       disabled: Boolean(recoBusy && recoBusy.name === item.name),
-                      onClick: () => copyCommand(item.name),
+                      onClick: () => copyCommand(item.name, topReasonKind(item)),
                     },
                     copied === item.name ? t('copied') : item.name,
                   ),
@@ -1858,6 +2031,7 @@ window.__ModuleLoader__.load({
                   : null,
                 renderExperienceTable(),
                 renderExperienceHealth(),
+                renderEvolution(),
               )
             : null,
           h(
@@ -1949,7 +2123,7 @@ window.__ModuleLoader__.load({
                             title: t('copySkill'),
                             onClick: (event) => {
                               event.stopPropagation()
-                              copyCommand(item.name)
+                              copyCommand(item.name, topReasonKind(item))
                             },
                           },
                           (copied === item.name ? t('copied') : t('copySkill')) +
@@ -1965,7 +2139,7 @@ window.__ModuleLoader__.load({
                             disabled: busy,
                             onClick: (event) => {
                               event.stopPropagation()
-                              sendRecommendFeedback(item.name, 'good')
+                              sendRecommendFeedback(item.name, 'good', topReasonKind(item))
                             },
                           },
                           '👍 ' +
@@ -1980,7 +2154,7 @@ window.__ModuleLoader__.load({
                             disabled: busy,
                             onClick: (event) => {
                               event.stopPropagation()
-                              sendRecommendFeedback(item.name, 'bad')
+                              sendRecommendFeedback(item.name, 'bad', topReasonKind(item))
                             },
                           },
                           '👎 ' +

@@ -17,7 +17,22 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const repoUrl = 'https://github.com/bugtakue/ronge-skill-studio'
 
-const publishTimestamp = Number(process.env.PUBLISH_TIMESTAMP || Math.floor(Date.now() / 1000))
+// Keep the committed publish timestamp when the version is unchanged, so
+// regenerating the index is idempotent (CI checks that it is up to date).
+const out = path.join(root, 'docs', 'plugin-market.json')
+const previous = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(out, 'utf8'))
+  } catch {
+    return null
+  }
+})()
+const previousVersion = previous?.plugins?.[0]?.versions?.[0]?.version
+const previousTimestamp = previous?.plugins?.[0]?.versions?.[0]?.publishTimestamp
+const publishTimestamp = Number(
+  process.env.PUBLISH_TIMESTAMP ||
+    (previousVersion === pkg.version && Number.isInteger(previousTimestamp) ? previousTimestamp : Math.floor(Date.now() / 1000)),
+)
 if (!Number.isInteger(publishTimestamp) || publishTimestamp < 0) {
   console.error('PUBLISH_TIMESTAMP must be an integer number of Unix seconds')
   process.exit(1)
@@ -26,12 +41,12 @@ if (!Number.isInteger(publishTimestamp) || publishTimestamp < 0) {
 const index = {
   format: 1,
   title: {
-    en: "Ronge's Skill Scroll Archive",
+    en: "Ronge's Adaptive Skill Cockpit",
     zh: '荣哥技能卷轴收藏馆',
   },
   description: {
-    en: 'Context-aware skill cockpit for DeepSeek Harness: recommendations with reasons, live "now using", plan/immersive modes, experience memory + feedback, local pre-install safety scan, update diff/rollback.',
-    zh: '面向 DeepSeek Harness 的上下文感知技能驾驶舱：推荐理由、正在使用、计划/沉浸模式、经验记忆与反馈、本地安装前安全扫描、更新 diff/回滚。',
+    en: 'Adaptive, self-evolving skill cockpit for DeepSeek Harness: recommendations with reasons, feedback-driven weight tuning, live \"now using\", plan/immersive modes, experience memory, local pre-install safety scan, update diff/rollback.',
+    zh: '面向 DeepSeek Harness 的自适应技能驾驶舱：推荐理由、反馈驱动的权重自进化、正在使用、计划/沉浸模式、经验记忆、本地安装前安全扫描、更新 diff/回滚。',
   },
   metadata: {
     categories: {
@@ -48,7 +63,7 @@ const index = {
     {
       name: pkg.name,
       title: {
-        en: "Ronge's Skill Scroll Archive (Immersive Edition)",
+        en: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
         zh: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
       },
       description: {
@@ -74,7 +89,6 @@ const index = {
   ],
 }
 
-const out = path.join(root, 'docs', 'plugin-market.json')
 fs.mkdirSync(path.dirname(out), { recursive: true })
 fs.writeFileSync(out, JSON.stringify(index, null, 2) + '\n')
 console.log('wrote', path.relative(root, out), 'version', pkg.version)

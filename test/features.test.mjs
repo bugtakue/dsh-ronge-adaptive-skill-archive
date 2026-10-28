@@ -1,12 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  EVOLUTION_DEFAULT_WEIGHTS,
   aggregateSkillStats,
   classifyTrust,
   diffSkillLines,
+  evaluateEvolutionState,
   evaluateRecommendations,
   mergeExperienceData,
   recommendSkills,
+  resolveEvolutionWeights,
   scanSkillText,
 } from '../index.js'
 
@@ -133,4 +136,114 @@ test('evaluateRecommendations computes Recall@K on labelled cases', () => {
   assert.equal(report.total, 3)
   assert.equal(report.hits, 3)
   assert.equal(report.recall, 1)
+})
+
+
+test('resolveEvolutionWeights clamps unknown and out-of-range weights', () => {
+  const weights = resolveEvolutionWeights({ token: 99, name: 1, category: 0.01, experience: 1 })
+  assert.equal(weights.token, 2)
+  assert.equal(weights.name, 4)
+  assert.equal(weights.category, 0.2)
+  assert.equal(weights.experience, 1)
+  assert.equal(weights.completion, EVOLUTION_DEFAULT_WEIGHTS.completion)
+  assert.deepEqual(resolveEvolutionWeights(null), EVOLUTION_DEFAULT_WEIGHTS)
+})
+
+test('evaluateEvolutionState raises a weight when its kind is praised', () => {
+  const base = {
+    version: 1,
+    weights: { ...EVOLUTION_DEFAULT_WEIGHTS },
+    stats: {
+      exposures: 12,
+      tasks: 3,
+      observations: 12,
+      good: 0,
+      bad: 0,
+      byKind: {
+        name: { adopt: 4, good: 9, bad: 1 },
+        keyword: { adopt: 0, good: 0, bad: 0 },
+        category: { adopt: 0, good: 0, bad: 0 },
+        experience: { adopt: 0, good: 0, bad: 0 },
+      },
+    },
+    kindBySkill: {},
+    observationsSinceEval: 10,
+    lastEvaluatedAt: null,
+    history: [],
+  }
+  const report = evaluateEvolutionState(base, { reason: 'test' })
+  assert.equal(report.changes.length, 1)
+  const change = report.changes[0]
+  assert.equal(change.weight, 'name')
+  assert.ok(change.to > change.from)
+  assert.equal(report.state.weights.name, change.to)
+  assert.equal(report.state.observationsSinceEval, 0)
+  assert.equal(report.state.history.length, 1)
+  assert.equal(report.state.history[0].reason, 'test')
+})
+
+test('evaluateEvolutionState lowers a weight on bad feedback and respects bounds', () => {
+  const base = {
+    version: 1,
+    weights: { ...EVOLUTION_DEFAULT_WEIGHTS, name: 4 },
+    stats: {
+      exposures: 9,
+      tasks: 0,
+      observations: 9,
+      good: 0,
+      bad: 0,
+      byKind: {
+        name: { adopt: 0, good: 0, bad: 9 },
+        keyword: { adopt: 0, good: 0, bad: 0 },
+        category: { adopt: 0, good: 0, bad: 0 },
+        experience: { adopt: 0, good: 0, bad: 0 },
+      },
+    },
+    kindBySkill: {},
+    observationsSinceEval: 9,
+    lastEvaluatedAt: null,
+    history: [],
+  }
+  const report = evaluateEvolutionState(base, { reason: 'test' })
+  assert.equal(report.changes.length, 0)
+  assert.equal(report.state.weights.name, 4)
+})
+
+test('evaluateEvolutionState does nothing below the sample floor', () => {
+  const base = {
+    version: 1,
+    weights: { ...EVOLUTION_DEFAULT_WEIGHTS },
+    stats: {
+      exposures: 1,
+      tasks: 0,
+      observations: 1,
+      good: 0,
+      bad: 0,
+      byKind: {
+        name: { adopt: 0, good: 3, bad: 0 },
+        keyword: { adopt: 0, good: 0, bad: 0 },
+        category: { adopt: 0, good: 0, bad: 0 },
+        experience: { adopt: 0, good: 0, bad: 0 },
+      },
+    },
+    kindBySkill: {},
+    observationsSinceEval: 1,
+    lastEvaluatedAt: null,
+    history: [],
+  }
+  const report = evaluateEvolutionState(base, {})
+  assert.equal(report.changes.length, 0)
+  assert.deepEqual(report.state.weights, EVOLUTION_DEFAULT_WEIGHTS)
+})
+
+test('recommendSkills accepts learned weights and reports them in reasonsDetail', () => {
+  const skills = [
+    { name: 'beat-promo-director', description: 'promo', intro: '卡点视频 宣传片' },
+    { name: 'office-xlsx', description: 'excel', intro: '表格 公式' },
+  ]
+  const tuned = { ...EVOLUTION_DEFAULT_WEIGHTS, name: 14 }
+  const ranked = recommendSkills(skills, '帮我用 beat-promo-director 做一个宣传片', {}, tuned)
+  const nameReason = ranked[0].reasonsDetail.find((reason) => reason.kind === 'name')
+  assert.equal(nameReason.weight, 14)
+  assert.ok(ranked[0].score >= 14)
 })

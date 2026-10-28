@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.6.0 — 2026-10-28
+
+- **English rename**: Ronge's Skill Scroll Archive → **Ronge's Adaptive Skill Cockpit (Immersive Edition)**; the package name stays `ronge-skill-studio` (client factory id must equal the package name). Chinese name unchanged.
+- **Self-evolution (自进化推荐)**: learnable recommendation weights (`token/name/category/experience`) auto-tuned in 10% bounded steps from feedback attributed to the reason kind that produced each recommendation; min 8 samples per kind, evaluation every 10 feedback signals, history log (max 50), full rollback/reset.
+- New endpoints: `GET /skill-studio/evolution`, `POST /skill-studio/evolution/evaluate|rollback|reset`; catalog now carries an `evolution` snapshot.
+- Recommendation feedback accepts `kind` so adopt/good/bad can be attributed; experience 👍/👎 is attributed through the last recommendation's top reason kind (`kindBySkill`).
+- Client: new「自进化」block (weights, feedback success rate, pending signals, recent changes, evaluate/rollback/reset), English panel title updated.
+- Tests: evolution rule tests + route test (auto-tune, rollback, reset); total 24.
+
+
 ## v1.5.0 — 2026-10-28
 
 - **Safety Radar**: local, heuristic pre-install scan of SKILL.md (shell execution, pipe-to-shell, dynamic eval, prompt injection, network, credential paths, file writes, over-broad `allowed-tools`) with `low/medium/high` level and line-level findings; no upload, no execution.

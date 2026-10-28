@@ -188,3 +188,44 @@ test('update and rollback endpoints fail cleanly for unknown skills', async () =
   })
   assert.equal(invalid.status, 400)
 })
+
+
+test('self-evolution: snapshot, auto-tune from feedback, rollback', async () => {
+  const snapshot = await call('/skill-studio/evolution', { url: '/skill-studio/evolution' })
+  assert.equal(snapshot.status, 200)
+  assert.equal(snapshot.body.ok, true)
+  assert.equal(snapshot.body.weights.name, 8)
+  assert.equal(snapshot.body.canRollback, false)
+
+  const manual = await call('/skill-studio/evolution/evaluate', { method: 'POST', body: {} })
+  assert.equal(manual.status, 200)
+  assert.equal(manual.body.changed, 0)
+
+  const emptyRollback = await call('/skill-studio/evolution/rollback', { method: 'POST', body: {} })
+  assert.equal(emptyRollback.status, 409)
+
+  for (let index = 0; index < 10; index += 1) {
+    const response = await call('/skill-studio/recommend-feedback', {
+      method: 'POST',
+      body: { skillName: 'plain-demo', verdict: 'good', kind: 'name' },
+    })
+    assert.equal(response.status, 200)
+  }
+
+  const evolved = await call('/skill-studio/evolution', { url: '/skill-studio/evolution' })
+  assert.equal(evolved.status, 200)
+  assert.ok(evolved.body.stats.observations >= 10)
+  assert.equal(evolved.body.observationsSinceEval, 0)
+  assert.ok(evolved.body.recentHistory.length >= 1)
+  assert.ok(evolved.body.weights.name > 8)
+  assert.equal(evolved.body.canRollback, true)
+
+  const rollback = await call('/skill-studio/evolution/rollback', { method: 'POST', body: {} })
+  assert.equal(rollback.status, 200)
+  assert.equal(rollback.body.weights.name, 8)
+  assert.equal(rollback.body.snapshot.canRollback, false)
+
+  const reset = await call('/skill-studio/evolution/reset', { method: 'POST', body: {} })
+  assert.equal(reset.status, 200)
+  assert.equal(reset.body.weights.name, 8)
+})

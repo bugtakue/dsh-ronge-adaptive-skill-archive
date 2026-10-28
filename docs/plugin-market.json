@@ -1,12 +1,12 @@
 {
   "format": 1,
   "title": {
-    "en": "Ronge's Skill Scroll Archive",
+    "en": "Ronge's Adaptive Skill Cockpit",
     "zh": "荣哥技能卷轴收藏馆"
   },
   "description": {
-    "en": "Context-aware skill cockpit for DeepSeek Harness: recommendations with reasons, live \"now using\", plan/immersive modes, experience memory + feedback, local pre-install safety scan, update diff/rollback.",
-    "zh": "面向 DeepSeek Harness 的上下文感知技能驾驶舱：推荐理由、正在使用、计划/沉浸模式、经验记忆与反馈、本地安装前安全扫描、更新 diff/回滚。"
+    "en": "Adaptive, self-evolving skill cockpit for DeepSeek Harness: recommendations with reasons, feedback-driven weight tuning, live \"now using\", plan/immersive modes, experience memory, local pre-install safety scan, update diff/rollback.",
+    "zh": "面向 DeepSeek Harness 的自适应技能驾驶舱：推荐理由、反馈驱动的权重自进化、正在使用、计划/沉浸模式、经验记忆、本地安装前安全扫描、更新 diff/回滚。"
   },
   "metadata": {
     "categories": {
@@ -48,11 +48,11 @@
     {
       "name": "ronge-skill-studio",
       "title": {
-        "en": "Ronge's Skill Scroll Archive (Immersive Edition)",
+        "en": "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
         "zh": "荣哥技能卷轴收藏馆（可沉浸式体验版本）"
       },
       "description": {
-        "en": "荣哥技能卷轴收藏馆（可沉浸式体验版本）: 6,399 public skills, context-aware recommendations, plan/immersive modes, experience memory + feedback, pre-install safety scan, update diff/rollback, and a completion chime for DeepSeek Harness.",
+        "en": "荣哥技能卷轴收藏馆（可沉浸式体验版本）/ Ronge's Adaptive Skill Cockpit (Immersive Edition): 6,399 public skills, adaptive contextual recommendations with self-evolving weights, plan/immersive modes, pre-install safety scan, update diff/rollback, experience memory + feedback, and a completion chime for DeepSeek Harness.",
         "zh": "6,399 条公开技能索引、上下文推荐、计划/沉浸模式、安装前安全扫描、更新 diff/回滚、经验记忆与反馈闭环。"
       },
       "author": "bugtakue",
@@ -78,8 +78,8 @@
       },
       "versions": [
         {
-          "version": "1.5.0",
-          "publishTimestamp": 1793195399,
+          "version": "1.6.0",
+          "publishTimestamp": 1793196226,
           "source": {
             "type": "npm"
           }
