@@ -229,3 +229,27 @@ test('self-evolution: snapshot, auto-tune from feedback, rollback', async () => 
   assert.equal(reset.status, 200)
   assert.equal(reset.body.weights.name, 8)
 })
+
+
+test('catalog language follows the panel locale and localizes intros', async () => {
+  const zh = await call('/skill-studio/catalog.json', { url: '/skill-studio/catalog.json?lang=zh' })
+  assert.equal(zh.status, 200)
+  assert.equal(zh.body.lang, 'zh')
+  const risky = zh.body.skills.find((skill) => skill.name === 'risky-demo')
+  assert.ok(risky)
+  assert.match(risky.intro, /[\u4e00-\u9fff]/, 'zh intros contain Chinese')
+  const en = await call('/skill-studio/catalog.json', { url: '/skill-studio/catalog.json?lang=en' })
+  assert.equal(en.body.lang, 'en')
+})
+
+test('library returns localized intro and category labels', async () => {
+  const zh = await call('/skill-studio/library', { url: '/skill-studio/library?q=pdf&lang=zh' })
+  assert.equal(zh.status, 200)
+  assert.equal(zh.body.ok, true)
+  assert.ok(zh.body.categoryLabels && zh.body.categoryLabels.ai)
+  const entry = (zh.body.entries || [])[0]
+  if (entry) {
+    assert.ok(entry.categoryLabel, 'category label present')
+    assert.ok(typeof entry.intro === 'string' && entry.intro.length > 0, 'intro present')
+  }
+})

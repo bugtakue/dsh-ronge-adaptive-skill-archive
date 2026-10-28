@@ -97,6 +97,124 @@ const SKILL_INTROS = {
     zh: 'Excel 表格、数据和公式的读写与校验。',
     en: 'Read, create, edit and validate Excel workbooks, data and formulas.',
   },
+  pdf: {
+    zh: 'PDF 处理：抽取文本/表格、填表、合并与拆页。',
+    en: 'Work with PDFs: extract text/tables, fill forms, merge and split.',
+  },
+  docx: {
+    zh: 'Word 文档创建与编辑（Anthropic 官方技能）。',
+    en: 'Create and edit Word documents (Anthropic skill).',
+  },
+  xlsx: {
+    zh: 'Excel 工作簿创建与编辑（Anthropic 官方技能）。',
+    en: 'Create and edit Excel workbooks (Anthropic skill).',
+  },
+  pptx: {
+    zh: 'PowerPoint 演示创建与编辑（Anthropic 官方技能）。',
+    en: 'Create and edit PowerPoint decks (Anthropic skill).',
+  },
+  'frontend-design': {
+    zh: '前端界面设计：布局、配色、组件与响应式。',
+    en: 'Frontend design: layouts, color, components and responsive UI.',
+  },
+  'brand-guidelines': {
+    zh: '品牌规范：把视觉与文案风格统一到产品里。',
+    en: 'Brand guidelines for consistent visual and voice styles.',
+  },
+  'skill-creator': {
+    zh: '创建/打磨 skill：结构、触发描述与评测。',
+    en: 'Create and refine skills: structure, triggering and evals.',
+  },
+  'mcp-builder': {
+    zh: '构建 MCP server：工具定义、传输与调试。',
+    en: 'Build MCP servers: tool definitions, transports and debugging.',
+  },
+  'webapp-testing': {
+    zh: 'Web 应用测试：起服务、点页面、抓失败现场。',
+    en: 'Web app testing: start the app, drive the page, capture failures.',
+  },
+  'canvas-design': {
+    zh: '画布/海报设计：版式、视觉层次与导出。',
+    en: 'Canvas and poster design: layout, visual hierarchy and export.',
+  },
+  'algorithmic-art': {
+    zh: '算法艺术：用代码生成图形与图案。',
+    en: 'Algorithmic art: generate graphics and patterns with code.',
+  },
+  'internal-comms': {
+    zh: '内部沟通写作：公告、周报、状态同步。',
+    en: 'Internal communications: announcements, updates and status notes.',
+  },
+  'theme-factory': {
+    zh: '主题工厂：快速生成配色与视觉主题。',
+    en: 'Theme factory: generate color schemes and visual themes.',
+  },
+  'slack-gif-creator': {
+    zh: '做 Slack 用的 GIF 动图。',
+    en: 'Create GIFs sized for Slack.',
+  },
+  'artifacts-builder': {
+    zh: '把页面/组件打包成可分享的 artifacts。',
+    en: 'Bundle pages and components into shareable artifacts.',
+  },
+  'web-artifacts-builder': {
+    zh: '打包 Web artifacts：HTML/CSS/JS 单文件交付。',
+    en: 'Build web artifacts as single-file HTML/CSS/JS deliverables.',
+  },
+}
+
+const LIBRARY_CATEGORY_LABELS = {
+  ai: 'AI',
+  coding: '编程',
+  design: '设计',
+  data: '数据',
+  writing: '写作',
+  video: '视频',
+  office: '办公',
+  research: '研究',
+  security: '安全',
+  marketing: '营销',
+  business: '商业',
+  productivity: '效率',
+  education: '教育',
+  other: '其他',
+}
+
+const INTRO_HINTS = [
+  [/video|motion|animation|footage|reel|clip/i, '视频/动效'],
+  [/image|photo|graphic|illustration|icon|svg/i, '图片/图形'],
+  [/music|audio|sound|voice|speech|sfx/i, '音频/配音'],
+  [/document|docx|word|\.pdf\b|report|contract/i, '文档/报告'],
+  [/spreadsheet|excel|xlsx|formula|csv|data table/i, '表格/公式'],
+  [/slide|presentation|pptx|deck/i, '演示/幻灯片'],
+  [/format|convert|export|render|preview/i, '格式转换/渲染'],
+  [/test|testing|qa|assert|playwright|browser/i, '测试/验证'],
+  [/design|ui|ux|layout|style|theme|css/i, '界面/设计'],
+  [/code|coding|program|developer|refactor|debug|api/i, '编程/开发'],
+  [/data|analysis|analytics|insight|metric|sql/i, '数据分析'],
+  [/research|search|scrape|retrieval|knowledge/i, '检索/研究'],
+  [/security|auth|vulnerab|scan|audit|permission/i, '安全/审计'],
+  [/marketing|seo|ad(s|vertising)?\b|growth|social/i, '营销/增长'],
+  [/writ(e|ing)|copy|content|blog|article|email/i, '写作/文案'],
+  [/skill|prompt|agent|llm|ai\b|model/i, 'AI/技能'],
+  [/plugin|extension|bundle|hook|mcp|server|tool/i, '插件/工具'],
+  [/office|doc|excel|ppt|pdf/i, '办公文档'],
+]
+
+const LOCAL_CATEGORY_LABELS = { video: '视频/动效', office: '办公文档', harness: 'Harness 插件', other: '通用' }
+
+function conciseChineseIntro(skill) {
+  const text = [skill.name, skill.description, skill.whenToUse || ''].join(' ')
+  const hints = []
+  for (const [pattern, label] of INTRO_HINTS) {
+    if (pattern.test(text) && !hints.includes(label)) hints.push(label)
+  }
+  const category = categoryOf(skill.name)
+  const categoryLabel = LOCAL_CATEGORY_LABELS[category] || LOCAL_CATEGORY_LABELS.other
+  const head = `「${categoryLabel}」技能` + (hints.length ? `，涉及${hints.slice(0, 3).join('、')}` : '')
+  const description = String(skill.description || '').replace(/\s+/g, ' ').trim()
+  const tail = description ? `。原文：${description.slice(0, 120)}` : ''
+  return head + tail
 }
 
 function localizeSkill(skill, lang) {
@@ -105,8 +223,9 @@ function localizeSkill(skill, lang) {
   if (intro) return { ...skill, intro }
   const description = String(skill.description || '')
   const hasChinese = /[\u4e00-\u9fff]/.test(description)
-  if (lang === 'zh' && !hasChinese && skill.whenToUse) {
-    return { ...skill, intro: `${description}（${skill.whenToUse}）` }
+  if (lang === 'zh') {
+    if (hasChinese) return { ...skill, intro: description }
+    return { ...skill, intro: conciseChineseIntro(skill), introGenerated: true }
   }
   return { ...skill, intro: description }
 }
@@ -1474,7 +1593,8 @@ function loadLibraryIndex() {
   return libraryCache
 }
 
-function searchLibrary(query, category, minRating, page, limit) {
+function searchLibrary(query, category, minRating, page, limit, lang) {
+  const language = lang === 'zh' || lang === 'en' ? lang : 'zh'
   const library = loadLibraryIndex()
   if (!library) return { ok: false, error: 'library index is not installed' }
   const q = String(query || '').trim().toLowerCase()
@@ -1494,16 +1614,29 @@ function searchLibrary(query, category, minRating, page, limit) {
   })
   const total = filtered.length
   const start = (pageNumber - 1) * pageSize
-  const entries = filtered.slice(start, start + pageSize).map((entry) => ({
-    ...entry,
-    installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
-  }))
+  const entries = filtered.slice(start, start + pageSize).map((entry) => {
+    const localized = localizeSkill(
+      {
+        name: entry.name,
+        description: entry.description || '',
+        whenToUse: entry.whenToUse || null,
+      },
+      language,
+    )
+    return {
+      ...entry,
+      intro: localized.intro || entry.description || '',
+      categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category || '',
+      installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
+    }
+  })
   return {
     ok: true,
     total,
     page: pageNumber,
     pageSize,
     categories: library.categories || {},
+    categoryLabels: LIBRARY_CATEGORY_LABELS,
     generatedAt: library.generatedAt || null,
     entries,
   }
@@ -2060,7 +2193,12 @@ async function buildCatalog(ctx, config, sessionId, lang) {
   }
 
   const analysis = analyzeSession(ctx, sessionId, cwd)
-  const language = detectLang(analysis.contextText, lang)
+  // The panel is a UI surface: when the client tells us its locale, use it.
+  // Context language only decides when the caller did not specify one.
+  const language =
+    lang === 'zh' || lang === 'en'
+      ? lang
+      : detectLang(analysis.lastUserText || analysis.contextText, 'zh')
   const summaries = sortSkills([...merged.values()])
     .map((skill) => localizeSkill(skill, language))
     .map((skill) => ({ ...skill, ...securityForSkill(skill) }))
@@ -2453,6 +2591,7 @@ export function apply(ctx, config = {}) {
           url.searchParams.get('minRating') || 0,
           url.searchParams.get('page') || 1,
           url.searchParams.get('limit') || 40,
+          url.searchParams.get('lang') || '',
         )
         if (result.ok === false) throw new HttpError(503, result.error)
         sendJson(res, 200, result)

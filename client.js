@@ -151,6 +151,7 @@ window.__ModuleLoader__.load({
       evolutionRolledBack: '已回滚上一次调整',
       evolutionReset: '权重已重置',
       noEvolution: '暂无自进化数据',
+      panelError: '这个面板出错了，但不会影响会话。可以重试或先关闭。',
       healthStale: '陈旧',
       healthFailing: '连续失败',
       healthNeverUsed: '从未使用',
@@ -299,6 +300,7 @@ window.__ModuleLoader__.load({
       evolutionRolledBack: 'Rolled back the last change',
       evolutionReset: 'Weights reset',
       noEvolution: 'No self-evolution data yet',
+      panelError: 'This panel hit an error (your session is unaffected). Retry or close it.',
       healthStale: 'Stale',
       healthFailing: 'Failing',
       healthNeverUsed: 'Never used',
@@ -393,6 +395,12 @@ window.__ModuleLoader__.load({
     function SkillButton(props) {
       const state = useStore()
       const t = useT()
+      const incomingSessionId = props && props.sessionId ? props.sessionId : null
+      React.useEffect(() => {
+        if (incomingSessionId && incomingSessionId !== store.sessionId) {
+          store.set({ sessionId: incomingSessionId })
+        }
+      }, [incomingSessionId])
 
       return h(
         React.Fragment,
@@ -619,6 +627,55 @@ window.__ModuleLoader__.load({
           copied ? t('copied') : t('copy'),
         ),
       )
+    }
+
+    class DrawerErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = { error: null }
+      }
+
+      static getDerivedStateFromError(error) {
+        return { error }
+      }
+
+      componentDidCatch() {
+        // Keep the drawer mounted: a tab error must never wedge the panel button.
+      }
+
+      render() {
+        if (this.state.error) {
+          const t = this.props.t || ((key) => key)
+          const detail = String((this.state.error && this.state.error.message) || this.state.error || '').slice(0, 200)
+          return h(
+            'aside',
+            { className: 'sf-drawer sf-drawer-error', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('panelError') },
+            h(
+              'div',
+              { className: 'sf-empty sf-error' },
+              h('div', null, t('panelError')),
+              h('div', { className: 'sf-error-detail' }, detail),
+              h(
+                'button',
+                { type: 'button', className: 'sf-primary', onClick: () => this.setState({ error: null }) },
+                t('retry'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'sf-secondary',
+                  onClick: () => {
+                    if (this.props.onClose) this.props.onClose()
+                  },
+                },
+                t('close'),
+              ),
+            ),
+          )
+        }
+        return this.props.children
+      }
     }
 
     function SkillDrawer() {
@@ -883,10 +940,17 @@ window.__ModuleLoader__.load({
             page: String(page),
             limit: '40',
           })
+          const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
+          if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
           const response = await fetch('/skill-studio/library?' + params.toString(), { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setLibraryMeta({ total: payload.total, categories: payload.categories || {}, generatedAt: payload.generatedAt })
+          setLibraryMeta({
+            total: payload.total,
+            categories: payload.categories || {},
+            categoryLabels: payload.categoryLabels || {},
+            generatedAt: payload.generatedAt,
+          })
           setLibraryPage(page)
           setLibraryResults((current) => (append ? current.concat(payload.entries || []) : payload.entries || []))
         } catch (err) {
@@ -1204,7 +1268,9 @@ window.__ModuleLoader__.load({
                     loadLibrary(1, false, { category })
                   },
                 },
-                category + ' ' + count,
+                ((libraryMeta && libraryMeta.categoryLabels && libraryMeta.categoryLabels[category]) || category) +
+                  ' ' +
+                  count,
               ),
             ),
           ),
@@ -1256,9 +1322,9 @@ window.__ModuleLoader__.load({
                   'div',
                   { className: 'sf-remote-head' },
                   h('strong', { className: 'sf-name' }, entry.name),
-                  h('span', { className: 'sf-source' }, '★ ' + entry.rating + ' · ' + entry.category),
+                  h('span', { className: 'sf-source' }, '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category)),
                 ),
-                h('p', { className: 'sf-desc' }, entry.description || ''),
+                h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
                 h('div', { className: 'sf-remote-meta' }, (entry.repo || '') + ' · ' + (entry.path || '')),
                 h(
                   'div',
@@ -1777,13 +1843,16 @@ window.__ModuleLoader__.load({
         h('style', null, CSS),
         h('div', { className: 'sf-backdrop', onClick: close }),
         h(
-          'aside',
-          {
-            className: 'sf-drawer',
-            role: 'dialog',
-            'aria-modal': 'true',
-            'aria-label': t('title'),
-          },
+          DrawerErrorBoundary,
+          { t, onClose: close },
+          h(
+            'aside',
+            {
+              className: 'sf-drawer',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': t('title'),
+            },
           h(
             'header',
             { className: 'sf-head' },
@@ -2258,6 +2327,7 @@ window.__ModuleLoader__.load({
                 view === 'discover' ? renderDiscover() : view === 'tools' ? renderTools() : renderLibrary(),
               )
             : null,
+          ),
         ),
       )
     }

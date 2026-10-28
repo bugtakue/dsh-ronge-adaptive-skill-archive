@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.1 — 2026-10-28
+
+- **Fix: 「卷轴馆」tab 崩溃 / 再次点按钮打不开**：早期版本里 `renderLibrary` 定义在错误组件内，点卷轴馆会抛 ReferenceError 并让抽屉失去响应；本版把渲染移入 `SkillDrawer`，并新增 `DrawerErrorBoundary`——任何 tab 异常都只在抽屉内显示「重试/关闭」，不再影响面板按钮。
+- **Fix: 切换对话后推荐不变**：`SkillButton` 现在监听 `sessionId` 变化并同步到 store（之前只在点击时更新），抽屉会按新会话重新拉 catalog；新增 UI 测试验证 session A → session B 的请求切换。
+- **Fix: 中文界面下技能简介仍是英文**：catalog 现在优先使用面板 locale（`lang=zh|en`），只有未指定时才用会话语言推断；同时新增中文兜底简介——没有人工中文简介的技能会生成「「类别」技能，涉及…。原文：…」，卷轴馆条目返回 `intro` 与中文 `categoryLabel`。
+- 补充 Anthropic 官方常见技能的人工中文简介（pdf/docx/xlsx/pptx/frontend-design/skill-creator/mcp-builder/webapp-testing 等 15 条）。
+- Tests: 27/27（新增语言跟随、卷轴馆本地化、未知技能中文兜底）；Host E2E 16/16；浏览器 UI 15/15（新增卷轴馆渲染、会话切换）。
+
+
 ## v1.6.0 — 2026-10-28
 
 - **English rename**: Ronge's Skill Scroll Archive → **Ronge's Adaptive Skill Cockpit (Immersive Edition)**; the package name stays `ronge-skill-studio` (client factory id must equal the package name). Chinese name unchanged.

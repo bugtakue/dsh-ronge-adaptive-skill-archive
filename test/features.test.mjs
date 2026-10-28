@@ -11,6 +11,7 @@ import {
   recommendSkills,
   resolveEvolutionWeights,
   scanSkillText,
+  localizeSkill,
 } from '../index.js'
 
 test('scanSkillText flags pipe-to-shell and prompt injection as high risk', () => {
@@ -246,4 +247,17 @@ test('recommendSkills accepts learned weights and reports them in reasonsDetail'
   const nameReason = ranked[0].reasonsDetail.find((reason) => reason.kind === 'name')
   assert.equal(nameReason.weight, 14)
   assert.ok(ranked[0].score >= 14)
+})
+
+
+test('localizeSkill generates a concise Chinese fallback for unknown skills', () => {
+  const localized = localizeSkill(
+    { name: 'acme-video-maker', description: 'Generate a promo video from clips with music', whenToUse: null },
+    'zh',
+  )
+  assert.match(localized.intro, /[\u4e00-\u9fff]/)
+  assert.match(localized.intro, /视频|动效|音乐/)
+  assert.ok(localized.intro.length <= 200)
+  const en = localizeSkill({ name: 'acme-video-maker', description: 'Generate a promo video' }, 'en')
+  assert.equal(en.intro, 'Generate a promo video')
 })

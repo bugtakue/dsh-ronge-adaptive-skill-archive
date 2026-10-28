@@ -1,6 +1,6 @@
 {
   "name": "ronge-skill-studio",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "荣哥技能卷轴收藏馆（可沉浸式体验版本）/ Ronge's Adaptive Skill Cockpit (Immersive Edition): 6,399 public skills, adaptive contextual recommendations with self-evolving weights, plan/immersive modes, pre-install safety scan, update diff/rollback, experience memory + feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
