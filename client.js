@@ -34,8 +34,8 @@ window.__ModuleLoader__.load({
       mode: '模式',
       planMode: '计划模式',
       immersiveMode: '沉浸模式',
-      planHint: '会先问你要单个还是组合',
-      immersiveHint: '自动匹配并协同',
+      planHint: '会先问你确认再执行',
+      immersiveHint: '不询问，自动执行',
       experience: '经验',
       lastTask: '上次：',
       memory: '记忆文件',
@@ -93,8 +93,8 @@ window.__ModuleLoader__.load({
       mode: 'Mode',
       planMode: 'Plan',
       immersiveMode: 'Immersive',
-      planHint: 'Asks single vs combination first',
-      immersiveHint: 'Auto-match and orchestrate',
+      planHint: 'Asks for confirmation first',
+      immersiveHint: 'No ask, auto-execute',
       experience: 'Experience',
       lastTask: 'Last: ',
       memory: 'Memory file',
@@ -276,7 +276,7 @@ window.__ModuleLoader__.load({
           h('code', { className: 'sf-name' }, skill.name),
           h('span', { className: 'sf-source' }, sourceLabel(t, skill.source)),
         ),
-        h('p', { className: 'sf-desc' }, skill.description),
+        h('p', { className: 'sf-desc' }, skill.intro || skill.description),
         skill.whenToUse
           ? h(
               'p',
@@ -349,7 +349,11 @@ window.__ModuleLoader__.load({
           setError(null)
         }
         try {
-          const suffix = sessionId ? '?sessionId=' + encodeURIComponent(sessionId) : ''
+          const params = new URLSearchParams()
+          if (sessionId) params.set('sessionId', sessionId)
+          const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
+          if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
+          const suffix = params.toString() ? '?' + params.toString() : ''
           const response = await fetch('/skill-studio/catalog.json' + suffix, {
             cache: 'no-store',
             signal: controller.signal,
@@ -408,7 +412,7 @@ window.__ModuleLoader__.load({
       const normalized = query.trim().toLowerCase()
       const filtered = normalized
         ? skills.filter((skill) =>
-            [skill.name, skill.description, skill.whenToUse]
+            [skill.name, skill.description, skill.intro, skill.whenToUse]
               .filter(Boolean)
               .join(' ')
               .toLowerCase()
@@ -641,6 +645,7 @@ window.__ModuleLoader__.load({
                       h('span', { className: 'sf-reco-name' }, item.name),
                       h('span', { className: 'sf-reco-score' }, String(item.score ?? '')),
                       h('span', { className: 'sf-reco-reasons' }, (item.reasons || []).join(' · ')),
+                      h('span', { className: 'sf-reco-intro' }, item.intro || item.description),
                     ),
                   ),
                 )
@@ -772,6 +777,7 @@ window.__ModuleLoader__.load({
 .sf-reco-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:600;overflow-wrap:anywhere}
 .sf-reco-score{color:var(--dsw-alias-brand-primary);font-size:10px}
 .sf-reco-reasons{grid-column:1/-1;color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.sf-reco-intro{grid-column:1/-1;color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sf-input{flex:1;min-width:0;height:34px;padding:0 10px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;outline:none}
 .sf-input:focus{border-color:var(--dsw-alias-brand-primary)}
 .sf-textarea{height:64px;padding:8px 10px;resize:vertical;line-height:1.5}

@@ -23,10 +23,98 @@ const CHIME_COOLDOWN_MS = 1500
 const MODE_TEXT = {
   plan: `## Skill Studio plan mode
 
-Plan mode is ON. Before acting, inspect the request and the installed skills. Identify the 1–3 most relevant skills, present a short plan naming them and why, and ask the user to confirm whether to use a single skill or a combination. Load skills only after confirmation.`,
+Plan mode is ON. Before acting, inspect the request and the installed skills, then present a short plan that names the 1–3 relevant skills and what you will do, and ask the user to confirm before proceeding. Do not execute or load skills until the user confirms. The point of the question is approval to proceed, not a choice between single and combined skills.`,
   immersive: `## Skill Studio immersive mode
 
-Immersive mode is ON. For every task, inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, and continue without asking for permission. State which skills you used and why.`,
+Immersive mode is ON. Do not ask the user to confirm. Inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, execute the task, and state which skills you used and why.`,
+}
+
+const SKILL_INTROS = {
+  'agent-experience': {
+    zh: '工具与技能设计：让 Agent 更会做选择、少占上下文。',
+    en: 'Tool, skill and context design so the agent chooses better with less context.',
+  },
+  'beat-promo-director': {
+    zh: '卡点宣传片导演：音乐卡点、大字排版、10–40 秒动效短片。',
+    en: 'Beat-synced promo director for 10–40s kinetic typography and motion shorts.',
+  },
+  'cordis-composition-reference': {
+    zh: 'Cordis 组合参考：patch 语法、可安装插件清单。',
+    en: 'Cordis composition reference: patch dialect and installable plugin packages.',
+  },
+  'cordis-plugin-development': {
+    zh: '给 DSH 写、装、调插件的完整流程。',
+    en: 'End-to-end workflow for authoring, installing and debugging DSH plugins.',
+  },
+  'editing-cordis-compositions': {
+    zh: '编辑、验证 agent preset 与 Cordis 组合。',
+    en: 'Edit and validate agent presets and Cordis compositions.',
+  },
+  hyperframes: {
+    zh: '用 HTML 渲染视频的完整制作规范（先读）。',
+    en: 'The complete HTML-to-video production contract for HyperFrames.',
+  },
+  'hyperframes-cli': {
+    zh: 'HyperFrames 命令行：脚手架、预览、渲染、发布、排错。',
+    en: 'HyperFrames CLI: scaffold, preview, render, publish and recover.',
+  },
+  'hyperframes-registry': {
+    zh: '450+ 现成动效、转场、图表组件；先找现成的再自己做。',
+    en: '450+ ready-made motion, transition and chart blocks to reuse.',
+  },
+  'media-use': {
+    zh: '给视频找/做音乐、音效、图片、图标、配音、字幕、调色。',
+    en: 'Source or create music, SFX, images, icons, voiceover, captions and grades.',
+  },
+  office: {
+    zh: 'Office / PDF 总入口：Word、Excel、PPT、PDF 的创建、编辑、转换。',
+    en: 'Office/PDF entry point: create, edit, inspect and convert DOCX, XLSX, PPTX and PDF.',
+  },
+  'office-docx': {
+    zh: 'Word 文档的创建、读取、编辑和校验。',
+    en: 'Create, read, edit and validate Word documents.',
+  },
+  'office-export-pdf': {
+    zh: '把 Office 文档导出为 PDF（LibreOffice Kit）。',
+    en: 'Export an Office document to PDF with LibreOffice Kit.',
+  },
+  'office-pptx': {
+    zh: 'PowerPoint 演示的创建、读取、编辑和校验。',
+    en: 'Create, read, edit and validate PowerPoint decks.',
+  },
+  'office-recalculate': {
+    zh: 'Excel 公式重算与计算值校验。',
+    en: 'Refresh spreadsheet formula caches and verify calculated values.',
+  },
+  'office-render': {
+    zh: '把文档渲染成图片，检查版式。',
+    en: 'Render documents to images and inspect layout.',
+  },
+  'office-xlsx': {
+    zh: 'Excel 表格、数据和公式的读写与校验。',
+    en: 'Read, create, edit and validate Excel workbooks, data and formulas.',
+  },
+}
+
+function localizeSkill(skill, lang) {
+  const known = SKILL_INTROS[skill.name]
+  const intro = known ? known[lang] || known.en || known.zh : undefined
+  if (intro) return { ...skill, intro }
+  const description = String(skill.description || '')
+  const hasChinese = /[\u4e00-\u9fff]/.test(description)
+  if (lang === 'zh' && !hasChinese && skill.whenToUse) {
+    return { ...skill, intro: `${description}（${skill.whenToUse}）` }
+  }
+  return { ...skill, intro: description }
+}
+
+function detectLang(contextText, fallback) {
+  const text = String(contextText || '')
+  const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length
+  const latin = (text.match(/[A-Za-z]/g) || []).length
+  if (cjk >= 20 && cjk >= latin * 0.2) return 'zh'
+  if (latin > cjk * 3) return 'en'
+  return fallback === 'zh' ? 'zh' : 'en'
 }
 
 let studioMode = 'off'
@@ -540,7 +628,7 @@ function recommendSkills(skills, contextText, skillStats = {}) {
   const contextLower = contextText.toLowerCase()
   const scored = []
   for (const skill of skills) {
-    const skillText = [skill.name, skill.description, skill.whenToUse || ''].join(' ')
+    const skillText = [skill.name, skill.description, skill.whenToUse || '', skill.intro || ''].join(' ')
     const skillTokens = tokenize(skillText)
     let score = 0
     const reasons = []
@@ -575,7 +663,7 @@ function recommendSkills(skills, contextText, skillStats = {}) {
   return scored.sort((left, right) => right.score - left.score).slice(0, 4)
 }
 
-async function buildCatalog(ctx, config, sessionId) {
+async function buildCatalog(ctx, config, sessionId, lang) {
   let cwd = config?.cwd
   if (!cwd && sessionId) {
     try {
@@ -638,8 +726,9 @@ async function buildCatalog(ctx, config, sessionId) {
     })
   }
 
-  const summaries = sortSkills([...merged.values()])
   const analysis = analyzeSession(ctx, sessionId, cwd)
+  const language = detectLang(analysis.contextText, lang)
+  const summaries = sortSkills([...merged.values()]).map((skill) => localizeSkill(skill, language))
   const recommendations = analysis.contextText
     ? recommendSkills(summaries, analysis.contextText, memory.skills)
     : []
@@ -651,6 +740,7 @@ async function buildCatalog(ctx, config, sessionId) {
     complete: true,
     sessionId: sessionId ?? null,
     cwd,
+    lang: language,
     generatedAt: new Date().toISOString(),
     skills: summaries,
     recommendations,
@@ -729,7 +819,9 @@ export function apply(ctx, config = {}) {
         }
         const url = new URL(req.url || '/', 'http://127.0.0.1')
         const sessionId = url.searchParams.get('sessionId') || undefined
-        const payload = await buildCatalog(ctx, config, sessionId)
+        const langParam = url.searchParams.get('lang')
+        const lang = langParam === 'zh' || langParam === 'en' ? langParam : undefined
+        const payload = await buildCatalog(ctx, config, sessionId, lang)
         if (req.method === 'HEAD') {
           res.writeHead(200, { 'cache-control': 'no-store' })
           res.end()
