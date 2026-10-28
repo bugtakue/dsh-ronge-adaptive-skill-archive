@@ -2302,6 +2302,7 @@ function route(handler) {
 }
 
 export function apply(ctx, config = {}) {
+  migrateLegacyStudioDir()
   loadStudioState()
   const disposers = []
   disposers.push(
