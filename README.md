@@ -146,7 +146,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 | 方式 | 命令 | 适合 |
 |---|---|---|
 | **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2` | 现在就能用、固定版本、可审源码 |
-| **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.1` | v2.1.0 发布到 npm 后可用（未发布时会 404，请先用上一种） |
+| **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.2` | 已发布到 npm（`ronge-adaptive-skill-archive@2.1.2`，2026-10-29） |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
 ### 升级（v1.x / v2.0.0 → v2.1.0）

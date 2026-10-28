@@ -1,6 +1,9 @@
-# v2.1.2 — First npm release
+# v2.1.2 — 首次 npm 发布
 
-- 首次发布 npm：`ronge-adaptive-skill-archive@2.1.2`（MIT，18 files）。
-- README 截图改为 GitHub raw 绝对地址（npm 页面可显示），加 npm 版本 badge。
-- GitHub Actions `publish` 已配置 `NPM_TOKEN` secret：后续 tag 自动发 npm；无 token 时优雅跳过。
+- ✅ 已发布到 npm：`ronge-adaptive-skill-archive@2.1.2`（MIT，公开，带 GitHub Actions provenance）。
+  - 安装：`npm i ronge-adaptive-skill-archive` 或 `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.2`
+  - 页面：https://www.npmjs.com/package/ronge-adaptive-skill-archive
+- README 主截图改为 GitHub raw 绝对地址，加 npm 版本 badge。
+- GitHub Actions `publish` 已配置 `NPM_TOKEN`；后续 tag 会自动发布（无 token 时优雅跳过）。
+- 注：首次发布经由 npm staged-publishing 流程（bypass-2FA granular token 的新限制），包内 README 已在 registry 元数据中；npm 网站 README 渲染偶有延迟（npm/cli#7967），刷新/等待即可。
 - 功能等价 v2.1.1。
