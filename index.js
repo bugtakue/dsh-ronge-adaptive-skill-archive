@@ -494,7 +494,7 @@ function upsertLock(entry) {
   const lock = loadLock()
   const previous = lock.skills[entry.name] || {}
   const next = { ...previous, ...entry, updatedAt: new Date().toISOString() }
-  if (previous.sha256 && previous.sha256 !== next.sha256) {
+  if (!entry.previousSha256 && previous.sha256 && previous.sha256 !== next.sha256) {
     next.previousSha256 = previous.sha256
     next.previousUpdatedAt = previous.updatedAt || null
   }
@@ -567,6 +567,7 @@ async function applySkillUpdate(name) {
     url: source.url,
     repo: source.repo || remoteRepoFromUrl(source.url),
     sha256: nextSource.sha256,
+    previousSha256: sha256(localText),
     trust: source.trust || 'community',
     license,
     installedAt: source.installedAt || null,
@@ -595,7 +596,13 @@ function rollbackSkill(name) {
   const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null) || {}
   const nextSource = { ...source, sha256: sha256(restoredText), updatedAt: new Date().toISOString() }
   fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(nextSource, null, 2))
-  upsertLock({ name, sha256: nextSource.sha256, url: source.url || null, updatedAt: nextSource.updatedAt })
+  upsertLock({
+    name,
+    sha256: nextSource.sha256,
+    previousSha256: sha256(currentText),
+    url: source.url || null,
+    updatedAt: nextSource.updatedAt,
+  })
   return {
     ok: true,
     name,
