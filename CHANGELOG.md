@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.1 — 2026-10-28
+
+- **GitHub 发布链路**：新增 `docs/index.html`（Pages 根路径跳转到 `landing.html`），开启 GitHub Pages 后可直接访问 `https://bugtakue.github.io/ronge-adaptive-skill-archive/`。
+- 首个通过 tag 触发的 `publish` workflow 因 tag 在 workflow 注册前推送未运行；v2.1.1 用来验证 CI 发布流水线（无 `NPM_TOKEN` 时优雅跳过 npm publish，仅跑 check/test）。
+- 无功能变更（等价 v2.1.0）。
+
+
 ## v2.1.0 — 2026-10-28
 
 - **10% self-exploration quota (自探索配额)**：默认把 1 个推荐位留给平时很少被推荐的技能（`explorationRate` 默认 0.1、范围 0–0.3，可 UI 三档切换）；探索结果（adopt/good/bad）单独计数，采用率长期过低会自动调低配额、采用率高会自动调高。
