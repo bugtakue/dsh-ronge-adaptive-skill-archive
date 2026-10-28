@@ -1,0 +1,54 @@
+{
+  "name": "dsh-skill-studio",
+  "version": "0.1.0",
+  "description": "Skill Studio: context-aware skill recommendations, active-skill tracking, and a completion chime for DeepSeek Harness.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bugtakue/skill-studio.git"
+  },
+  "homepage": "https://github.com/bugtakue/skill-studio#readme",
+  "bugs": {
+    "url": "https://github.com/bugtakue/skill-studio/issues"
+  },
+  "author": "bugtakue",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "skills",
+    "ai-agent",
+    "context-aware",
+    "productivity"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "scripts/*.mjs"
+  ],
+  "scripts": {
+    "check": "node scripts/check.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "license": "MIT"
+}
