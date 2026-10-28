@@ -28,11 +28,17 @@
 ## 30 秒开始
 
 ```bash
-# 1) 安装（在任意 DSH 会话里让 Agent 执行；npm 发布前建议用 GitHub tag）
-plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2
-# 2) 打开任意会话 → 右上角「技能」→ 右侧抽屉
-# 3) 顶部切换「计划模式 / 沉浸模式」，然后正常发任务
+# 1) 先跑 npx 助手：检查环境 + 打印这台机器该用的安装命令（不装任何东西）
+npx ronge-adaptive-skill-archive
+#    想先体检：npx ronge-adaptive-skill-archive doctor
+
+# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行
+plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3
+
+# 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
+
+> `npx` 不是 npm 的替代品（它本身也从 npm registry 取包），而是「装之前先看一眼」的安装助手：不修改 profile、不联网做任何写入，只打印命令和检查 Node / profile / 数据目录 / 已装版本。**没有 npm 也能装**：用 GitHub tag 或本地目录路径，见[安装](#安装)。
 
 ---
 
@@ -141,12 +147,13 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 - macOS（提示音用系统 `afplay`；Linux 可改为 `paplay`）
 - 安装插件需要 `danger-full-access` 或审批
 
-### 三种方式（profile 级，所有会话生效）
+### 四种入口（profile 级，所有会话生效）
 
 | 方式 | 命令 | 适合 |
 |---|---|---|
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2` | 现在就能用、固定版本、可审源码 |
-| **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.2` | 已发布到 npm（`ronge-adaptive-skill-archive@2.1.2`，2026-10-29） |
+| **npx 助手** | `npx ronge-adaptive-skill-archive`（体检：`npx ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
+| **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3` | 已发布到 npm，版本解析最顺 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.3` | 不用 npm、固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
 ### 升级（v1.x / v2.0.0 → v2.1.0）

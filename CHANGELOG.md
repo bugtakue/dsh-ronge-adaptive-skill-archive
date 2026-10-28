@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.1.3 — 2026-10-29
+
+- **`npx ronge-adaptive-skill-archive` 安装助手**：默认打印本机该用的安装命令；`doctor` 检查 Node / DSH profile / 已安装 bundle / 数据目录 / 经验 / 自进化 / 卷轴馆索引；`eval` 离线跑推荐评估 Recall@4；`market` 打印 DSH 插件市场索引信息。CLI 不做任何 profile 写入，实际安装仍走 `plugin_manager`。
+- README 首屏改为「npx 体检 → 一行安装」三步；安装表增加「不用 npm」的 GitHub tag / 本地目录两种方式；说明 npx 不是 npm 的替代品。
+- `package.json` 增加 `bin`（`ronge-adaptive-skill-archive`）与 `npm start`。
+- 新增 `test/cli.test.mjs`（help/version/doctor/market/eval）。
+- 功能等价 v2.1.2。
+
+
 ## v2.1.2 — 2026-10-29
 
 - **首次发布到 npm**：`ronge-adaptive-skill-archive@2.1.2`（MIT）；README 主截图改为 GitHub raw 绝对地址，npm 页面也能正常显示；加入 npm 版本 badge。
