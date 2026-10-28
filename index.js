@@ -215,7 +215,7 @@ function appendMemoryMarkdown(entry) {
 function recordExperience(sessionId, header, state) {
   const skills = [...state.skills].filter(Boolean)
   if (skills.length === 0) return
-  const task = (state.userTexts.find((text) => text && text.length > 1) || '').slice(0, 240)
+  const task = (state.userTexts.find((text) => text && text.length > 1 && isHumanUserText(text)) || '').slice(0, 240)
   const outcome = (state.assistant || '').slice(0, 500)
   const entry = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -900,6 +900,12 @@ function cleanUserText(parts) {
   return lines.join(' ').replace(/\s+/g, ' ').trim()
 }
 
+function isHumanUserText(text) {
+  const value = String(text || '').trim()
+  if (!value) return false
+  return !/^(background job|job .* finished|bash-[a-z0-9]+|a background job)/i.test(value)
+}
+
 function tokenize(text) {
   const value = String(text || '').toLowerCase()
   const tokens = new Set()
@@ -1004,7 +1010,9 @@ function analyzeSession(ctx, sessionId, cwd) {
   }
 
   if (userTexts.length === 0) userTexts.push(...eventUserTexts)
-  const lastUserText = userTexts.slice(-1)[0] || ''
+  const humanTexts = userTexts.filter(isHumanUserText)
+  const contextUserTexts = humanTexts.length ? humanTexts : userTexts
+  const lastUserText = contextUserTexts.slice(-1)[0] || ''
   let fileNames = []
   try {
     fileNames = fs
@@ -1016,7 +1024,7 @@ function analyzeSession(ctx, sessionId, cwd) {
     // cwd may be a file or unavailable; recommendations still use messages.
   }
 
-  const contextText = [userTexts.slice(-8).join('\n'), fileNames.join(' ')].join('\n').trim()
+  const contextText = [contextUserTexts.slice(-8).join('\n'), fileNames.join(' ')].join('\n').trim()
   return {
     running: lastType !== 'turn/end',
     activeSkills: dedupeSkillCalls(skillCalls.filter((call) => call.turn === maxTurn)).slice(-3),

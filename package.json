@@ -1,6 +1,6 @@
 {
   "name": "ronge-skill-studio",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Ronge Skill Studio: context-aware skill recommendations, remote Discover/install, MCP tool directory, plan/immersive modes, experience memory + feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {

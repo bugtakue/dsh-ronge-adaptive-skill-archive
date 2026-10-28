@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1 — 2026-10-28
+
+- Ignore background-job notification messages when deriving the language/context, so Chinese sessions keep Chinese skill intros and better recommendations.
+
 ## v1.4.0 — 2026-10-28
 
 - **荣哥技能卷轴收藏馆**: a categorized, rated index of public GitHub SKILL.md files, bundled as `library/skills-index.json`.
