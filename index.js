@@ -383,6 +383,7 @@ function recordExperience(sessionId, header, state) {
   appendMemoryMarkdown(entry)
   const evolution = loadEvolution()
   evolution.stats.tasks = Number(evolution.stats.tasks || 0) + 1
+  for (const name of skills) noteSkillOutcome(name, 1)
   saveEvolution()
 }
 
@@ -390,6 +391,7 @@ function recordFailedTurn(sessionId, header, state) {
   const skills = [...state.skills].filter(Boolean)
   if (skills.length === 0) return
   const time = new Date().toISOString()
+  for (const name of skills) noteSkillOutcome(name, -1)
   for (const name of skills) {
     const previous = memory.skills[name] || { uses: 0, successes: 0, good: 0, bad: 0, lastUsed: null }
     memory.skills[name] = {
@@ -805,7 +807,7 @@ function recordRecommendationFeedback(name, verdict, kind) {
   feedback.skills[skillName] = stat
   feedback.updatedAt = stat.lastAt
   writeJsonFile(recFeedbackFile(), feedback)
-  noteRecommendationOutcome(String(kind || ''), verdict)
+  noteRecommendationOutcome(String(kind || ''), verdict, skillName)
   saveEvolution()
   const evolved = maybeEvolve()
   return {
@@ -1004,6 +1006,19 @@ const EVOLUTION_EVAL_EVERY = 10
 const EVOLUTION_HISTORY_MAX = 50
 const EVOLUTION_KIND_MEMORY_MAX = 300
 
+// Exploration: reserve roughly 10% of the recommendation slots for skills the
+// user rarely sees, so the engine keeps collecting evidence instead of only
+// exploiting what it already likes.
+const EVOLUTION_DEFAULT_EXPLORATION = 0.1
+const EVOLUTION_EXPLORATION_BOUNDS = [0, 0.3]
+const EVOLUTION_EXPLORATION_STEP = 0.05
+const EVOLUTION_EXPLORATION_MIN_ATTEMPTS = 8
+
+// Per-category affinity: which families of skills actually work for this user.
+const EVOLUTION_DEFAULT_CATEGORY_WEIGHTS = { video: 1, office: 1, harness: 1, other: 1 }
+const EVOLUTION_CATEGORY_BOUNDS = [0.5, 2]
+const EVOLUTION_CATEGORY_LABELS = { video: '视频/动效', office: '办公文档', harness: 'Harness 插件', other: '通用' }
+
 let evolutionState = null
 
 function evolutionFile() {
@@ -1031,6 +1046,59 @@ function resolveEvolutionWeights(weights) {
   return merged
 }
 
+function clampExploration(value) {
+  const number = Number(value)
+  const safe = Number.isFinite(number) ? number : EVOLUTION_DEFAULT_EXPLORATION
+  return roundWeight(
+    Math.min(EVOLUTION_EXPLORATION_BOUNDS[1], Math.max(EVOLUTION_EXPLORATION_BOUNDS[0], safe)),
+  )
+}
+
+function clampCategoryWeight(value) {
+  const number = Number(value)
+  const safe = Number.isFinite(number) ? number : 1
+  return roundWeight(
+    Math.min(EVOLUTION_CATEGORY_BOUNDS[1], Math.max(EVOLUTION_CATEGORY_BOUNDS[0], safe)),
+  )
+}
+
+function resolveCategoryWeights(weights) {
+  const source = weights && typeof weights === 'object' ? weights : {}
+  const merged = {}
+  for (const key of Object.keys(EVOLUTION_DEFAULT_CATEGORY_WEIGHTS)) {
+    merged[key] = clampCategoryWeight(source[key] ?? EVOLUTION_DEFAULT_CATEGORY_WEIGHTS[key])
+  }
+  return merged
+}
+
+function normalizeAffinity(saved) {
+  const source = saved && typeof saved === 'object' ? saved : {}
+  const output = {}
+  for (const [name, entry] of Object.entries(source)) {
+    if (!name || !entry || typeof entry !== 'object') continue
+    const score = Number(entry.score)
+    const samples = Number(entry.samples)
+    output[name] = {
+      score: roundWeight(Math.min(1, Math.max(0, Number.isFinite(score) ? score : 0.5))),
+      samples: Number.isFinite(samples) && samples > 0 ? Math.floor(samples) : 0,
+      lastAt: entry.lastAt || null,
+    }
+  }
+  return output
+}
+
+function updateSkillAffinityEntry(affinity, name, delta) {
+  if (!name) return
+  const previous = affinity[name] || { score: 0.5, samples: 0, lastAt: null }
+  const target = delta > 0 ? 1 : 0
+  const weight = previous.samples === 0 ? 0.35 : 0.2
+  affinity[name] = {
+    score: roundWeight(previous.score + (target - previous.score) * weight),
+    samples: previous.samples + 1,
+    lastAt: new Date().toISOString(),
+  }
+}
+
 function emptyEvolutionStats() {
   return {
     exposures: 0,
@@ -1044,6 +1112,13 @@ function emptyEvolutionStats() {
       category: { adopt: 0, good: 0, bad: 0 },
       experience: { adopt: 0, good: 0, bad: 0 },
     },
+    byCategory: {
+      video: { good: 0, bad: 0 },
+      office: { good: 0, bad: 0 },
+      harness: { good: 0, bad: 0 },
+      other: { good: 0, bad: 0 },
+    },
+    exploration: { served: 0, attempts: 0, adopted: 0, good: 0, bad: 0 },
   }
 }
 
@@ -1052,8 +1127,12 @@ function normalizeEvolutionState(saved) {
     version: 1,
     updatedAt: null,
     weights: resolveEvolutionWeights(null),
+    categoryWeights: resolveCategoryWeights(null),
+    explorationRate: EVOLUTION_DEFAULT_EXPLORATION,
+    skillAffinity: {},
     stats: emptyEvolutionStats(),
     kindBySkill: {},
+    categoryBySkill: {},
     observationsSinceEval: 0,
     lastEvaluatedAt: null,
     history: [],
@@ -1061,10 +1140,15 @@ function normalizeEvolutionState(saved) {
   if (!saved || typeof saved !== 'object') return base
   const stats = saved.stats && typeof saved.stats === 'object' ? saved.stats : {}
   const byKind = stats.byKind && typeof stats.byKind === 'object' ? stats.byKind : {}
+  const byCategory = stats.byCategory && typeof stats.byCategory === 'object' ? stats.byCategory : {}
+  const exploration = stats.exploration && typeof stats.exploration === 'object' ? stats.exploration : {}
   return {
     version: 1,
     updatedAt: saved.updatedAt || null,
     weights: resolveEvolutionWeights(saved.weights),
+    categoryWeights: resolveCategoryWeights(saved.categoryWeights),
+    explorationRate: clampExploration(saved.explorationRate),
+    skillAffinity: normalizeAffinity(saved.skillAffinity),
     stats: {
       exposures: Number(stats.exposures || 0),
       tasks: Number(stats.tasks || 0),
@@ -1077,8 +1161,23 @@ function normalizeEvolutionState(saved) {
         category: { ...emptyEvolutionStats().byKind.category, ...(byKind.category || {}) },
         experience: { ...emptyEvolutionStats().byKind.experience, ...(byKind.experience || {}) },
       },
+      byCategory: {
+        video: { ...emptyEvolutionStats().byCategory.video, ...(byCategory.video || {}) },
+        office: { ...emptyEvolutionStats().byCategory.office, ...(byCategory.office || {}) },
+        harness: { ...emptyEvolutionStats().byCategory.harness, ...(byCategory.harness || {}) },
+        other: { ...emptyEvolutionStats().byCategory.other, ...(byCategory.other || {}) },
+      },
+      exploration: {
+        served: Number(exploration.served || 0),
+        attempts: Number(exploration.attempts || 0),
+        adopted: Number(exploration.adopted || 0),
+        good: Number(exploration.good || 0),
+        bad: Number(exploration.bad || 0),
+      },
     },
     kindBySkill: saved.kindBySkill && typeof saved.kindBySkill === 'object' ? saved.kindBySkill : {},
+    categoryBySkill:
+      saved.categoryBySkill && typeof saved.categoryBySkill === 'object' ? saved.categoryBySkill : {},
     observationsSinceEval: Number(saved.observationsSinceEval || 0),
     lastEvaluatedAt: saved.lastEvaluatedAt || null,
     history: Array.isArray(saved.history) ? saved.history.slice(-EVOLUTION_HISTORY_MAX) : [],
@@ -1107,11 +1206,20 @@ function evolutionSnapshot() {
   const byKind = state.stats.byKind
   const totalGood = Object.values(byKind).reduce((sum, entry) => sum + Number(entry.good || 0), 0)
   const totalBad = Object.values(byKind).reduce((sum, entry) => sum + Number(entry.bad || 0), 0)
+  const affinityValues = Object.values(state.skillAffinity || {})
+  const avgAffinity = affinityValues.length
+    ? roundWeight(affinityValues.reduce((sum, entry) => sum + Number(entry.score || 0), 0) / affinityValues.length)
+    : null
   return {
     weights: state.weights,
     defaults: { ...EVOLUTION_DEFAULT_WEIGHTS },
     bounds: EVOLUTION_BOUNDS,
     contentLabels: EVOLUTION_CONTENT_LABELS,
+    explorationRate: state.explorationRate,
+    explorationBounds: EVOLUTION_EXPLORATION_BOUNDS,
+    categoryWeights: state.categoryWeights,
+    categoryLabels: EVOLUTION_CATEGORY_LABELS,
+    categoryBounds: EVOLUTION_CATEGORY_BOUNDS,
     stats: {
       exposures: state.stats.exposures,
       tasks: state.stats.tasks,
@@ -1120,6 +1228,15 @@ function evolutionSnapshot() {
       bad: totalBad,
       successRate: totalGood + totalBad > 0 ? Math.round((totalGood / (totalGood + totalBad)) * 100) / 100 : null,
       byKind,
+      byCategory: state.stats.byCategory,
+      exploration: state.stats.exploration,
+    },
+    learning: {
+      skillsTracked: affinityValues.length,
+      avgAffinity,
+      exploredServed: state.stats.exploration.served,
+      exploredRecommendations: state.stats.exploration.attempts,
+      explorationAdopted: state.stats.exploration.adopted,
     },
     observationsSinceEval: state.observationsSinceEval,
     lastEvaluatedAt: state.lastEvaluatedAt,
@@ -1140,6 +1257,9 @@ function evaluateEvolutionState(state, options = {}) {
   const reason = String(options.reason || 'auto')
   const changes = []
   const nextWeights = { ...current.weights }
+  const nextCategoryWeights = { ...current.categoryWeights }
+  let nextExploration = current.explorationRate
+
   for (const [kind, weightKey] of Object.entries(EVOLUTION_KIND_WEIGHT)) {
     const stat = current.stats.byKind[kind]
     if (!stat) continue
@@ -1173,6 +1293,61 @@ function evaluateEvolutionState(state, options = {}) {
       reason: why,
     })
   }
+
+  // Category weights learn which skill families work for this user.
+  for (const [category, label] of Object.entries(EVOLUTION_CATEGORY_LABELS)) {
+    const stat = current.stats.byCategory[category]
+    if (!stat) continue
+    const good = Number(stat.good || 0)
+    const bad = Number(stat.bad || 0)
+    const sample = good + bad
+    if (sample < minSamples) continue
+    const rate = good / sample
+    let factor = 1
+    if (rate >= 0.7) factor = 1 + step
+    else if (rate <= 0.4) factor = 1 - step
+    if (factor === 1) continue
+    const from = nextCategoryWeights[category]
+    const to = clampCategoryWeight(from * factor)
+    if (to === from) continue
+    nextCategoryWeights[category] = to
+    changes.push({
+      kind: 'category',
+      weight: 'category:' + category,
+      label: label + ' 类别权重',
+      from,
+      to,
+      rate: Math.round(rate * 100) / 100,
+      sample,
+      reason: '好评为 ' + good + '/' + sample,
+    })
+  }
+
+  // The exploration quota tunes itself: if exploration rarely gets adopted,
+  // spend less on it; if it works, explore a little more.
+  const exploration = current.stats.exploration
+  const attempts = Number(exploration.attempts || 0)
+  const adopted = Number(exploration.adopted || 0)
+  if (attempts >= EVOLUTION_EXPLORATION_MIN_ATTEMPTS) {
+    const adoptionRate = adopted / attempts
+    let next = nextExploration
+    if (adoptionRate < 0.05) next = clampExploration(nextExploration - EVOLUTION_EXPLORATION_STEP)
+    else if (adoptionRate >= 0.3) next = clampExploration(nextExploration + EVOLUTION_EXPLORATION_STEP)
+    if (next !== nextExploration) {
+      changes.push({
+        kind: 'exploration',
+        weight: 'explorationRate',
+        label: '探索配额',
+        from: nextExploration,
+        to: next,
+        rate: Math.round(adoptionRate * 100) / 100,
+        sample: attempts,
+        reason: '探索采用率为 ' + adopted + '/' + attempts,
+      })
+      nextExploration = next
+    }
+  }
+
   if (changes.length === 0) {
     return { state: { ...current, lastEvaluatedAt: new Date().toISOString() }, changes: [] }
   }
@@ -1181,14 +1356,20 @@ function evaluateEvolutionState(state, options = {}) {
     at,
     reason,
     changes,
-    before: { ...current.weights },
-    after: { ...nextWeights },
+    before: {
+      weights: { ...current.weights },
+      categoryWeights: { ...current.categoryWeights },
+      explorationRate: current.explorationRate,
+    },
+    after: { weights: { ...nextWeights }, categoryWeights: { ...nextCategoryWeights }, explorationRate: nextExploration },
   })
   return {
     state: {
       ...current,
       updatedAt: at,
       weights: nextWeights,
+      categoryWeights: nextCategoryWeights,
+      explorationRate: nextExploration,
       observationsSinceEval: 0,
       lastEvaluatedAt: at,
       history: history.slice(-EVOLUTION_HISTORY_MAX),
@@ -1224,8 +1405,13 @@ function noteRecommendationExposure(recommendations) {
   for (const item of recommendations) {
     if (!item || !item.name) continue
     const top = Array.isArray(item.reasonsDetail) ? item.reasonsDetail.find((reason) => reason && reason.kind) : null
-    if (!top || !EVOLUTION_KIND_WEIGHT[top.kind]) continue
-    state.kindBySkill[item.name] = { kind: top.kind, at }
+    if (top && EVOLUTION_KIND_WEIGHT[top.kind]) {
+      state.kindBySkill[item.name] = { kind: top.kind, at }
+    }
+    state.categoryBySkill[item.name] = { category: categoryOf(item.name), at }
+    if (item.exploration) {
+      state.stats.exploration.served = Number(state.stats.exploration.served || 0) + 1
+    }
   }
   const names = Object.keys(state.kindBySkill)
   if (names.length > EVOLUTION_KIND_MEMORY_MAX) {
@@ -1233,11 +1419,30 @@ function noteRecommendationExposure(recommendations) {
   }
 }
 
-function noteRecommendationOutcome(kind, verdict) {
-  if (!EVOLUTION_KIND_WEIGHT[kind] || !['adopt', 'good', 'bad'].includes(verdict)) return
+function noteRecommendationOutcome(kind, verdict, skillName) {
+  if (!['adopt', 'good', 'bad'].includes(verdict)) return
   const state = loadEvolution()
-  const bucket = state.stats.byKind[kind]
-  bucket[verdict] = Number(bucket[verdict] || 0) + 1
+  if (kind === 'explore') {
+    state.stats.exploration.attempts = Number(state.stats.exploration.attempts || 0) + 1
+    if (verdict === 'adopt' || verdict === 'good') {
+      state.stats.exploration.adopted = Number(state.stats.exploration.adopted || 0) + 1
+    }
+    if (verdict === 'bad') state.stats.exploration.bad = Number(state.stats.exploration.bad || 0) + 1
+  } else if (EVOLUTION_KIND_WEIGHT[kind]) {
+    const bucket = state.stats.byKind[kind]
+    bucket[verdict] = Number(bucket[verdict] || 0) + 1
+  } else {
+    return
+  }
+  if (skillName) {
+    updateSkillAffinityEntry(state.skillAffinity, skillName, verdict === 'bad' ? -1 : 1)
+    const hint = state.categoryBySkill[skillName]
+    if (hint && (verdict === 'good' || verdict === 'bad')) {
+      const category = hint.category || 'other'
+      const bucket = state.stats.byCategory[category] || state.stats.byCategory.other
+      bucket[verdict] = Number(bucket[verdict] || 0) + 1
+    }
+  }
   state.stats.observations = Number(state.stats.observations || 0) + 1
   state.observationsSinceEval = Number(state.observationsSinceEval || 0) + 1
   if (verdict === 'good') state.stats.good = Number(state.stats.good || 0) + 1
@@ -1250,24 +1455,93 @@ function noteExperienceFeedback(skills, rating) {
   const at = new Date().toISOString()
   for (const name of skills) {
     const hint = state.kindBySkill[name]
-    if (!hint || !EVOLUTION_KIND_WEIGHT[hint.kind]) continue
-    const bucket = state.stats.byKind[hint.kind]
-    bucket[rating] = Number(bucket[rating] || 0) + 1
-    state.stats.observations = Number(state.stats.observations || 0) + 1
-    state.observationsSinceEval = Number(state.observationsSinceEval || 0) + 1
-    if (rating === 'good') state.stats.good = Number(state.stats.good || 0) + 1
-    if (rating === 'bad') state.stats.bad = Number(state.stats.bad || 0) + 1
-    state.kindBySkill[name] = { kind: hint.kind, at }
+    if (hint && EVOLUTION_KIND_WEIGHT[hint.kind]) {
+      const bucket = state.stats.byKind[hint.kind]
+      bucket[rating] = Number(bucket[rating] || 0) + 1
+      state.stats.observations = Number(state.stats.observations || 0) + 1
+      state.observationsSinceEval = Number(state.observationsSinceEval || 0) + 1
+      if (rating === 'good') state.stats.good = Number(state.stats.good || 0) + 1
+      if (rating === 'bad') state.stats.bad = Number(state.stats.bad || 0) + 1
+      state.kindBySkill[name] = { kind: hint.kind, at }
+    }
+    state.categoryBySkill[name] = { category: categoryOf(name), at }
+    updateSkillAffinityEntry(state.skillAffinity, name, rating === 'bad' ? -1 : 1)
+    if (rating === 'good' || rating === 'bad') {
+      const category = categoryOf(name)
+      const bucket = state.stats.byCategory[category] || state.stats.byCategory.other
+      bucket[rating] = Number(bucket[rating] || 0) + 1
+    }
   }
+}
+
+function noteSkillOutcome(name, delta) {
+  if (!name) return
+  const state = loadEvolution()
+  updateSkillAffinityEntry(state.skillAffinity, name, delta)
+  const category = categoryOf(name)
+  state.categoryBySkill[name] = { category, at: new Date().toISOString() }
+  if (delta > 0) {
+    state.stats.byCategory[category] = state.stats.byCategory[category] || { good: 0, bad: 0 }
+  }
+}
+
+function setEvolutionExplorationRate(value) {
+  const rate = clampExploration(value)
+  const state = loadEvolution()
+  state.explorationRate = rate
+  saveEvolution()
+  return { ok: true, explorationRate: rate, snapshot: evolutionSnapshot() }
+}
+
+function applyExploration(skills, ranked, skillStats = {}, options = {}) {
+  const rate = clampExploration(options.explorationRate ?? 0)
+  if (rate <= 0 || !Array.isArray(ranked) || ranked.length === 0) return ranked
+  const random = typeof options.random === 'function' ? options.random : Math.random
+  if (random() >= rate) return ranked
+  const excluded = new Set(ranked.map((item) => item && item.name).filter(Boolean))
+  const candidates = (Array.isArray(skills) ? skills : []).filter(
+    (skill) => skill && skill.name && !excluded.has(skill.name),
+  )
+  if (candidates.length === 0) return ranked
+  const statOf = (name) => (skillStats && skillStats[name]) || {}
+  candidates.sort((left, right) => {
+    const leftUses = Number(statOf(left.name).uses || 0)
+    const rightUses = Number(statOf(right.name).uses || 0)
+    if (leftUses !== rightUses) return leftUses - rightUses
+    return String(left.name).localeCompare(String(right.name))
+  })
+  const pool = candidates.slice(0, Math.min(8, candidates.length))
+  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
+  const picked = pool[Math.max(0, index)]
+  const explore = {
+    ...picked,
+    score: 0.1,
+    exploration: true,
+    reasons: ['探索'],
+    reasonsDetail: [
+      {
+        kind: 'explore',
+        label: '探索',
+        detail: '10% 探索配额：给平时不常被推荐的技能一个验证机会',
+        weight: 0,
+      },
+    ],
+  }
+  const next = ranked.slice(0, Math.max(1, ranked.length - 1))
+  next.push(explore)
+  return next
 }
 
 function rollbackEvolution() {
   const state = loadEvolution()
   if (state.history.length === 0) throw new HttpError(409, 'no evolution history to roll back')
   const last = state.history[state.history.length - 1]
+  const before = last.before && typeof last.before === 'object' ? last.before : {}
   evolutionState = {
     ...state,
-    weights: resolveEvolutionWeights(last.before),
+    weights: resolveEvolutionWeights(before.weights || null),
+    categoryWeights: resolveCategoryWeights(before.categoryWeights || null),
+    explorationRate: before.explorationRate === undefined ? state.explorationRate : clampExploration(before.explorationRate),
     history: state.history.slice(0, -1),
     observationsSinceEval: 0,
     lastEvaluatedAt: new Date().toISOString(),
@@ -1278,11 +1552,17 @@ function rollbackEvolution() {
 
 function resetEvolution() {
   const state = loadEvolution()
-  evolutionState = { ...state, weights: resolveEvolutionWeights(null), observationsSinceEval: 0, lastEvaluatedAt: null }
+  evolutionState = {
+    ...state,
+    weights: resolveEvolutionWeights(null),
+    categoryWeights: resolveCategoryWeights(null),
+    explorationRate: EVOLUTION_DEFAULT_EXPLORATION,
+    observationsSinceEval: 0,
+    lastEvaluatedAt: null,
+  }
   saveEvolution()
   return { ok: true, weights: evolutionState.weights, snapshot: evolutionSnapshot() }
 }
-
 
 const SOURCE_META_FILE = '.skill-studio-source.json'
 const MCP_REGISTRY_URL = 'https://registry.modelcontextprotocol.io/v0/servers'
@@ -2071,9 +2351,17 @@ function analyzeSession(ctx, sessionId, cwd) {
   }
 }
 
-function recommendSkills(skills, contextText, skillStats = {}, weights = EVOLUTION_DEFAULT_WEIGHTS) {
+function recommendSkills(
+  skills,
+  contextText,
+  skillStats = {},
+  weights = EVOLUTION_DEFAULT_WEIGHTS,
+  options = {},
+) {
   if (!contextText) return []
   const resolvedWeights = resolveEvolutionWeights(weights)
+  const categoryWeights = resolveCategoryWeights(options.categoryWeights)
+  const affinity = normalizeAffinity(options.affinity)
   const contextTokens = tokenize(contextText)
   const contextLower = contextText.toLowerCase()
   const scored = []
@@ -2108,10 +2396,24 @@ function recommendSkills(skills, contextText, skillStats = {}, weights = EVOLUTI
       })
     }
     const category = categoryOf(skill.name)
+    const categoryWeight = categoryWeights[category] || 1
     for (const cue of CATEGORY_CUES[category] || []) {
       if (!contextLower.includes(cue.toLowerCase())) continue
-      score += resolvedWeights.category
-      addReason('category', cue, '类别线索「' + cue + '」', resolvedWeights.category)
+      score += resolvedWeights.category * categoryWeight
+      addReason('category', cue, '类别线索「' + cue + '」', resolvedWeights.category * categoryWeight)
+    }
+    const affinityEntry = affinity[skill.name]
+    if (affinityEntry && affinityEntry.samples > 0) {
+      const affinityBoost = Math.round(((affinityEntry.score - 0.5) * 2 * 2) * 10) / 10
+      score += affinityBoost
+      if (Math.abs(affinityBoost) >= 0.2) {
+        addReason(
+          'affinity',
+          '手感×' + affinityEntry.samples,
+          '这类任务的实际手感 ' + Math.round(affinityEntry.score * 100) + '%（' + affinityEntry.samples + ' 次）',
+          affinityBoost,
+        )
+      }
     }
     const stat = skillStats[skill.name]
     if (stat && stat.uses > 0) {
@@ -2132,7 +2434,7 @@ function recommendSkills(skills, contextText, skillStats = {}, weights = EVOLUTI
       )
     }
     if (score > 0) {
-      const kindOrder = { name: 0, experience: 1, category: 2, keyword: 3 }
+      const kindOrder = { name: 0, experience: 1, affinity: 2, category: 3, keyword: 4 }
       const orderedReasons = reasonsDetail
         .slice()
         .sort((left, right) => (kindOrder[left.kind] ?? 9) - (kindOrder[right.kind] ?? 9))
@@ -2145,7 +2447,12 @@ function recommendSkills(skills, contextText, skillStats = {}, weights = EVOLUTI
       })
     }
   }
-  return scored.sort((left, right) => right.score - left.score).slice(0, 4)
+  const ranked = scored.sort((left, right) => right.score - left.score).slice(0, 4)
+  if (options.explorationRate === undefined) return ranked
+  return applyExploration(skills, ranked, skillStats, {
+    explorationRate: options.explorationRate,
+    random: options.random,
+  })
 }
 
 async function buildCatalog(ctx, config, sessionId, lang) {
@@ -2223,7 +2530,11 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     .map((skill) => ({ ...skill, ...securityForSkill(skill) }))
   const evolution = loadEvolution()
   const recommendations = analysis.contextText
-    ? recommendSkills(summaries, analysis.contextText, memory.skills, evolution.weights)
+    ? recommendSkills(summaries, analysis.contextText, memory.skills, evolution.weights, {
+        categoryWeights: evolution.categoryWeights,
+        affinity: evolution.skillAffinity,
+        explorationRate: evolution.explorationRate,
+      })
     : []
   noteRecommendationExposure(recommendations)
   return {
@@ -2581,6 +2892,19 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
+      path: '/ronge-adaptive-skill-archive/evolution/config',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        if (payload.explorationRate === undefined) throw new HttpError(400, 'explorationRate is required')
+        const result = setEvolutionExplorationRate(payload.explorationRate)
+        sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
       path: '/ronge-adaptive-skill-archive/evolution/rollback',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
@@ -2719,8 +3043,10 @@ export function apply(ctx, config = {}) {
 }
 
 export {
+  EVOLUTION_DEFAULT_EXPLORATION,
   EVOLUTION_DEFAULT_WEIGHTS,
   aggregateSkillStats,
+  applyExploration,
   classifyTrust,
   detectLang,
   diffSkillLines,
@@ -2730,6 +3056,7 @@ export {
   mergeExperienceData,
   parseSkillArguments,
   recommendSkills,
+  resolveCategoryWeights,
   resolveEvolutionWeights,
   scanSkillText,
   tokenize,

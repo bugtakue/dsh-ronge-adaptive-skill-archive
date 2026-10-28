@@ -1,7 +1,7 @@
 {
   "name": "ronge-adaptive-skill-archive",
-  "version": "2.0.0",
-  "description": "荣哥技能卷轴收藏馆（可沉浸式体验版本）/ Ronge's Adaptive Skill Cockpit (Immersive Edition): 6,399 public skills, adaptive contextual recommendations with self-evolving weights, plan/immersive modes, pre-install safety scan, update diff/rollback, experience memory + feedback, and a completion chime for DeepSeek Harness.",
+  "version": "2.1.0",
+  "description": "荣哥技能卷轴收藏馆 / Ronge's Adaptive Skill Cockpit: a context-aware, self-evolving skill cockpit for DeepSeek Harness — recommendations with reasons, 10% exploration quota, category/skill affinity learning, live usage, plan/immersive modes, experience memory, pre-install safety scan, update diff/rollback and a 6,399-skill public index.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
     "productivity",
     "adaptive",
     "self-evolving",
-    "skills-manager"
+    "skills-manager",
+    "exploration"
   ],
   "exports": {
     ".": "./index.js",

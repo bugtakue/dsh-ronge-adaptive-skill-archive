@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.1.0 — 2026-10-28
+
+- **10% self-exploration quota (自探索配额)**：默认把 1 个推荐位留给平时很少被推荐的技能（`explorationRate` 默认 0.1、范围 0–0.3，可 UI 三档切换）；探索结果（adopt/good/bad）单独计数，采用率长期过低会自动调低配额、采用率高会自动调高。
+- **Deeper online learning（越用越好用）**：新增「分类权重」（video/office/harness/other，0.5–2，按该类反馈自动升降）与「技能亲和度」（每次成功/失败/👍/👎 更新 EWMA，推荐分里体现为「手感」理由）；全局权重、分类权重、探索配额统一进 `evolution.json`，均可回滚/重置。
+- **UI/UX 全面重做**：设计 token（间距/圆角/阴影/字号/过渡）、品牌头 + 分段 tabs + 吸顶工具区、推荐卡（排名/分数/理由 badge/操作）、按类别分组的技能列表、经验统计卡片、健康告警、自进化权重与探索进度条、统一卡片/空状态/skeleton、移动端与 focus-visible/aria。
+- 新增 `POST /ronge-adaptive-skill-archive/evolution/config {explorationRate}`；catalog 的 `evolution` 增加 `explorationRate/categoryWeights/categoryLabels/learning`，推荐项可带 `exploration:true` 与 `kind:'explore'` 理由。
+- Tests：探索配额/分类权重/亲和度/配置端点（36/36）；Host E2E 17/17；浏览器 UI 17/17（含探索配额与探索卡断言）。
+
+
 ## v2.0.0 — 2026-10-28
 
 - **BREAKING rename**: package/repo `ronge-skill-studio` → **`ronge-adaptive-skill-archive`**. Client factory id, cordis bundle id, HTTP route prefix (`/ronge-adaptive-skill-archive/*`), locale scope and system-prompt section ids all follow the new name.

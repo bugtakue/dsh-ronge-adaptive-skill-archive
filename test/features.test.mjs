@@ -1,14 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  EVOLUTION_DEFAULT_EXPLORATION,
   EVOLUTION_DEFAULT_WEIGHTS,
   aggregateSkillStats,
+  applyExploration,
   classifyTrust,
   diffSkillLines,
   evaluateEvolutionState,
   evaluateRecommendations,
   mergeExperienceData,
   recommendSkills,
+  resolveCategoryWeights,
   resolveEvolutionWeights,
   scanSkillText,
   localizeSkill,
@@ -260,4 +263,123 @@ test('localizeSkill generates a concise Chinese fallback for unknown skills', ()
   assert.ok(localized.intro.length <= 200)
   const en = localizeSkill({ name: 'acme-video-maker', description: 'Generate a promo video' }, 'en')
   assert.equal(en.intro, 'Generate a promo video')
+})
+
+
+test('applyExploration reserves a slot for an unexplored skill at the configured rate', () => {
+  const skills = ['alpha', 'beta', 'gamma', 'delta'].map((name) => ({ name, description: name }))
+  const ranked = [
+    { name: 'alpha', score: 9 },
+    { name: 'beta', score: 7 },
+    { name: 'gamma', score: 5 },
+  ]
+  const explored = applyExploration(skills, ranked, { delta: { uses: 0 } }, { explorationRate: 0.1, random: () => 0 })
+  assert.equal(explored.length, 3)
+  assert.equal(explored[0].name, 'alpha')
+  assert.equal(explored[2].name, 'delta')
+  assert.equal(explored[2].exploration, true)
+  assert.equal(explored[2].reasonsDetail[0].kind, 'explore')
+
+  const noExplore = applyExploration(skills, ranked, {}, { explorationRate: 0.1, random: () => 0.9 })
+  assert.deepEqual(noExplore.map((item) => item.name), ['alpha', 'beta', 'gamma'])
+  const disabled = applyExploration(skills, ranked, {}, { explorationRate: 0, random: () => 0 })
+  assert.equal(disabled[2].name, 'gamma')
+  assert.equal(EVOLUTION_DEFAULT_EXPLORATION, 0.1)
+})
+
+test('applyExploration keeps the list when every candidate is already ranked', () => {
+  const skills = ['alpha', 'beta'].map((name) => ({ name }))
+  const ranked = [{ name: 'alpha', score: 3 }, { name: 'beta', score: 2 }]
+  const result = applyExploration(skills, ranked, {}, { explorationRate: 1, random: () => 0 })
+  assert.deepEqual(result.map((item) => item.name), ['alpha', 'beta'])
+})
+
+test('resolveCategoryWeights clamps learned category weights', () => {
+  const weights = resolveCategoryWeights({ video: 9, office: 0.1, harness: 1.2 })
+  assert.equal(weights.video, 2)
+  assert.equal(weights.office, 0.5)
+  assert.equal(weights.harness, 1.2)
+  assert.equal(weights.other, 1)
+})
+
+test('recommendSkills applies category weights and session affinity', () => {
+  const skills = [
+    { name: 'hyperframes', description: 'video', intro: '视频 动画 分镜' },
+    { name: 'office-xlsx', description: 'excel', intro: '表格 公式' },
+  ]
+  const context = '做一个视频 分镜'
+  const base = recommendSkills(skills, context, {}, EVOLUTION_DEFAULT_WEIGHTS, {
+    categoryWeights: { video: 1, office: 1, harness: 1, other: 1 },
+    affinity: {},
+  })
+  const boosted = recommendSkills(skills, context, {}, EVOLUTION_DEFAULT_WEIGHTS, {
+    categoryWeights: { video: 2, office: 1, harness: 1, other: 1 },
+    affinity: { hyperframes: { score: 0.9, samples: 5, lastAt: null } },
+  })
+  const baseVideo = base.find((item) => item.name === 'hyperframes')
+  const boostedVideo = boosted.find((item) => item.name === 'hyperframes')
+  assert.ok(boostedVideo.score > baseVideo.score)
+  assert.ok(boostedVideo.reasonsDetail.some((reason) => reason.kind === 'affinity'))
+})
+
+test('evaluateEvolutionState learns category weights and self-tunes exploration', () => {
+  const base = {
+    version: 1,
+    weights: { ...EVOLUTION_DEFAULT_WEIGHTS },
+    categoryWeights: { video: 1, office: 1, harness: 1, other: 1 },
+    explorationRate: 0.1,
+    skillAffinity: {},
+    stats: {
+      exposures: 30,
+      tasks: 3,
+      observations: 30,
+      good: 0,
+      bad: 0,
+      byKind: {
+        name: { adopt: 0, good: 0, bad: 0 },
+        keyword: { adopt: 0, good: 0, bad: 0 },
+        category: { adopt: 0, good: 0, bad: 0 },
+        experience: { adopt: 0, good: 0, bad: 0 },
+      },
+      byCategory: {
+        video: { good: 9, bad: 1 },
+        office: { good: 2, bad: 8 },
+        harness: { good: 0, bad: 0 },
+        other: { good: 0, bad: 0 },
+      },
+      exploration: { attempts: 20, adopted: 0, good: 0, bad: 0 },
+    },
+    kindBySkill: {},
+    categoryBySkill: {},
+    observationsSinceEval: 10,
+    lastEvaluatedAt: null,
+    history: [],
+  }
+  const report = evaluateEvolutionState(base, { reason: 'test' })
+  const weights = report.state.categoryWeights
+  assert.ok(weights.video > 1, 'praised category grows')
+  assert.ok(weights.office < 1, 'bad category shrinks')
+  assert.ok(report.state.explorationRate < 0.1, 'unused exploration quota shrinks')
+  assert.ok(report.changes.some((change) => change.weight === 'explorationRate'))
+})
+
+
+test('recommendSkills can include an exploration pick when quota is enabled', () => {
+  const skills = [
+    { name: 'hyperframes', description: 'video', intro: '视频 动画 分镜' },
+    { name: 'office-xlsx', description: 'excel', intro: '表格 公式' },
+    { name: 'media-use', description: 'music', intro: '音乐 音效' },
+    { name: 'office-docx', description: 'docx', intro: '文档 报告' },
+    { name: 'agent-experience', description: 'skill design', intro: '技能 设计' },
+  ]
+  const ranked = recommendSkills(skills, '做一个视频', {}, EVOLUTION_DEFAULT_WEIGHTS, {
+    categoryWeights: { video: 1, office: 1, harness: 1, other: 1 },
+    affinity: {},
+    explorationRate: 1,
+    random: () => 0,
+  })
+  assert.ok(ranked.length >= 1 && ranked.length <= 4)
+  const explored = ranked.find((item) => item.exploration === true)
+  assert.ok(explored, 'one recommendation is an exploration pick')
+  assert.equal(explored.reasonsDetail[0].kind, 'explore')
 })

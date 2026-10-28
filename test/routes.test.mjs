@@ -253,3 +253,41 @@ test('library returns localized intro and category labels', async () => {
     assert.ok(typeof entry.intro === 'string' && entry.intro.length > 0, 'intro present')
   }
 })
+
+
+test('evolution config exposes exploration rate and category weights', async () => {
+  const snapshot = await call('/ronge-adaptive-skill-archive/evolution')
+  assert.equal(snapshot.status, 200)
+  assert.equal(snapshot.body.ok, true)
+  assert.equal(snapshot.body.explorationRate, 0.1)
+  assert.deepEqual(snapshot.body.categoryWeights, { video: 1, office: 1, harness: 1, other: 1 })
+  assert.ok(snapshot.body.categoryLabels.video)
+  assert.equal(typeof snapshot.body.learning.skillsTracked, 'number')
+  assert.equal(snapshot.body.canRollback, false)
+
+  const configured = await call('/ronge-adaptive-skill-archive/evolution/config', {
+    method: 'POST',
+    body: { explorationRate: 0.2 },
+  })
+  assert.equal(configured.status, 200)
+  assert.equal(configured.body.explorationRate, 0.2)
+  assert.equal(configured.body.snapshot.explorationRate, 0.2)
+
+  const reset = await call('/ronge-adaptive-skill-archive/evolution/config', {
+    method: 'POST',
+    body: { explorationRate: 0 },
+  })
+  assert.equal(reset.body.explorationRate, 0)
+
+  const invalid = await call('/ronge-adaptive-skill-archive/evolution/config', {
+    method: 'POST',
+    body: {},
+  })
+  assert.equal(invalid.status, 400)
+
+  const clamped = await call('/ronge-adaptive-skill-archive/evolution/config', {
+    method: 'POST',
+    body: { explorationRate: 9 },
+  })
+  assert.equal(clamped.body.explorationRate, 0.3)
+})
