@@ -533,7 +533,7 @@ function collectTexts(value, out = []) {
   return out
 }
 
-const RUNTIME_LINE = /^(Time sampled|Current runtime context|Current working directory|Current DSH|Current DeepSeek|You are an AI|Browser time zone|The user may also|Use only names|Approval prompts|Tokens prefixed|Use the read tool|Use the glob|Use the grep|Track every background|web_search results|web_fetch returns|create_goal may|After session resume|Mark complete|Use the workflow|Start independent|Agent Teams is available|The Team Lead|To message another|The runtime context names|The browser provides)/i
+const RUNTIME_LINE = /^(Time sampled|Elapsed since|Current runtime context|Current working directory|Current DSH|Current DeepSeek|You are an AI|You are a coding agent|You are the Team Lead|Browser time zone|The user may also|Use only names|Approval prompts|Tokens prefixed|Use the read tool|Use the glob|Use the grep|Track every background|web_search results|web_fetch returns|create_goal may|After session resume|Mark complete|Use the workflow|Start independent|Agent Teams is available|The Team Lead|To message another|The runtime context names|The browser provides|The available skill catalog changed|system-reminder|This snapshot supersedes|Use list_agents|Use send_message|Use the target|Check the \[exit code)/i
 
 function cleanUserText(parts) {
   const lines = parts
@@ -605,22 +605,32 @@ function analyzeSession(ctx, sessionId, cwd) {
   const seq = Number(session.seq || 0)
   let events = []
   try {
-    events = session.snapshotEvents(Math.max(0, seq - 800))
+    events = session.snapshotEvents(Math.max(0, seq - 3000))
   } catch {
     return empty
   }
 
   const userTexts = []
+  const eventUserTexts = []
   const skillCalls = []
   let maxTurn = 0
   let lastType = ''
+  try {
+    for (const message of session.deriveMessages()) {
+      if (!message || message.role !== 'user') continue
+      const text = cleanUserText(collectTexts(message))
+      if (text) userTexts.push(text.slice(0, 1200))
+    }
+  } catch {
+    // Derivation is optional; event messages below are the fallback.
+  }
   for (const event of events) {
     lastType = event.type
     const turn = Number(event.data?.turn)
     if (Number.isFinite(turn) && turn > maxTurn) maxTurn = turn
     if (event.type === 'user/message') {
       const text = cleanUserText(collectTexts(event.data))
-      if (text) userTexts.push(text.slice(0, 1200))
+      if (text) eventUserTexts.push(text.slice(0, 1200))
     }
     if (event.type === 'tool/call' && event.data?.name === 'skill') {
       const args = parseSkillArguments(event.data.arguments)
@@ -636,6 +646,7 @@ function analyzeSession(ctx, sessionId, cwd) {
     }
   }
 
+  if (userTexts.length === 0) userTexts.push(...eventUserTexts)
   const lastUserText = userTexts.slice(-1)[0] || ''
   let fileNames = []
   try {
