@@ -41,7 +41,8 @@
   "scripts": {
     "check": "node scripts/check.mjs",
     "test": "node --test test/*.test.mjs",
-    "eval:recommend": "node scripts/eval-recommend.mjs"
+    "eval:recommend": "node scripts/eval-recommend.mjs",
+    "build:market-index": "node scripts/build-market-index.mjs"
   },
   "dsh": {
     "bundle": {

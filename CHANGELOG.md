@@ -9,6 +9,7 @@
 - **Experience+**: aggregate success rate, average duration, failure streak per skill; failed top-level turns record a failure streak; health report (stale / failing / never used / license unknown); `GET /skill-studio/experience/export` + `POST /skill-studio/experience/import` (versioned, dedupe by entry id, merge counters).
 - Client: recommendation reason badges, copy-`/skill` and 👍/👎 actions, top-2 suggestion chips, trust/license/risk badges, update diff + update-all + rollback controls, experience table / health / export-import UI.
 - Tests: `test/features.test.mjs` (pure helpers), `test/routes.test.mjs` (loopback routes with a mock host), eval fixtures/script; version bumped to 1.5.0.
+- Distribution: DSH plugin-market index (`docs/plugin-market.json`, format 1, validated with `@deepseek-ai/dsh-plugin-market-index`), `npm run build:market-index`, GitHub Actions publish workflow (`tag v*` → test → verify tag/version → `npm publish --provenance`), README three install channels (npm / git tag / local path).
 
 
 ## v1.4.2 — 2026-10-28

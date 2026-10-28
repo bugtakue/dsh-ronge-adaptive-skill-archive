@@ -1,0 +1,90 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Ronge's Skill Scroll Archive",
+    "zh": "荣哥技能卷轴收藏馆"
+  },
+  "description": {
+    "en": "Context-aware skill cockpit for DeepSeek Harness: recommendations with reasons, live \"now using\", plan/immersive modes, experience memory + feedback, local pre-install safety scan, update diff/rollback.",
+    "zh": "面向 DeepSeek Harness 的上下文感知技能驾驶舱：推荐理由、正在使用、计划/沉浸模式、经验记忆与反馈、本地安装前安全扫描、更新 diff/回滚。"
+  },
+  "metadata": {
+    "categories": {
+      "skills": {
+        "title": {
+          "en": "Skills",
+          "zh": "技能管理"
+        }
+      },
+      "productivity": {
+        "title": {
+          "en": "Productivity",
+          "zh": "效率工具"
+        }
+      }
+    },
+    "labels": {
+      "recommendation": {
+        "title": {
+          "en": "Recommendation",
+          "zh": "推荐"
+        }
+      },
+      "safety": {
+        "title": {
+          "en": "Safety",
+          "zh": "安全"
+        }
+      },
+      "experience": {
+        "title": {
+          "en": "Experience memory",
+          "zh": "经验记忆"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "ronge-skill-studio",
+      "title": {
+        "en": "Ronge's Skill Scroll Archive (Immersive Edition)",
+        "zh": "荣哥技能卷轴收藏馆（可沉浸式体验版本）"
+      },
+      "description": {
+        "en": "荣哥技能卷轴收藏馆（可沉浸式体验版本）: 6,399 public skills, context-aware recommendations, plan/immersive modes, experience memory + feedback, pre-install safety scan, update diff/rollback, and a completion chime for DeepSeek Harness.",
+        "zh": "6,399 条公开技能索引、上下文推荐、计划/沉浸模式、安装前安全扫描、更新 diff/回滚、经验记忆与反馈闭环。"
+      },
+      "author": "bugtakue",
+      "homepage": "https://github.com/bugtakue/ronge-skill-studio",
+      "repository": {
+        "url": "https://github.com/bugtakue/ronge-skill-studio"
+      },
+      "metadata": {
+        "category": "skills",
+        "keywords": [
+          "dsh",
+          "skills",
+          "recommendation",
+          "safety",
+          "experience",
+          "skills-manager"
+        ],
+        "labels": [
+          "recommendation",
+          "safety",
+          "experience"
+        ]
+      },
+      "versions": [
+        {
+          "version": "1.5.0",
+          "publishTimestamp": 1793195399,
+          "source": {
+            "type": "npm"
+          }
+        }
+      ]
+    }
+  ]
+}

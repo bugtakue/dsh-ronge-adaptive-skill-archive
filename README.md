@@ -150,16 +150,27 @@
 - macOS（提示音用系统 `afplay`；Linux 可改成 `paplay`）
 - 安装插件需要 `danger-full-access` 或审批
 
-### 安装 bundle
+### 安装 bundle（三选一）
 
-```bash
-# 在 Harness 里执行（profile 级，所有会话生效）
-plugin_manager install_bundle target=/absolute/path/to/ronge-skill-studio
-```
+| 方式 | 命令（在 Harness 里执行，profile 级、所有会话生效） | 适合 |
+|---|---|---|
+| **npm（推荐，v1.5.0 起）** | `plugin_manager install_bundle target=ronge-skill-studio@1.5.0` | 普通用户，一行安装、可升级 |
+| **GitHub** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-skill-studio.git#v1.5.0` | 想固定版本 / 审源码 |
+| **本地目录** | `plugin_manager install_bundle target=/absolute/path/to/ronge-skill-studio` | 开发、改代码 |
 
-安装后打开任意会话，会话头部右侧会出现「技能」按钮；点开就是右侧抽屉。
+> 版本是否已发布以 [npm](https://www.npmjs.com/package/ronge-skill-studio) 与 GitHub Releases 为准；未发布时请用本地目录方式安装。安装后打开任意会话，会话头部右侧会出现「技能」按钮，点开就是右侧抽屉。
+>
+> 包名固定为 `ronge-skill-studio`：client factory id 必须等于 package name（`npm run check` 会校验），改 scope 需要同时改 factory id 并重新发版。数据目录沿用兼容路径 `~/.dsh/skill-studio/`。
 
-> 包名是 `ronge-skill-studio`；发布到 npm 前可改成自己的 scope，例如 `@yourname/ronge-skill-studio`。数据目录沿用兼容路径 `~/.dsh/skill-studio/`。
+### 在 DSH 插件市场索引里被发现（可选）
+
+`docs/plugin-market.json` 是 DSH **format 1 插件市场索引**（已用官方 `@deepseek-ai/dsh-plugin-market-index` 校验通过，install target = `ronge-skill-studio@1.5.0`）：
+
+1. 把该文件托管到可访问的 https URL（GitHub raw / Pages 均可）；
+2. 在 DSH 中启用自定义插件市场（experimental `plugin-market-bundle`），把该 URL 加为索引；
+3. 之后可在 Discover 中搜索本插件并一键安装（索引条目会带版本与安装目标）。
+
+发新版本后运行 `npm run build:market-index` 更新索引里的版本与发布戳。发布流水线见 `.github/workflows/publish.yml`（tag `v*` → 测试 → 校验版本一致 → npm publish --provenance）。
 
 ---
 
