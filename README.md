@@ -10,7 +10,8 @@
 <p align="center">
   <a href="https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml"><img src="https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/version-2.1.1-blue.svg" alt="version 2.1.0">
+  <img src="https://img.shields.io/badge/version-2.1.2-blue.svg" alt="version 2.1.2">
+  <a href="https://www.npmjs.com/package/ronge-adaptive-skill-archive"><img src="https://img.shields.io/npm/v/ronge-adaptive-skill-archive?label=npm" alt="npm"></a>
   <img src="https://img.shields.io/badge/DeepSeek%20Harness-plugin-1f6feb.svg" alt="DeepSeek Harness plugin">
 </p>
 
@@ -19,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/panel.png" width="360" alt="技能面板：卷轴馆 tab，6,399 条 GitHub 公开 SKILL.md 索引">
+  <img src="https://raw.githubusercontent.com/bugtakue/ronge-adaptive-skill-archive/main/docs/panel.png" width="360" alt="技能面板：卷轴馆 tab，6,399 条 GitHub 公开 SKILL.md 索引">
   <br>
   <sub>会话右侧的「技能」抽屉：6,399 条公开 SKILL.md 索引、上下文推荐、正在使用、经验与自进化都在这里。</sub>
 </p>
@@ -28,7 +29,7 @@
 
 ```bash
 # 1) 安装（在任意 DSH 会话里让 Agent 执行；npm 发布前建议用 GitHub tag）
-plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.1
+plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2
 # 2) 打开任意会话 → 右上角「技能」→ 右侧抽屉
 # 3) 顶部切换「计划模式 / 沉浸模式」，然后正常发任务
 ```
@@ -144,7 +145,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 | 方式 | 命令 | 适合 |
 |---|---|---|
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.1` | 现在就能用、固定版本、可审源码 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2` | 现在就能用、固定版本、可审源码 |
 | **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.1` | v2.1.0 发布到 npm 后可用（未发布时会 404，请先用上一种） |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
@@ -266,7 +267,7 @@ MIT。见 [LICENSE](LICENSE)。
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.1
+plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2
 # then open any session → 「技能」in the header → switch Plan / Immersive
 ```
 

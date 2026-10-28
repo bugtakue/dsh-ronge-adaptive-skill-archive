@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.2 — 2026-10-29
+
+- **首次发布到 npm**：`ronge-adaptive-skill-archive@2.1.2`（MIT）；README 主截图改为 GitHub raw 绝对地址，npm 页面也能正常显示；加入 npm 版本 badge。
+- GitHub Actions `publish` 已配置 `NPM_TOKEN`，后续 tag 推送会自动发布（无 token 时优雅跳过）。
+- 功能等价 v2.1.1（无运行时变更）。
+
+
 ## v2.1.1 — 2026-10-28
 
 - **GitHub 发布链路**：新增 `docs/index.html`（Pages 根路径跳转到 `landing.html`），开启 GitHub Pages 后可直接访问 `https://bugtakue.github.io/ronge-adaptive-skill-archive/`。
