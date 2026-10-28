@@ -1,8 +1,8 @@
 # 荣哥技能卷轴收藏馆（可沉浸式体验版本）
 
-> **English name: Ronge's Adaptive Skill Cockpit (Immersive Edition)** — a context-aware, self-evolving skill cockpit for DeepSeek Harness. （旧英文名：Ronge's Skill Scroll Archive）
+> **English name: Ronge's Adaptive Skill Cockpit (Immersive Edition)** — a context-aware, self-evolving skill cockpit for DeepSeek Harness. （包名/仓库：`ronge-adaptive-skill-archive`；旧英文名：Ronge's Skill Scroll Archive）
 
-[![check](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/ronge-skill-studio/actions/workflows/check.yml)
+[![check](https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml)
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
@@ -20,7 +20,7 @@
 - 🧰 **Tools · MCP 目录**：浏览官方 MCP registry 里的服务器；工具和 skill 分开展示。
 - 📚 **Scroll Library · 荣哥技能卷轴收藏馆**：GitHub 公开 SKILL.md 的分类 + 评级索引，按分类/评分浏览、预览、安装。
 - 🛡️ **Safety Radar · 安装前安全提示**：本地静态扫描 shell 执行 / 下载后直接执行 / 动态解码 / 提示注入 / 网络访问 / 凭据路径 / 过宽 `allowed-tools`，给出低/中/高风险与命中行号；同时解析 `license` 与来源信任级别（official / verified / community / local / unknown）。不联网、不上传、不执行。
-- 🔄 **Update Center · 更新与回滚**：`skills-lock.json` 记录来源 / 哈希 / 信任 / 许可证；检查更新时返回**内容 diff**；支持单条更新、一键全部更新（更新前自动备份到 `~/.dsh/skill-studio/backups/<skill>/`）与回滚。
+- 🔄 **Update Center · 更新与回滚**：`skills-lock.json` 记录来源 / 哈希 / 信任 / 许可证；检查更新时返回**内容 diff**；支持单条更新、一键全部更新（更新前自动备份到 `~/.dsh/ronge-adaptive-skill-archive/backups/<skill>/`）与回滚。
 - 🧪 **Recommendation Eval · 推荐评估**：推荐理由升级为结构化 `reasonsDetail`（名称 / 关键词 / 类别 / 经验四类）；内置离线金标集与 `npm run eval:recommend`（Recall@K）；面板可对推荐点「采用 / 👍 / 👎」，写入 `rec-feedback.json`。
 - 🧬 **Self-evolution · 自进化推荐**：推荐权重（名称 / 关键词 / 类别 / 经验）是可学习参数——按反馈归因（哪类理由带来的推荐被采用/好评/差评）以小步长自动微调，带上下界、样本门槛、变更日志与一键回滚；全部本地完成。面板「自进化」区可查看当前权重、成功率与最近调整。
 - 📊 **Experience+ · 经验深化**：跨会话成功率、平均耗时、连续失败；健康报告（长期不用 / 连续失败 / 从未使用 / 许可证未知）；经验支持 JSON 导出 / 导入。
@@ -52,7 +52,7 @@
 
 ## 两种智能模式
 
-面板顶部可切换（全局配置，写入 `~/.dsh/skill-studio/config.json`）：
+面板顶部可切换（全局配置，写入 `~/.dsh/ronge-adaptive-skill-archive/config.json`）：
 
 | 模式 | 行为 |
 |---|---|
@@ -67,13 +67,13 @@
 
 每次**主会话**任务成功完成、且使用了至少一个 skill，Host 会写一条经验：
 
-- `~/.dsh/skill-studio/experience.md` — 人读的 Markdown：时间、任务、Skills、结果摘要、耗时；
-- `~/.dsh/skill-studio/experience.json` — 机器读的统计：每个 skill 的 `uses` / `successes` / `lastUsed`。
+- `~/.dsh/ronge-adaptive-skill-archive/experience.md` — 人读的 Markdown：时间、任务、Skills、结果摘要、耗时；
+- `~/.dsh/ronge-adaptive-skill-archive/experience.json` — 机器读的统计：每个 skill 的 `uses` / `successes` / `lastUsed`。
 
 推荐算法会把熟练度算进去：`score += min(4, uses × 0.8)`，并在理由里显示「经验×N」。所以用得越多、越稳定有效的 skill，越容易被优先推荐——这就是「越做越好」的经验值。
 
 - **v1.5.0 起**：每 skill 额外统计成功率、平均耗时、连续失败（失败的顶层 turn 也记一次 uses + `failureStreak`）；面板「经验」页有统计表与健康报告（长期不用 / 连续失败 / 从未使用 / 许可证未知）。
-- **导出 / 导入**：`GET /skill-studio/experience/export` 返回带 `version: 2` 的 JSON；`POST /skill-studio/experience/import` 按 entry id 去重、按计数取较大值合并，适合换机或小团队共享经验。
+- **导出 / 导入**：`GET /ronge-adaptive-skill-archive/experience/export` 返回带 `version: 2` 的 JSON；`POST /ronge-adaptive-skill-archive/experience/import` 按 entry id 去重、按计数取较大值合并，适合换机或小团队共享经验。
 
 ```md
 ## 2026-10-28T12:00:00.000Z · 为宣传片写分镜
@@ -90,8 +90,8 @@
 推荐打分不再是写死的常数：`token / name / category / experience` 四个权重是**可学习参数**（默认 1 / 8 / 0.6 / 1，带上下界 0.5–2 / 4–14 / 0.2–1.5 / 0.4–2）。
 
 - **反馈归因**：每条推荐都带结构化 `reasonsDetail`；面板上的「复制 /skill」= adopt、👍/👎 = good/bad，会把结果记到**产生该推荐的 top 理由类型**上（经验条目的 👍/👎 也会按同一归因记录）。
-- **自评估**：累计 10 条反馈后自动评估一次；某类理由的 `good/(good+bad)` ≥ 70% 时该权重 ×1.1，≤ 40% 时 ×0.9，样本 < 8 不动；每次改动记录 `before/after/证据/原因` 到 `~/.dsh/skill-studio/evolution.json`（最多 50 条历史）。
-- **可解释 + 可回滚**：`GET /skill-studio/evolution` 查看权重、成功率、待评估反馈与最近调整；`POST /evolution/evaluate` 手动评估、`/evolution/rollback` 回滚上一次调整、`/evolution/reset` 重置默认。
+- **自评估**：累计 10 条反馈后自动评估一次；某类理由的 `good/(good+bad)` ≥ 70% 时该权重 ×1.1，≤ 40% 时 ×0.9，样本 < 8 不动；每次改动记录 `before/after/证据/原因` 到 `~/.dsh/ronge-adaptive-skill-archive/evolution.json`（最多 50 条历史）。
+- **可解释 + 可回滚**：`GET /ronge-adaptive-skill-archive/evolution` 查看权重、成功率、待评估反馈与最近调整；`POST /evolution/evaluate` 手动评估、`/evolution/rollback` 回滚上一次调整、`/evolution/reset` 重置默认。
 - **护栏**：全部本地、无网络/无模型；步长 10%、有上下界；不自动回滚、不删数据；冷启动（样本不足）完全不动权重。
 
 ## v1.6.1 修复（用户反馈）
@@ -111,17 +111,17 @@
 
 ## 更新中心（v1.5.0）
 
-- `~/.dsh/skill-studio/skills-lock.json`：记录每个已安装 skill 的 `url / repo / sha256 / trust / license / installedAt / updatedAt / previousSha256`。
-- `GET /skill-studio/discover/updates`：除了哈希变化，还返回 `diff: {added, removed, changedAtLine, lines[]}` 与远端 `license` / `risk`。
-- `POST /skill-studio/discover/update`（单条）、`POST /skill-studio/discover/update-all`（全部，单条失败不影响其他）、`POST /skill-studio/discover/rollback`（回滚到上一次备份）。
-- 覆盖前一定备份：`~/.dsh/skill-studio/backups/<skill>/<timestamp>.md`；回滚本身也会先备份当前版本。
+- `~/.dsh/ronge-adaptive-skill-archive/skills-lock.json`：记录每个已安装 skill 的 `url / repo / sha256 / trust / license / installedAt / updatedAt / previousSha256`。
+- `GET /ronge-adaptive-skill-archive/discover/updates`：除了哈希变化，还返回 `diff: {added, removed, changedAtLine, lines[]}` 与远端 `license` / `risk`。
+- `POST /ronge-adaptive-skill-archive/discover/update`（单条）、`POST /ronge-adaptive-skill-archive/discover/update-all`（全部，单条失败不影响其他）、`POST /ronge-adaptive-skill-archive/discover/rollback`（回滚到上一次备份）。
+- 覆盖前一定备份：`~/.dsh/ronge-adaptive-skill-archive/backups/<skill>/<timestamp>.md`；回滚本身也会先备份当前版本。
 - 边界不变：只拉 `raw.githubusercontent.com/**/SKILL.md`、≤256 KiB、不自动拉脚本/资源。
 
 ## 推荐评估与反馈（v1.5.0）
 
 - 推荐结果同时返回 `reasons`（旧字符串）与 `reasonsDetail`（结构化：`kind` = name / keyword / category / experience，附 `label`、`detail`、`weight`）。
 - 离线金标集：`test/fixtures/recommend-cases.json` + `test/fixtures/eval-skills.json`；`npm run eval:recommend` 输出 Recall@K（默认 K=4，阈值 0.75，可用 `EVAL_K` / `EVAL_THRESHOLD` 覆盖）。
-- 推荐反馈：`POST /skill-studio/recommend-feedback {skillName, verdict: adopt|good|bad}` → 写入 `rec-feedback.json`；面板上「复制 /skill」记 adopt，👍/👎 记质量反馈。它只做统计与展示，**不直接改推荐权重**（避免把点击率当成效果）。
+- 推荐反馈：`POST /ronge-adaptive-skill-archive/recommend-feedback {skillName, verdict: adopt|good|bad}` → 写入 `rec-feedback.json`；面板上「复制 /skill」记 adopt，👍/👎 记质量反馈。它只做统计与展示，**不直接改推荐权重**（避免把点击率当成效果）。
 
 ## 发现远程技能 / Discover
 
@@ -132,7 +132,7 @@
 - 安装时记录来源 URL、repo、SHA-256、信任级别到 `.skill-studio-source.json`；
 - 「检查更新」对比远程 SKILL.md 哈希，列出有更新的本地 skill；
 - 「刷新索引」用 GitHub API 重新抓取；可设 `GITHUB_TOKEN` 提高配额；
-- 自定义源：`~/.dsh/skill-studio/sources.json`，格式 `{"sources":[{"repo":"owner/repo","label":"...","trust":"community"}]}`。
+- 自定义源：`~/.dsh/ronge-adaptive-skill-archive/sources.json`，格式 `{"sources":[{"repo":"owner/repo","label":"...","trust":"community"}]}`。
 
 **安全边界**：只允许 `raw.githubusercontent.com/.../SKILL.md`；最大 256 KiB；只拉 SKILL.md，不自动拉脚本/资源；安装前必须预览确认；不自动覆盖已有 skill。
 
@@ -172,17 +172,17 @@
 
 | 方式 | 命令（在 Harness 里执行，profile 级、所有会话生效） | 适合 |
 |---|---|---|
-| **npm（推荐，v1.5.0 起）** | `plugin_manager install_bundle target=ronge-skill-studio@1.5.0` | 普通用户，一行安装、可升级 |
-| **GitHub** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-skill-studio.git#v1.5.0` | 想固定版本 / 审源码 |
-| **本地目录** | `plugin_manager install_bundle target=/absolute/path/to/ronge-skill-studio` | 开发、改代码 |
+| **npm（推荐，v1.5.0 起）** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@1.5.0` | 普通用户，一行安装、可升级 |
+| **GitHub** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v1.5.0` | 想固定版本 / 审源码 |
+| **本地目录** | `plugin_manager install_bundle target=/absolute/path/to/ronge-adaptive-skill-archive` | 开发、改代码 |
 
-> 版本是否已发布以 [npm](https://www.npmjs.com/package/ronge-skill-studio) 与 GitHub Releases 为准；未发布时请用本地目录方式安装。安装后打开任意会话，会话头部右侧会出现「技能」按钮，点开就是右侧抽屉。
+> 版本是否已发布以 [npm](https://www.npmjs.com/package/ronge-adaptive-skill-archive) 与 GitHub Releases 为准；未发布时请用本地目录方式安装。安装后打开任意会话，会话头部右侧会出现「技能」按钮，点开就是右侧抽屉。
 >
-> 包名固定为 `ronge-skill-studio`：client factory id 必须等于 package name（`npm run check` 会校验），改 scope 需要同时改 factory id 并重新发版。数据目录沿用兼容路径 `~/.dsh/skill-studio/`。
+> 包名固定为 `ronge-adaptive-skill-archive`：client factory id 必须等于 package name（`npm run check` 会校验），改 scope 需要同时改 factory id 并重新发版。数据目录沿用兼容路径 `~/.dsh/ronge-adaptive-skill-archive/`。
 
 ### 在 DSH 插件市场索引里被发现（可选）
 
-`docs/plugin-market.json` 是 DSH **format 1 插件市场索引**（已用官方 `@deepseek-ai/dsh-plugin-market-index` 校验通过，install target = `ronge-skill-studio@1.5.0`）：
+`docs/plugin-market.json` 是 DSH **format 1 插件市场索引**（已用官方 `@deepseek-ai/dsh-plugin-market-index` 校验通过，install target = `ronge-adaptive-skill-archive@1.5.0`）：
 
 1. 把该文件托管到可访问的 https URL（GitHub raw / Pages 均可）；
 2. 在 DSH 中启用自定义插件市场（experimental `plugin-market-bundle`），把该 URL 加为索引；
@@ -212,6 +212,8 @@ export DSH_TASK_CHIME_SOUND=/System/Library/Sounds/Ping.aiff
 
 ---
 
+> **v2.0.0 重命名**：包名/仓库从 `ronge-skill-studio` 改为 `ronge-adaptive-skill-archive`；HTTP 路由前缀改为 `/ronge-adaptive-skill-archive/*`。旧数据目录 `~/.dsh/skill-studio/` 会在首次启动时**自动复制**到 `~/.dsh/ronge-adaptive-skill-archive/`（旧目录不删除）；已安装 skill 的 `.skill-studio-source.json` 保持兼容。
+
 ## 数据来源与优先级
 
 | 优先级 | 来源 | 路径 |
@@ -231,28 +233,28 @@ export DSH_TASK_CHIME_SOUND=/System/Library/Sounds/Ping.aiff
 
 ```
 Host (index.js)
-  GET  /skill-studio/catalog.json?sessionId=...
+  GET  /ronge-adaptive-skill-archive/catalog.json?sessionId=...
        -> ctx.skills 会话级注册表 + 文件系统扫描
        -> Session 事件分析：最近用户消息、skill 工具调用、当前 turn
        -> 推荐打分（含经验加权）+ active/recent + 经验快照
-  POST /skill-studio/create
+  POST /ronge-adaptive-skill-archive/create
        -> ~/.dsh/skills/<name>/SKILL.md
-  POST /skill-studio/mode
-       -> ~/.dsh/skill-studio/config.json { mode: off|plan|immersive }
-  GET  /skill-studio/discover?q=...        -> 远程索引搜索
-  POST /skill-studio/discover/refresh      -> GitHub 索引刷新
-  GET  /skill-studio/discover/preview?url= -> SKILL.md 预览
-  POST /skill-studio/discover/install      -> 安装到 ~/.dsh/skills
-  GET  /skill-studio/discover/updates      -> 更新检查（含内容 diff / license / risk）
-  POST /skill-studio/discover/update       -> 应用单条更新（先备份，再覆盖）
-  POST /skill-studio/discover/update-all   -> 应用全部更新（单条失败不影响其他）
-  POST /skill-studio/discover/rollback     -> 回滚到上一次备份
-  POST /skill-studio/recommend-feedback    -> 推荐反馈 adopt / good / bad
-  GET  /skill-studio/experience/export     -> 导出经验（version 2）
-  POST /skill-studio/experience/import     -> 合并导入经验
-  GET  /skill-studio/health?cwd=...        -> 技能健康报告
-  GET  /skill-studio/tools?q=...           -> MCP registry 目录
-  GET  /skill-studio/library?q=&category=&minRating=&page= -> 卷轴馆索引
+  POST /ronge-adaptive-skill-archive/mode
+       -> ~/.dsh/ronge-adaptive-skill-archive/config.json { mode: off|plan|immersive }
+  GET  /ronge-adaptive-skill-archive/discover?q=...        -> 远程索引搜索
+  POST /ronge-adaptive-skill-archive/discover/refresh      -> GitHub 索引刷新
+  GET  /ronge-adaptive-skill-archive/discover/preview?url= -> SKILL.md 预览
+  POST /ronge-adaptive-skill-archive/discover/install      -> 安装到 ~/.dsh/skills
+  GET  /ronge-adaptive-skill-archive/discover/updates      -> 更新检查（含内容 diff / license / risk）
+  POST /ronge-adaptive-skill-archive/discover/update       -> 应用单条更新（先备份，再覆盖）
+  POST /ronge-adaptive-skill-archive/discover/update-all   -> 应用全部更新（单条失败不影响其他）
+  POST /ronge-adaptive-skill-archive/discover/rollback     -> 回滚到上一次备份
+  POST /ronge-adaptive-skill-archive/recommend-feedback    -> 推荐反馈 adopt / good / bad
+  GET  /ronge-adaptive-skill-archive/experience/export     -> 导出经验（version 2）
+  POST /ronge-adaptive-skill-archive/experience/import     -> 合并导入经验
+  GET  /ronge-adaptive-skill-archive/health?cwd=...        -> 技能健康报告
+  GET  /ronge-adaptive-skill-archive/tools?q=...           -> MCP registry 目录
+  GET  /ronge-adaptive-skill-archive/library?q=&category=&minRating=&page= -> 卷轴馆索引
   session/event 监听
        -> 主会话 turn/end completed：afplay + 写 experience.md/json
   ctx.systemPrompt.section('skill-studio')      -> 技能路由提示
@@ -290,7 +292,7 @@ Client (client.js)
 
 - 推荐分析**只在本机**完成，不调用外部模型/网络。
 - 安装前安全扫描同样**只在本机**完成：不联网、不上传、不执行 skill 内容，只读 SKILL.md 文本并给出启发式提示（不是安全保证）。
-- 经验 / 推荐反馈 / lock 文件全部落在 `~/.dsh/skill-studio/`：`experience.json/md`、`rec-feedback.json`、`skills-lock.json`、`backups/`；不写日志到外部。
+- 经验 / 推荐反馈 / lock 文件全部落在 `~/.dsh/ronge-adaptive-skill-archive/`：`experience.json/md`、`rec-feedback.json`、`skills-lock.json`、`backups/`；不写日志到外部。
 - 只读取当前会话的最近事件和项目根目录文件名；不上传、不写日志。
 - 新建技能只写入 `~/.dsh/skills/<kebab-case-name>/SKILL.md`，不覆盖已有目录。
 - 名称白名单：`^[a-z0-9]+(?:-[a-z0-9]+)*$`，拒绝 `/`、`..`、绝对路径。

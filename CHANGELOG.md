@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.0.0 — 2026-10-28
+
+- **BREAKING rename**: package/repo `ronge-skill-studio` → **`ronge-adaptive-skill-archive`**. Client factory id, cordis bundle id, HTTP route prefix (`/ronge-adaptive-skill-archive/*`), locale scope and system-prompt section ids all follow the new name.
+- **Data migration**: `~/.dsh/skill-studio/` is copied (old dir kept) to `~/.dsh/ronge-adaptive-skill-archive/` on first start; `experience.json/md`, `config.json`, `evolution.json`, `rec-feedback.json`, `skills-lock.json`, `backups/`, `remote-index.json` carry over. Installed skills' `.skill-studio-source.json` stays compatible.
+- Display name unchanged: Chinese 荣哥技能卷轴收藏馆（可沉浸式体验版本） / English Ronge's Adaptive Skill Cockpit (Immersive Edition).
+- All existing v1.6.1 fixes included (library crash, session switch, Chinese intros, self-evolution, safety scan, update center).
+
+
 ## v1.6.1 — 2026-10-28
 
 - **Fix: 「卷轴馆」tab 崩溃 / 再次点按钮打不开**：早期版本里 `renderLibrary` 定义在错误组件内，点卷轴馆会抛 ReferenceError 并让抽屉失去响应；本版把渲染移入 `SkillDrawer`，并新增 `DrawerErrorBoundary`——任何 tab 异常都只在抽屉内显示「重试/关闭」，不再影响面板按钮。

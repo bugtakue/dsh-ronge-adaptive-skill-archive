@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'ronge-skill-studio',
+  id: 'ronge-adaptive-skill-archive',
   factory(require) {
     const React = require('react')
     const h = React.createElement
@@ -331,7 +331,7 @@ window.__ModuleLoader__.load({
         return localeCtx.locale.subscribe(() => force((value) => value + 1))
       }, [])
       if (!localeCtx) return (key) => key
-      return localeCtx.locale.bind('skill-studio')
+      return localeCtx.locale.bind('ronge-adaptive-skill-archive')
     }
 
     function IconSkills(props) {
@@ -739,7 +739,7 @@ window.__ModuleLoader__.load({
           const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
           if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
           const suffix = params.toString() ? '?' + params.toString() : ''
-          const response = await fetch('/skill-studio/catalog.json' + suffix, {
+          const response = await fetch('/ronge-adaptive-skill-archive/catalog.json' + suffix, {
             cache: 'no-store',
             signal: controller.signal,
           })
@@ -831,7 +831,7 @@ window.__ModuleLoader__.load({
         if (!skillName || recoBusy) return
         setRecoBusy({ name: skillName, verdict })
         try {
-          const response = await fetch('/skill-studio/recommend-feedback', {
+          const response = await fetch('/ronge-adaptive-skill-archive/recommend-feedback', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ skillName, verdict, kind: kind || undefined }),
@@ -859,7 +859,7 @@ window.__ModuleLoader__.load({
         setModeBusy(true)
         setError(null)
         try {
-          const response = await fetch('/skill-studio/mode', {
+          const response = await fetch('/ronge-adaptive-skill-archive/mode', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ mode: target }),
@@ -878,7 +878,7 @@ window.__ModuleLoader__.load({
         if (!id || feedbackBusy) return
         setFeedbackBusy(true)
         try {
-          const response = await fetch('/skill-studio/feedback', {
+          const response = await fetch('/ronge-adaptive-skill-archive/feedback', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ id, rating }),
@@ -897,7 +897,7 @@ window.__ModuleLoader__.load({
         setRemoteLoading(true)
         setRemoteError(null)
         try {
-          const response = await fetch('/skill-studio/discover?q=' + encodeURIComponent(q || ''), {
+          const response = await fetch('/ronge-adaptive-skill-archive/discover?q=' + encodeURIComponent(q || ''), {
             cache: 'no-store',
           })
           const payload = await response.json().catch(() => ({}))
@@ -915,7 +915,7 @@ window.__ModuleLoader__.load({
         setToolsLoading(true)
         setToolsError(null)
         try {
-          const response = await fetch('/skill-studio/tools?q=' + encodeURIComponent(q || ''), {
+          const response = await fetch('/ronge-adaptive-skill-archive/tools?q=' + encodeURIComponent(q || ''), {
             cache: 'no-store',
           })
           const payload = await response.json().catch(() => ({}))
@@ -942,7 +942,7 @@ window.__ModuleLoader__.load({
           })
           const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
           if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
-          const response = await fetch('/skill-studio/library?' + params.toString(), { cache: 'no-store' })
+          const response = await fetch('/ronge-adaptive-skill-archive/library?' + params.toString(), { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setLibraryMeta({
@@ -965,7 +965,7 @@ window.__ModuleLoader__.load({
         setRemotePreview({ entry, content: '', loading: true, error: null })
         try {
           const response = await fetch(
-            '/skill-studio/discover/preview?url=' + encodeURIComponent(entry.url),
+            '/ronge-adaptive-skill-archive/discover/preview?url=' + encodeURIComponent(entry.url),
             { cache: 'no-store' },
           )
           const payload = await response.json().catch(() => ({}))
@@ -992,7 +992,7 @@ window.__ModuleLoader__.load({
       const installRemote = async (entry) => {
         setRemoteInstall({ name: entry.name, status: 'installing' })
         try {
-          const response = await fetch('/skill-studio/discover/install', {
+          const response = await fetch('/ronge-adaptive-skill-archive/discover/install', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ url: entry.url, trust: entry.trust }),
@@ -1012,7 +1012,7 @@ window.__ModuleLoader__.load({
 
       const checkUpdates = async (silent = false) => {
         try {
-          const response = await fetch('/skill-studio/discover/updates', { cache: 'no-store' })
+          const response = await fetch('/ronge-adaptive-skill-archive/discover/updates', { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setUpdates({ updates: payload.updates || [], checked: payload.checked || 0 })
@@ -1028,14 +1028,14 @@ window.__ModuleLoader__.load({
         setUpdateError(null)
         setUpdateNotice(null)
         try {
-          let endpoint = '/skill-studio/discover/update'
+          let endpoint = '/ronge-adaptive-skill-archive/discover/update'
           let body = { name }
           let doneKey = 'updateOk'
           if (kind === 'all') {
-            endpoint = '/skill-studio/discover/update-all'
+            endpoint = '/ronge-adaptive-skill-archive/discover/update-all'
             body = {}
           } else if (kind === 'rollback') {
-            endpoint = '/skill-studio/discover/rollback'
+            endpoint = '/ronge-adaptive-skill-archive/discover/rollback'
             doneKey = 'rollbackOk'
           }
           const response = await fetch(endpoint, {
@@ -1066,7 +1066,7 @@ window.__ModuleLoader__.load({
         setXpBusy('export')
         setXpStatus(null)
         try {
-          const response = await fetch('/skill-studio/experience/export', { cache: 'no-store' })
+          const response = await fetch('/ronge-adaptive-skill-archive/experience/export', { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           const data =
@@ -1123,7 +1123,7 @@ window.__ModuleLoader__.load({
         setXpBusy('import')
         setXpStatus(null)
         try {
-          const response = await fetch('/skill-studio/experience/import', {
+          const response = await fetch('/ronge-adaptive-skill-archive/experience/import', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ payload }),
@@ -1145,9 +1145,9 @@ window.__ModuleLoader__.load({
       const runEvolutionAction = async (action) => {
         if (evolutionBusy) return
         const endpoints = {
-          evaluate: '/skill-studio/evolution/evaluate',
-          rollback: '/skill-studio/evolution/rollback',
-          reset: '/skill-studio/evolution/reset',
+          evaluate: '/ronge-adaptive-skill-archive/evolution/evaluate',
+          rollback: '/ronge-adaptive-skill-archive/evolution/rollback',
+          reset: '/ronge-adaptive-skill-archive/evolution/reset',
         }
         const doneKeys = {
           evaluate: 'evolutionDone',
@@ -1190,7 +1190,7 @@ window.__ModuleLoader__.load({
         setCreateError(null)
         setCreatedPath(null)
         try {
-          const response = await fetch('/skill-studio/create', {
+          const response = await fetch('/ronge-adaptive-skill-archive/create', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(form),
@@ -2504,11 +2504,11 @@ window.__ModuleLoader__.load({
       apply(ctx) {
         localeCtx = ctx
         const localeDisposers = [
-          ctx.locale.register('skill-studio', 'zh', dictZh),
-          ctx.locale.register('skill-studio', 'zh-CN', dictZh),
-          ctx.locale.register('skill-studio', 'zh-Hans', dictZh),
-          ctx.locale.register('skill-studio', 'en', dictEn),
-          ctx.locale.register('skill-studio', 'en-US', dictEn),
+          ctx.locale.register('ronge-adaptive-skill-archive', 'zh', dictZh),
+          ctx.locale.register('ronge-adaptive-skill-archive', 'zh-CN', dictZh),
+          ctx.locale.register('ronge-adaptive-skill-archive', 'zh-Hans', dictZh),
+          ctx.locale.register('ronge-adaptive-skill-archive', 'en', dictEn),
+          ctx.locale.register('ronge-adaptive-skill-archive', 'en-US', dictEn),
         ]
         ctx.effect(() => () => {
           for (const dispose of localeDisposers) dispose()
@@ -2518,7 +2518,7 @@ window.__ModuleLoader__.load({
           ctx.slots.register(
             {
               name: 'conversation.session.header.utilities',
-              id: 'ronge-skill-studio',
+              id: 'ronge-adaptive-skill-archive',
               order: -3,
             },
             SkillButton,
@@ -2529,7 +2529,7 @@ window.__ModuleLoader__.load({
           ctx.slots.register(
             {
               name: 'shell.overlay',
-              id: 'ronge-skill-studio-drawer',
+              id: 'ronge-adaptive-skill-archive-drawer',
               order: 30,
             },
             SkillDrawer,

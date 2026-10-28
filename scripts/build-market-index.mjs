@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
-const repoUrl = 'https://github.com/bugtakue/ronge-skill-studio'
+const repoUrl = 'https://github.com/bugtakue/ronge-adaptive-skill-archive'
 
 // Keep the committed publish timestamp when the version is unchanged, so
 // regenerating the index is idempotent (CI checks that it is up to date).
