@@ -1,7 +1,7 @@
 {
   "name": "dsh-skill-studio",
-  "version": "0.3.0",
-  "description": "Skill Studio: context-aware skill recommendations with localized intros, plan/immersive modes, active-skill tracking, experience memory and a completion chime for DeepSeek Harness.",
+  "version": "1.0.0",
+  "description": "Skill Studio: context-aware skill recommendations with localized intros, plan/immersive modes, active-skill tracking, experience memory with feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -36,7 +36,8 @@
     "scripts/*.mjs"
   ],
   "scripts": {
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "dsh": {
     "bundle": {

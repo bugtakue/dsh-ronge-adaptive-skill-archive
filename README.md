@@ -1,5 +1,7 @@
 # Skill Studio · 技能工作室
 
+[![check](https://github.com/bugtakue/skill-studio/actions/workflows/check.yml/badge.svg)](https://github.com/bugtakue/skill-studio/actions/workflows/check.yml)
+
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
 一个 bundle，六个能力：
@@ -9,7 +11,7 @@
 - 🧭 **Smart Modes · 智能模式**：
   - **计划模式**：Agent 先给方案，**会先问你确认**，确认后再执行；
   - **沉浸模式**：**不询问**，根据上下文自动匹配 1–3 个 skill 并协同执行。
-- 📈 **Experience · 经验记忆**：每次主任务完成，自动把「任务 / 用了哪些 skill / 结果摘要」写进 `experience.md`；使用次数反过来提升推荐权重。
+- 📈 **Experience · 经验记忆**：每次主任务完成，自动把「任务 / 用了哪些 skill / 结果摘要」写进 `experience.md`；👍/👎 反馈会反过来调整推荐权重。
 - 🔔 **Done Chime · 完成提示音**：主任务完成时播放一声轻提示音；子智能体、fork 会话不响。
 - 🌐 **Localized intro · 双语简介**：根据上下文语言自动显示中文或英文的一句话简介，一眼看懂 skill 干什么。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
@@ -47,7 +49,7 @@
 | **计划模式 Plan** | 下一次任务开始前，Agent 先给出方案和 1–3 个推荐 skill，并**问你确认**；你确认后才执行。重点：**会问**。 |
 | **沉浸模式 Immersive** | **不询问**：Agent 根据上下文自动选 1–3 个 skill、组合并执行，最后说明用了哪些、为什么。重点：**不问**。 |
 
-> 计划模式 = 会先问；沉浸模式 = 不问直接做。两者都是 prompt 级默认行为，不是硬编码固定管线。
+> 默认模式是**计划模式**；可以在面板切换。计划模式 = 会先问；沉浸模式 = 不问直接做。两者都是 prompt 级默认行为，不是硬编码固定管线。
 
 ---
 
@@ -167,7 +169,6 @@ Client (client.js)
 - **静音时段 / 窗口失焦才响**：更多提示音策略。
 - **原生右侧栏 tab**：不再用抽屉，直接成为右侧栏的一页。
 - **快捷键**：`Cmd+Shift+S` 打开面板。
-- **推荐反馈**：👍/👎 记录本地偏好，逐步调权重。
 - **导出/安装**：从 URL/gist 安装一个 skill 到 `~/.dsh/skills`。
 
 ---
@@ -186,6 +187,7 @@ Client (client.js)
 
 ```bash
 npm run check     # client factory id 必须等于 package name
+npm test          # 推荐/语言检测/参数解析单元测试
 node --check index.js
 node --check client.js
 ```

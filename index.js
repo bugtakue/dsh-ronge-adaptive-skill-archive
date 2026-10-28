@@ -112,12 +112,12 @@ function detectLang(contextText, fallback) {
   const text = String(contextText || '')
   const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length
   const latin = (text.match(/[A-Za-z]/g) || []).length
-  if (cjk >= 20 && cjk >= latin * 0.2) return 'zh'
-  if (latin > cjk * 3) return 'en'
+  if (cjk >= 4 && cjk >= latin) return 'zh'
+  if (latin >= 4 && latin > cjk) return 'en'
   return fallback === 'zh' ? 'zh' : 'en'
 }
 
-let studioMode = 'off'
+let studioMode = 'plan'
 let memory = { version: 1, updatedAt: null, entries: [], skills: {} }
 let lastChimeAt = 0
 const turnStates = new Map()
@@ -147,7 +147,7 @@ function loadStudioState() {
     const config = JSON.parse(fs.readFileSync(modeFile(), 'utf8'))
     if (config && ['off', 'plan', 'immersive'].includes(config.mode)) studioMode = config.mode
   } catch {
-    studioMode = 'off'
+    studioMode = 'plan'
   }
   try {
     const saved = JSON.parse(fs.readFileSync(memoryFile(), 'utf8'))
@@ -215,6 +215,7 @@ function recordExperience(sessionId, header, state) {
   const task = (state.userTexts.find((text) => text && text.length > 1) || '').slice(0, 240)
   const outcome = (state.assistant || '').slice(0, 500)
   const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     time: new Date().toISOString(),
     sessionId: String(sessionId),
     cwd: header?.cwd || null,
@@ -226,15 +227,50 @@ function recordExperience(sessionId, header, state) {
   memory.entries.push(entry)
   if (memory.entries.length > 1000) memory.entries = memory.entries.slice(-1000)
   for (const name of skills) {
-    const previous = memory.skills[name] || { uses: 0, successes: 0, lastUsed: null }
+    const previous = memory.skills[name] || { uses: 0, successes: 0, good: 0, bad: 0, lastUsed: null }
     memory.skills[name] = {
       uses: previous.uses + 1,
       successes: previous.successes + 1,
+      good: previous.good || 0,
+      bad: previous.bad || 0,
       lastUsed: entry.time,
     }
   }
   saveMemory()
   appendMemoryMarkdown(entry)
+}
+
+function appendFeedbackMarkdown(entry, rating) {
+  try {
+    ensureStudioDir()
+    const file = memoryMarkdownFile()
+    if (!fs.existsSync(file)) return
+    fs.appendFileSync(
+      file,
+      `\n### 反馈 ${new Date().toISOString()}\n- Task: ${entry.task.slice(0, 60) || '未命名任务'}\n- Rating: ${rating === 'good' ? '👍' : '👎'}\n`,
+    )
+  } catch {
+    // Best-effort.
+  }
+}
+
+function recordFeedback(id, rating) {
+  const entry = memory.entries.find((candidate) => candidate.id === id)
+  if (!entry) return undefined
+  const previous = entry.rating
+  if (previous === rating) return entry
+  entry.rating = rating
+  for (const name of entry.skills) {
+    const stat = memory.skills[name] || { uses: 0, successes: 0, good: 0, bad: 0, lastUsed: null }
+    if (previous === 'good') stat.good = Math.max(0, (stat.good || 0) - 1)
+    if (previous === 'bad') stat.bad = Math.max(0, (stat.bad || 0) - 1)
+    if (rating === 'good') stat.good = (stat.good || 0) + 1
+    if (rating === 'bad') stat.bad = (stat.bad || 0) + 1
+    memory.skills[name] = stat
+  }
+  saveMemory()
+  appendFeedbackMarkdown(entry, rating)
+  return entry
 }
 
 function experienceSnapshot() {
@@ -649,8 +685,14 @@ function recommendSkills(skills, contextText, skillStats = {}) {
     }
     const stat = skillStats[skill.name]
     if (stat && stat.uses > 0) {
-      score += Math.min(4, stat.uses * 0.8)
-      if (reasons.length < 6) reasons.push(`经验×${stat.uses}`)
+      const good = Number(stat.good || 0)
+      const bad = Number(stat.bad || 0)
+      const completion = good + bad === 0 ? Math.min(2, (stat.successes || stat.uses) * 0.25) : 0
+      const boost = Math.min(4, good * 0.8) - Math.min(2, bad * 0.5) + completion
+      score += boost
+      if (reasons.length < 6) {
+        reasons.push(good > 0 ? `好评×${good}` : bad > 0 ? `差评×${bad}` : `完成×${stat.successes || stat.uses}`)
+      }
     }
     if (score > 0) {
       scored.push({
@@ -859,6 +901,23 @@ export function apply(ctx, config = {}) {
       }),
     }),
   )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/feedback',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const id = String(payload?.id ?? '')
+        const rating = String(payload?.rating ?? '')
+        if (!id) throw new HttpError(400, 'id is required')
+        if (rating !== 'good' && rating !== 'bad') throw new HttpError(400, 'rating must be good or bad')
+        const entry = recordFeedback(id, rating)
+        if (!entry) throw new HttpError(404, 'experience entry not found')
+        sendJson(res, 200, { ok: true, entry })
+      }),
+    }),
+  )
   ctx.effect(() => () => {
     for (const dispose of disposers) dispose()
   })
@@ -943,3 +1002,5 @@ export function apply(ctx, config = {}) {
     }),
   )
 }
+
+export { detectLang, localizeSkill, parseSkillArguments, recommendSkills, tokenize }

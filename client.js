@@ -38,6 +38,9 @@ window.__ModuleLoader__.load({
       immersiveHint: '不询问，自动执行',
       experience: '经验',
       lastTask: '上次：',
+      lastOutcome: '结果：',
+      good: '好用',
+      bad: '不好用',
       memory: '记忆文件',
       modeBusy: '切换中…',
       search: '搜索技能、描述、用途…',
@@ -97,6 +100,9 @@ window.__ModuleLoader__.load({
       immersiveHint: 'No ask, auto-execute',
       experience: 'Experience',
       lastTask: 'Last: ',
+      lastOutcome: 'Outcome: ',
+      good: 'Good',
+      bad: 'Bad',
       memory: 'Memory file',
       modeBusy: 'Switching…',
       search: 'Search skills, descriptions, usage…',
@@ -337,6 +343,7 @@ window.__ModuleLoader__.load({
       const [createError, setCreateError] = React.useState(null)
       const [createdPath, setCreatedPath] = React.useState(null)
       const [modeBusy, setModeBusy] = React.useState(false)
+      const [feedbackBusy, setFeedbackBusy] = React.useState(false)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
 
@@ -452,8 +459,26 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const submitCreate = async (event) => {
-        event.preventDefault()
+      const sendFeedback = async (id, rating) => {
+        if (!id || feedbackBusy) return
+        setFeedbackBusy(true)
+        try {
+          const response = await fetch('/skill-studio/feedback', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id, rating }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          await load(state.sessionId, true)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setFeedbackBusy(false)
+        }
+      }
+
+      const submitCreate = async (event) => {        event.preventDefault()
         setCreateBusy(true)
         setCreateError(null)
         setCreatedPath(null)
@@ -590,17 +615,54 @@ window.__ModuleLoader__.load({
             : null,
           experience && experience.topSkills && experience.topSkills.length
             ? h(
-                'div',
-                { className: 'sf-xp', title: experience.path || '' },
-                h('span', { className: 'sf-xp-label' }, t('experience')),
-                experience.topSkills.slice(0, 5).map((stat) =>
-                  h('span', { key: stat.name, className: 'sf-xp-chip' }, stat.name + ' ×' + stat.uses),
+                React.Fragment,
+                null,
+                h(
+                  'div',
+                  { className: 'sf-xp', title: experience.path || '' },
+                  h('span', { className: 'sf-xp-label' }, t('experience')),
+                  experience.topSkills.slice(0, 5).map((stat) =>
+                    h('span', { key: stat.name, className: 'sf-xp-chip' }, stat.name + ' ×' + stat.uses),
+                  ),
+                  experience.recent && experience.recent[0]
+                    ? h(
+                        'span',
+                        { className: 'sf-xp-last' },
+                        t('lastTask') + String(experience.recent[0].task || '').slice(0, 36),
+                      )
+                    : null,
                 ),
-                experience.recent && experience.recent[0]
+                experience.recent && experience.recent[0] && experience.recent[0].outcome
                   ? h(
-                      'span',
-                      { className: 'sf-xp-last' },
-                      t('lastTask') + String(experience.recent[0].task || '').slice(0, 36),
+                      'div',
+                      { className: 'sf-feedback' },
+                      h(
+                        'span',
+                        { className: 'sf-feedback-outcome', title: experience.recent[0].outcome },
+                        t('lastOutcome') + String(experience.recent[0].outcome).slice(0, 90),
+                      ),
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className:
+                            experience.recent[0].rating === 'good' ? 'sf-fb sf-fb-active' : 'sf-fb',
+                          disabled: feedbackBusy,
+                          onClick: () => sendFeedback(experience.recent[0].id, 'good'),
+                        },
+                        '👍 ' + t('good'),
+                      ),
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className:
+                            experience.recent[0].rating === 'bad' ? 'sf-fb sf-fb-active' : 'sf-fb',
+                          disabled: feedbackBusy,
+                          onClick: () => sendFeedback(experience.recent[0].id, 'bad'),
+                        },
+                        '👎 ' + t('bad'),
+                      ),
                     )
                   : null,
               )
@@ -765,6 +827,12 @@ window.__ModuleLoader__.load({
 .sf-xp-label{color:var(--dsw-alias-state-success-primary);font-size:11px;font-weight:600;margin-right:2px}
 .sf-xp-chip{padding:2px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
 .sf-xp-last{color:var(--dsw-alias-label-secondary);font-size:10px;opacity:.85;overflow-wrap:anywhere}
+.sf-feedback{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
+.sf-feedback-outcome{color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.45;max-width:100%;overflow-wrap:anywhere}
+.sf-fb{padding:2px 8px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:10px;cursor:pointer}
+.sf-fb:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
+.sf-fb-active{color:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-2)}
+.sf-fb:disabled{opacity:.55;cursor:default}
 .sf-active{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
 .sf-active-label{color:var(--dsw-alias-brand-primary);font-size:11px;font-weight:600;margin-right:2px}
 .sf-active-chip{padding:2px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
