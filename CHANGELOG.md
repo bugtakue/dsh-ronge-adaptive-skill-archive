@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.0 — 2026-10-28
+
+- **Discover**: remote skill search over a curated GitHub index (`anthropics/skills` built in), SKILL.md preview, install with source metadata + SHA-256, update checks, and index refresh via the GitHub API.
+- **Tools**: browse the official MCP registry separately from skills.
+- Sources config at `~/.dsh/skill-studio/sources.json`; `GITHUB_TOKEN` support for higher API quota.
+- Security limits: raw.githubusercontent.com/SKILL.md only, 256 KiB max, no automatic assets, no overwrite.
+
 ## v1.0.1 — 2026-10-28
 
 - Renamed the project to **ronge-skill-studio** (Ronge Skill Studio).

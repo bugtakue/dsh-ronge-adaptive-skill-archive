@@ -43,6 +43,29 @@ window.__ModuleLoader__.load({
       bad: '不好用',
       memory: '记忆文件',
       modeBusy: '切换中…',
+      tabSkills: '技能',
+      tabDiscover: '发现',
+      tabTools: '工具',
+      discoverTitle: '发现远程技能',
+      toolsTitle: 'MCP / Tools 目录',
+      searchBtn: '搜索',
+      searchRemote: '搜索远程技能…',
+      searchTools: '搜索 MCP 服务器…',
+      refreshIndex: '刷新索引',
+      checkUpdates: '检查更新',
+      install: '安装',
+      installing: '安装中…',
+      installed: '已安装',
+      preview: '预览',
+      noRemote: '没有远程结果',
+      noTools: '没有 MCP 结果',
+      remoteHint: '来自精选 GitHub 源；只拉取 SKILL.md',
+      toolsHint: '来自 MCP 官方 registry；工具不是 skill',
+      updatesFound: '个更新',
+      noUpdates: '暂无更新',
+      source: '来源',
+      versionLabel: '版本',
+      repoLabel: '仓库',
       search: '搜索技能、描述、用途…',
       refresh: '刷新',
       close: '关闭',
@@ -105,6 +128,29 @@ window.__ModuleLoader__.load({
       bad: 'Bad',
       memory: 'Memory file',
       modeBusy: 'Switching…',
+      tabSkills: 'Skills',
+      tabDiscover: 'Discover',
+      tabTools: 'Tools',
+      discoverTitle: 'Discover remote skills',
+      toolsTitle: 'MCP / Tools directory',
+      searchBtn: 'Search',
+      searchRemote: 'Search remote skills…',
+      searchTools: 'Search MCP servers…',
+      refreshIndex: 'Refresh index',
+      checkUpdates: 'Check updates',
+      install: 'Install',
+      installing: 'Installing…',
+      installed: 'Installed',
+      preview: 'Preview',
+      noRemote: 'No remote results',
+      noTools: 'No MCP results',
+      remoteHint: 'From curated GitHub sources; SKILL.md only',
+      toolsHint: 'From the official MCP registry; tools are not skills',
+      updatesFound: 'updates',
+      noUpdates: 'Up to date',
+      source: 'Source',
+      versionLabel: 'Version',
+      repoLabel: 'Repo',
       search: 'Search skills, descriptions, usage…',
       refresh: 'Refresh',
       close: 'Close',
@@ -344,6 +390,18 @@ window.__ModuleLoader__.load({
       const [createdPath, setCreatedPath] = React.useState(null)
       const [modeBusy, setModeBusy] = React.useState(false)
       const [feedbackBusy, setFeedbackBusy] = React.useState(false)
+      const [view, setView] = React.useState('skills')
+      const [remoteQuery, setRemoteQuery] = React.useState('')
+      const [remoteResults, setRemoteResults] = React.useState([])
+      const [remoteLoading, setRemoteLoading] = React.useState(false)
+      const [remoteError, setRemoteError] = React.useState(null)
+      const [remotePreview, setRemotePreview] = React.useState(null)
+      const [remoteInstall, setRemoteInstall] = React.useState(null)
+      const [updates, setUpdates] = React.useState(null)
+      const [toolsQuery, setToolsQuery] = React.useState('')
+      const [toolsResults, setToolsResults] = React.useState([])
+      const [toolsLoading, setToolsLoading] = React.useState(false)
+      const [toolsError, setToolsError] = React.useState(null)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
 
@@ -478,6 +536,100 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const loadRemote = async (q = remoteQuery) => {
+        setRemoteLoading(true)
+        setRemoteError(null)
+        try {
+          const response = await fetch('/skill-studio/discover?q=' + encodeURIComponent(q || ''), {
+            cache: 'no-store',
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemoteResults(Array.isArray(payload.entries) ? payload.entries : [])
+        } catch (err) {
+          setRemoteError(err instanceof Error ? err.message : String(err))
+          setRemoteResults([])
+        } finally {
+          setRemoteLoading(false)
+        }
+      }
+
+      const loadTools = async (q = toolsQuery) => {
+        setToolsLoading(true)
+        setToolsError(null)
+        try {
+          const response = await fetch('/skill-studio/tools?q=' + encodeURIComponent(q || ''), {
+            cache: 'no-store',
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setToolsResults(Array.isArray(payload.servers) ? payload.servers : [])
+        } catch (err) {
+          setToolsError(err instanceof Error ? err.message : String(err))
+          setToolsResults([])
+        } finally {
+          setToolsLoading(false)
+        }
+      }
+
+      const openRemotePreview = async (entry) => {
+        setRemotePreview({ entry, content: '', loading: true, error: null })
+        try {
+          const response = await fetch(
+            '/skill-studio/discover/preview?url=' + encodeURIComponent(entry.url),
+            { cache: 'no-store' },
+          )
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemotePreview({ entry, content: payload.content || '', loading: false, error: null })
+        } catch (err) {
+          setRemotePreview({
+            entry,
+            content: '',
+            loading: false,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        }
+      }
+
+      const installRemote = async (entry) => {
+        setRemoteInstall({ name: entry.name, status: 'installing' })
+        try {
+          const response = await fetch('/skill-studio/discover/install', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ url: entry.url, trust: entry.trust }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemoteInstall({ name: entry.name, status: 'installed', path: payload.path })
+          await load(state.sessionId, true)
+        } catch (err) {
+          setRemoteInstall({
+            name: entry.name,
+            status: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          })
+        }
+      }
+
+      const checkUpdates = async () => {
+        try {
+          const response = await fetch('/skill-studio/discover/updates', { cache: 'no-store' })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setUpdates({ updates: payload.updates || [], checked: payload.checked || 0 })
+        } catch (err) {
+          setRemoteError(err instanceof Error ? err.message : String(err))
+        }
+      }
+
+      const changeView = (next) => {
+        setView(next)
+        if (next === 'discover' && remoteResults.length === 0) loadRemote('')
+        if (next === 'tools' && toolsResults.length === 0) loadTools('')
+      }
+
       const submitCreate = async (event) => {        event.preventDefault()
         setCreateBusy(true)
         setCreateError(null)
@@ -506,6 +658,192 @@ window.__ModuleLoader__.load({
       }
 
       const close = () => store.set({ open: false })
+
+      const renderDiscover = () =>
+        h(
+          React.Fragment,
+          null,
+          h(
+            'div',
+            { className: 'sf-subhead' },
+            h('button', { type: 'button', className: 'sf-icon-btn', onClick: () => setView('skills') }, '←'),
+            h('strong', null, t('discoverTitle')),
+            h(
+              'button',
+              { type: 'button', className: 'sf-secondary', onClick: () => loadRemote(remoteQuery) },
+              t('refreshIndex'),
+            ),
+            h(
+              'button',
+              { type: 'button', className: 'sf-secondary', onClick: checkUpdates },
+              t('checkUpdates'),
+            ),
+          ),
+          h(
+            'div',
+            { className: 'sf-toolbar' },
+            h('input', {
+              className: 'sf-input',
+              type: 'search',
+              value: remoteQuery,
+              placeholder: t('searchRemote'),
+              onChange: (event) => setRemoteQuery(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') loadRemote(remoteQuery)
+              },
+            }),
+            h('button', { type: 'button', className: 'sf-secondary', onClick: () => loadRemote(remoteQuery) }, t('searchBtn')),
+          ),
+          h('div', { className: 'sf-subhint' }, t('remoteHint')),
+          updates
+            ? h(
+                'div',
+                { className: 'sf-update-note' },
+                updates.updates.length
+                  ? updates.updates.length + ' ' + t('updatesFound') + ': ' + updates.updates.map((item) => item.name).join(', ')
+                  : t('noUpdates'),
+              )
+            : null,
+          remoteInstall
+            ? h(
+                'div',
+                { className: 'sf-install-note' },
+                remoteInstall.name + ': ' +
+                  (remoteInstall.status === 'installing'
+                    ? t('installing')
+                    : remoteInstall.status === 'installed'
+                      ? t('installed') + ' ' + (remoteInstall.path || '')
+                      : remoteInstall.error || ''),
+              )
+            : null,
+          remoteLoading ? h('div', { className: 'sf-empty' }, t('loading')) : null,
+          remoteError ? h('div', { className: 'sf-empty sf-error' }, t('error') + ': ' + remoteError) : null,
+          !remoteLoading && !remoteError && remoteResults.length === 0
+            ? h('div', { className: 'sf-empty' }, t('noRemote'))
+            : null,
+          h(
+            'div',
+            { className: 'sf-list' },
+            remoteResults.map((entry) =>
+              h(
+                'div',
+                { className: 'sf-remote-card', key: entry.url || entry.name },
+                h(
+                  'div',
+                  { className: 'sf-remote-head' },
+                  h('strong', { className: 'sf-name' }, entry.name),
+                  h('span', { className: 'sf-source' }, entry.trust || entry.sourceLabel || t('source')),
+                ),
+                h('p', { className: 'sf-desc' }, entry.description || ''),
+                h('div', { className: 'sf-remote-meta' }, (entry.repo || '') + ' · ' + (entry.path || '')),
+                h(
+                  'div',
+                  { className: 'sf-remote-actions' },
+                  h('button', { type: 'button', className: 'sf-secondary', onClick: () => openRemotePreview(entry) }, t('preview')),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-primary',
+                      disabled: entry.installed,
+                      onClick: () => installRemote(entry),
+                    },
+                    entry.installed ? t('installed') : t('install'),
+                  ),
+                ),
+              ),
+            ),
+            remotePreview
+              ? h(
+                  'div',
+                  { className: 'sf-preview' },
+                  h(
+                    'div',
+                    { className: 'sf-preview-head' },
+                    h('strong', null, remotePreview.entry.name),
+                    h('button', { type: 'button', className: 'sf-icon-btn', onClick: () => setRemotePreview(null) }, '✕'),
+                  ),
+                  remotePreview.loading
+                    ? h('div', { className: 'sf-empty' }, t('loading'))
+                    : remotePreview.error
+                      ? h('div', { className: 'sf-empty sf-error' }, remotePreview.error)
+                      : h(
+                          'pre',
+                          { className: 'sf-preview-code' },
+                          String(remotePreview.content || '').slice(0, 6000),
+                        ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-primary',
+                      onClick: () => installRemote(remotePreview.entry),
+                    },
+                    t('install'),
+                  ),
+                )
+              : null,
+          ),
+        )
+
+      const renderTools = () =>
+        h(
+          React.Fragment,
+          null,
+          h(
+            'div',
+            { className: 'sf-subhead' },
+            h('button', { type: 'button', className: 'sf-icon-btn', onClick: () => setView('skills') }, '←'),
+            h('strong', null, t('toolsTitle')),
+          ),
+          h(
+            'div',
+            { className: 'sf-toolbar' },
+            h('input', {
+              className: 'sf-input',
+              type: 'search',
+              value: toolsQuery,
+              placeholder: t('searchTools'),
+              onChange: (event) => setToolsQuery(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') loadTools(toolsQuery)
+              },
+            }),
+            h('button', { type: 'button', className: 'sf-secondary', onClick: () => loadTools(toolsQuery) }, t('searchBtn')),
+          ),
+          h('div', { className: 'sf-subhint' }, t('toolsHint')),
+          toolsLoading ? h('div', { className: 'sf-empty' }, t('loading')) : null,
+          toolsError ? h('div', { className: 'sf-empty sf-error' }, t('error') + ': ' + toolsError) : null,
+          !toolsLoading && !toolsError && toolsResults.length === 0
+            ? h('div', { className: 'sf-empty' }, t('noTools'))
+            : null,
+          h(
+            'div',
+            { className: 'sf-list' },
+            toolsResults.map((server) =>
+              h(
+                'div',
+                { className: 'sf-remote-card', key: server.name },
+                h(
+                  'div',
+                  { className: 'sf-remote-head' },
+                  h('strong', { className: 'sf-name' }, server.title || server.name),
+                  h('span', { className: 'sf-source' }, server.version || ''),
+                ),
+                h('p', { className: 'sf-desc' }, server.description || ''),
+                h('div', { className: 'sf-remote-meta' }, server.name),
+                server.repo
+                  ? h(
+                      'a',
+                      { className: 'sf-remote-link', href: server.repo, target: '_blank', rel: 'noreferrer' },
+                      t('repoLabel') + ': ' + server.repo,
+                    )
+                  : null,
+              ),
+            ),
+          ),
+        )
+
 
       return h(
         React.Fragment,
@@ -554,6 +892,37 @@ window.__ModuleLoader__.load({
                 },
                 h(IconClose, null),
               ),
+            ),
+          ),
+          h(
+            'div',
+            { className: 'sf-tabs' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: view === 'skills' ? 'sf-tab sf-tab-active' : 'sf-tab',
+                onClick: () => setView('skills'),
+              },
+              t('tabSkills'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: view === 'discover' ? 'sf-tab sf-tab-active' : 'sf-tab',
+                onClick: () => changeView('discover'),
+              },
+              t('tabDiscover'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: view === 'tools' ? 'sf-tab sf-tab-active' : 'sf-tab',
+                onClick: () => changeView('tools'),
+              },
+              t('tabTools'),
             ),
           ),
           h(
@@ -797,6 +1166,13 @@ window.__ModuleLoader__.load({
                   '+ ' + t('create'),
                 ),
           ),
+          view !== 'skills'
+            ? h(
+                'div',
+                { className: 'sf-subview' },
+                view === 'discover' ? renderDiscover() : renderTools(),
+              )
+            : null,
         ),
       )
     }
@@ -815,6 +1191,26 @@ window.__ModuleLoader__.load({
 .sf-head-actions{display:flex;gap:4px}
 .sf-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}
 .sf-icon-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+.sf-tabs{display:flex;gap:4px;padding:8px 18px 0}
+.sf-tab{padding:5px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;cursor:pointer}
+.sf-tab:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2)}
+.sf-tab-active{color:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2)}
+.sf-subview{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1)}
+.sf-subhead{display:flex;align-items:center;gap:8px;padding:14px 14px 8px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.sf-subhead strong{flex:1;font-size:14px}
+.sf-subhead .sf-secondary{height:26px;font-size:10px;padding:0 8px}
+.sf-subhint{padding:0 18px 6px;color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.5}
+.sf-remote-card{padding:10px;margin-bottom:8px;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;background:var(--dsw-alias-bg-layer-2)}
+.sf-remote-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sf-remote-meta{color:var(--dsw-alias-label-secondary);font-size:10px;margin-top:4px;overflow-wrap:anywhere}
+.sf-remote-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.sf-remote-actions .sf-secondary,.sf-remote-actions .sf-primary{height:26px;font-size:10px;padding:0 8px}
+.sf-remote-link{display:block;color:var(--dsw-alias-brand-primary);font-size:10px;margin-top:4px;overflow-wrap:anywhere}
+.sf-preview{margin-top:10px;padding:10px;border:1px solid var(--dsw-alias-brand-primary);border-radius:10px;background:var(--dsw-alias-bg-layer-2)}
+.sf-preview-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.sf-preview-code{max-height:240px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.5;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-base);padding:8px;border-radius:6px;margin:0 0 8px}
+.sf-update-note,.sf-install-note{padding:0 18px 8px;font-size:10px;color:var(--dsw-alias-label-secondary);line-height:1.5;overflow-wrap:anywhere}
+.sf-install-note{color:var(--dsw-alias-state-success-primary)}
 .sf-toolbar{display:flex;align-items:center;gap:10px;padding:12px 18px}
 .sf-modebar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 18px 8px}
 .sf-mode-label{color:var(--dsw-alias-label-secondary);font-size:10px;margin-right:2px}

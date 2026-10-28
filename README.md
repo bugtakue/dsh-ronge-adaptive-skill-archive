@@ -4,7 +4,7 @@
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
-一个 bundle，六个能力：
+一个 bundle，八个能力：
 
 - 🧠 **Skill Radar · 智能推荐**：根据当前会话最近的内容和项目目录，给技能打分排序，显示 Top 4 与匹配原因。
 - 🟢 **Now Using · 正在使用**：从会话的 `skill` 工具调用里读出当前 turn 正在用的技能；不在运行时显示「最近使用」。
@@ -14,6 +14,8 @@
 - 📈 **Experience · 经验记忆**：每次主任务完成，自动把「任务 / 用了哪些 skill / 结果摘要」写进 `experience.md`；👍/👎 反馈会反过来调整推荐权重。
 - 🔔 **Done Chime · 完成提示音**：主任务完成时播放一声轻提示音；子智能体、fork 会话不响。
 - 🌐 **Localized intro · 双语简介**：根据上下文语言自动显示中文或英文的一句话简介，一眼看懂 skill 干什么。
+- 🌐 **Discover · 远程发现**：从精选 GitHub 源搜索 SKILL.md，预览后安装；记录来源/哈希，支持更新检查。
+- 🧰 **Tools · MCP 目录**：浏览官方 MCP registry 里的服务器；工具和 skill 分开展示。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
 
 ![技能入口](docs/header-button.png)
@@ -69,6 +71,29 @@
 - Session: session-...
 - Duration: 320s
 ```
+
+---
+
+## 发现远程技能 / Discover
+
+面板「发现」页：
+
+- 搜索内置精选索引（目前含 `anthropics/skills` 的 20 个官方 skill）；
+- 预览 SKILL.md 全文后，点「安装」写入 `~/.dsh/skills/<name>/`；
+- 安装时记录来源 URL、repo、SHA-256、信任级别到 `.skill-studio-source.json`；
+- 「检查更新」对比远程 SKILL.md 哈希，列出有更新的本地 skill；
+- 「刷新索引」用 GitHub API 重新抓取；可设 `GITHUB_TOKEN` 提高配额；
+- 自定义源：`~/.dsh/skill-studio/sources.json`，格式 `{"sources":[{"repo":"owner/repo","label":"...","trust":"community"}]}`。
+
+**安全边界**：只允许 `raw.githubusercontent.com/.../SKILL.md`；最大 256 KiB；只拉 SKILL.md，不自动拉脚本/资源；安装前必须预览确认；不自动覆盖已有 skill。
+
+## MCP / Tools 目录
+
+面板「工具」页读取 **MCP 官方 registry**（`registry.modelcontextprotocol.io`）：
+
+- 搜索服务器名称/描述；
+- 展示版本、描述、仓库链接；
+- **工具不是 skill**：这里只做发现，不自动安装/配置 MCP Server。
 
 ---
 
@@ -140,6 +165,12 @@ Host (index.js)
        -> ~/.dsh/skills/<name>/SKILL.md
   POST /skill-studio/mode
        -> ~/.dsh/skill-studio/config.json { mode: off|plan|immersive }
+  GET  /skill-studio/discover?q=...        -> 远程索引搜索
+  POST /skill-studio/discover/refresh      -> GitHub 索引刷新
+  GET  /skill-studio/discover/preview?url= -> SKILL.md 预览
+  POST /skill-studio/discover/install      -> 安装到 ~/.dsh/skills
+  GET  /skill-studio/discover/updates      -> 更新检查
+  GET  /skill-studio/tools?q=...           -> MCP registry 目录
   session/event 监听
        -> 主会话 turn/end completed：afplay + 写 experience.md/json
   ctx.systemPrompt.section('skill-studio')      -> 技能路由提示
@@ -169,7 +200,6 @@ Client (client.js)
 - **静音时段 / 窗口失焦才响**：更多提示音策略。
 - **原生右侧栏 tab**：不再用抽屉，直接成为右侧栏的一页。
 - **快捷键**：`Cmd+Shift+S` 打开面板。
-- **导出/安装**：从 URL/gist 安装一个 skill 到 `~/.dsh/skills`。
 
 ---
 

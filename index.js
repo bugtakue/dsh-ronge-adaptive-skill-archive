@@ -11,12 +11,15 @@
  * A filesystem scan is the fallback for agentless requests.
  */
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 export const inject = ['webServer', 'skills']
 
+const PACKAGE_DIR = path.dirname(fileURLToPath(import.meta.url))
 const DEFAULT_CHIME = '/System/Library/Sounds/Glass.aiff'
 const CHIME_COOLDOWN_MS = 1500
 
@@ -286,6 +289,295 @@ function experienceSnapshot() {
   }
 }
 
+
+const SOURCE_META_FILE = '.skill-studio-source.json'
+const MCP_REGISTRY_URL = 'https://registry.modelcontextprotocol.io/v0/servers'
+
+function remoteCacheFile() {
+  return path.join(studioDir(), 'remote-index.json')
+}
+
+function sourcesFile() {
+  return path.join(studioDir(), 'sources.json')
+}
+
+function readJsonFile(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return fallback
+  }
+}
+
+function writeJsonFile(file, value) {
+  ensureStudioDir()
+  fs.writeFileSync(file, JSON.stringify(value, null, 2))
+}
+
+function loadRemoteSources() {
+  const fallback = {
+    sources: [{ repo: 'anthropics/skills', label: 'Anthropic Skills', trust: 'official' }],
+  }
+  const configured = readJsonFile(sourcesFile(), null)
+  if (configured && Array.isArray(configured.sources) && configured.sources.length) {
+    return configured.sources
+      .filter((source) => source && typeof source.repo === 'string' && source.repo.includes('/'))
+      .slice(0, 5)
+  }
+  return fallback.sources
+}
+
+function loadBundledRemote() {
+  const file = path.join(PACKAGE_DIR, 'sources', 'anthropic-skills.json')
+  const data = readJsonFile(file, null)
+  if (!data || !Array.isArray(data.entries)) return { entries: [], cachedAt: null, label: 'Bundled index' }
+  return {
+    entries: data.entries.map((entry) => ({
+      ...entry,
+      sourceLabel: 'Anthropic Skills',
+      trust: entry.trust || 'official',
+    })),
+    cachedAt: data.fetchedAt || null,
+    label: 'Bundled index',
+  }
+}
+
+function loadRemoteIndex() {
+  const cached = readJsonFile(remoteCacheFile(), null)
+  if (cached && Array.isArray(cached.entries) && cached.entries.length) {
+    return { entries: cached.entries, cachedAt: cached.fetchedAt || null, label: 'Remote cache' }
+  }
+  return loadBundledRemote()
+}
+
+function sha256(text) {
+  return createHash('sha256').update(String(text)).digest('hex')
+}
+
+function normalizeRemoteEntry(entry, source) {
+  const description = String(entry.description || '').replace(/\s+/g, ' ').trim()
+  const whenToUse = String(entry.whenToUse || '').replace(/\s+/g, ' ').trim()
+  return {
+    name: entry.name,
+    description,
+    whenToUse: whenToUse || null,
+    repo: entry.repo || source.repo,
+    path: entry.path || '',
+    url: entry.url,
+    trust: source.trust || 'community',
+    sourceLabel: source.label || source.repo,
+  }
+}
+
+async function refreshRemoteIndex() {
+  const sources = loadRemoteSources()
+  const entries = []
+  const errors = []
+  const token = process.env.GITHUB_TOKEN || ''
+  for (const source of sources) {
+    try {
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'ronge-skill-studio',
+      }
+      if (token) headers.Authorization = 'Bearer ' + token
+      const repoResponse = await fetch('https://api.github.com/repos/' + source.repo, {
+        headers,
+        signal: AbortSignal.timeout(15000),
+      })
+      if (!repoResponse.ok) throw new Error('GitHub repo ' + repoResponse.status)
+      const repoInfo = await repoResponse.json()
+      const branch = repoInfo.default_branch || 'main'
+      const treeResponse = await fetch(
+        'https://api.github.com/repos/' + source.repo + '/git/trees/' + branch + '?recursive=1',
+        { headers, signal: AbortSignal.timeout(20000) },
+      )
+      if (!treeResponse.ok) throw new Error('GitHub tree ' + treeResponse.status)
+      const tree = await treeResponse.json()
+      const paths = (tree.tree || [])
+        .filter((item) => item.type === 'blob' && item.path.endsWith('SKILL.md'))
+        .slice(0, 80)
+      for (const item of paths) {
+        try {
+          const rawUrl =
+            'https://raw.githubusercontent.com/' +
+            source.repo +
+            '/' +
+            branch +
+            '/' +
+            item.path
+          const response = await fetch(rawUrl, {
+            headers: { 'User-Agent': 'ronge-skill-studio' },
+            signal: AbortSignal.timeout(15000),
+          })
+          if (!response.ok) continue
+          const text = await response.text()
+          if (text.length > 262144) continue
+          const front = parseFrontmatter(text)
+          const fallbackName = item.path.split('/').slice(-2, -1)[0] || 'skill'
+          const name = front.name || fallbackName
+          if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) continue
+          entries.push(
+            normalizeRemoteEntry(
+              {
+                name,
+                description: front.description || '',
+                whenToUse: front.whenToUse || front.when_to_use || '',
+                repo: source.repo,
+                path: item.path,
+                url: rawUrl,
+              },
+              source,
+            ),
+          )
+        } catch {
+          // Skip one unreadable skill; keep the rest of the index.
+        }
+      }
+    } catch (error) {
+      errors.push(source.repo + ': ' + (error instanceof Error ? error.message : String(error)))
+    }
+  }
+  if (entries.length === 0) {
+    throw new HttpError(502, 'Remote index refresh failed: ' + (errors.join('; ') || 'no entries'))
+  }
+  const payload = {
+    fetchedAt: new Date().toISOString(),
+    sources,
+    entries,
+    errors,
+  }
+  writeJsonFile(remoteCacheFile(), payload)
+  return payload
+}
+
+function validateRemoteUrl(raw) {
+  let url
+  try {
+    url = new URL(String(raw))
+  } catch {
+    throw new HttpError(400, 'invalid remote url')
+  }
+  if (url.protocol !== 'https:' || url.hostname !== 'raw.githubusercontent.com') {
+    throw new HttpError(400, 'remote url must be a raw.githubusercontent.com SKILL.md')
+  }
+  if (!url.pathname.endsWith('/SKILL.md')) {
+    throw new HttpError(400, 'remote url must point to a SKILL.md')
+  }
+  return url.toString()
+}
+
+async function fetchRemoteSkill(raw) {
+  const url = validateRemoteUrl(raw)
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'ronge-skill-studio' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!response.ok) throw new HttpError(502, 'remote fetch failed: HTTP ' + response.status)
+  const text = await response.text()
+  if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+  return { url, text }
+}
+
+function remoteRepoFromUrl(raw) {
+  try {
+    const parts = new URL(raw).pathname.split('/').filter(Boolean)
+    return parts.length >= 2 ? parts[0] + '/' + parts[1] : null
+  } catch {
+    return null
+  }
+}
+
+function installRemoteSkill(payload) {
+  const raw = payload && payload.url
+  if (!raw) throw new HttpError(400, 'url is required')
+  return fetchRemoteSkill(raw).then(({ url, text }) => {
+    const front = parseFrontmatter(text)
+    const name = String(front.name || '').trim()
+    const description = String(front.description || '').replace(/\s+/g, ' ').trim()
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) {
+      throw new HttpError(400, 'remote SKILL.md has an invalid or missing name')
+    }
+    if (!description) throw new HttpError(400, 'remote SKILL.md has no description')
+    const dir = path.join(dshHome(), 'skills', name)
+    if (fs.existsSync(dir)) throw new HttpError(409, 'skill "' + name + '" already exists locally')
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), text, { flag: 'wx' })
+    const source = {
+      url,
+      repo: remoteRepoFromUrl(url),
+      name,
+      sha256: sha256(text),
+      trust: String(payload.trust || 'community'),
+      installedAt: new Date().toISOString(),
+    }
+    fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(source, null, 2))
+    return {
+      ok: true,
+      name,
+      path: path.join(dir, 'SKILL.md'),
+      source,
+      note: 'Only SKILL.md was fetched. Referenced assets/scripts are not installed automatically.',
+    }
+  })
+}
+
+async function checkSkillUpdates() {
+  const root = path.join(dshHome(), 'skills')
+  const updates = []
+  let entries = []
+  try {
+    entries = fs.readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory())
+  } catch {
+    return { ok: true, updates, checked: 0 }
+  }
+  for (const entry of entries.slice(0, 40)) {
+    const dir = path.join(root, entry.name)
+    const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null)
+    if (!source || !source.url) continue
+    try {
+      const { text } = await fetchRemoteSkill(source.url)
+      const remoteHash = sha256(text)
+      if (remoteHash !== source.sha256) {
+        updates.push({
+          name: entry.name,
+          url: source.url,
+          localSha256: source.sha256,
+          remoteSha256: remoteHash,
+          trust: source.trust || 'community',
+        })
+      }
+    } catch {
+      // A missing remote or rate limit should not fail the whole check.
+    }
+  }
+  return { ok: true, updates, checked: Math.min(entries.length, 40) }
+}
+
+async function searchMcpServers(query) {
+  const url = new URL(MCP_REGISTRY_URL)
+  url.searchParams.set('limit', '20')
+  if (query) url.searchParams.set('search', query)
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'ronge-skill-studio' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!response.ok) throw new HttpError(502, 'MCP registry fetch failed: HTTP ' + response.status)
+  const payload = await response.json()
+  const servers = (payload.servers || []).map((item) => {
+    const server = item.server || item
+    return {
+      name: server.name,
+      title: server.title || server.name,
+      description: server.description || '',
+      version: server.version || '',
+      repo: server.repository?.url || null,
+      remotes: Array.isArray(server.remotes) ? server.remotes.map((remote) => remote.url).filter(Boolean) : [],
+    }
+  })
+  return { ok: true, servers, query: query || '', source: MCP_REGISTRY_URL }
+}
+
 const SOURCE_ORDER = {
   'project-dsh': 0,
   'project-agents': 1,
@@ -362,18 +654,37 @@ async function readJson(req, limit = 64 * 1024) {
 function parseFrontmatter(text) {
   const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)
   if (!match) return {}
+  const lines = match[1].split(/\r?\n/)
   const data = {}
-  for (const line of match[1].split(/\r?\n/)) {
-    const field = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(line)
-    if (!field) continue
-    let value = field[2].trim()
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1)
+  let index = 0
+  while (index < lines.length) {
+    const field = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(lines[index])
+    if (!field) {
+      index += 1
+      continue
     }
-    data[field[1]] = value
+    const key = field[1]
+    let value = field[2].trim()
+    index += 1
+    if (value === '>' || value === '|' || value === '>-' || value === '|-') {
+      const buffer = []
+      while (
+        index < lines.length &&
+        (lines[index].startsWith(' ') || lines[index].startsWith('\t') || lines[index].trim() === '')
+      ) {
+        buffer.push(lines[index].trim())
+        index += 1
+      }
+      value = buffer.filter(Boolean).join(' ')
+    } else {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+    }
+    data[key] = value
   }
   return data
 }
@@ -926,6 +1237,105 @@ export function apply(ctx, config = {}) {
         const entry = recordFeedback(id, rating)
         if (!entry) throw new HttpError(404, 'experience entry not found')
         sendJson(res, 200, { ok: true, entry })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'method not allowed')
+        const url = new URL(req.url || '/', 'http://127.0.0.1')
+        const query = (url.searchParams.get('q') || '').trim().toLowerCase()
+        const index = loadRemoteIndex()
+        const entries = index.entries
+          .filter((entry) => {
+            if (!query) return true
+            return [entry.name, entry.description, entry.whenToUse, entry.repo, entry.path]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .includes(query)
+          })
+          .slice(0, 40)
+          .map((entry) => ({
+            ...entry,
+            installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
+          }))
+        sendJson(res, 200, {
+          ok: true,
+          entries,
+          cachedAt: index.cachedAt,
+          label: index.label,
+          total: index.entries.length,
+        })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/refresh',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await refreshRemoteIndex()
+        sendJson(res, 200, {
+          ok: true,
+          count: payload.entries.length,
+          fetchedAt: payload.fetchedAt,
+          errors: payload.errors,
+        })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/preview',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        const url = new URL(req.url || '/', 'http://127.0.0.1')
+        const remoteUrl = url.searchParams.get('url') || ''
+        const { url: checkedUrl, text } = await fetchRemoteSkill(remoteUrl)
+        const front = parseFrontmatter(text)
+        sendJson(res, 200, { ok: true, url: checkedUrl, content: text, frontmatter: front })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/install',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const installed = await installRemoteSkill(payload)
+        sendJson(res, 201, installed)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/updates',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        const result = await checkSkillUpdates()
+        sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/tools',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        const url = new URL(req.url || '/', 'http://127.0.0.1')
+        const query = (url.searchParams.get('q') || '').trim()
+        const result = await searchMcpServers(query)
+        sendJson(res, 200, result)
       }),
     }),
   )

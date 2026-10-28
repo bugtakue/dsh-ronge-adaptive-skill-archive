@@ -1,7 +1,7 @@
 {
   "name": "ronge-skill-studio",
-  "version": "1.0.1",
-  "description": "Ronge Skill Studio: context-aware skill recommendations with localized intros, plan/immersive modes, active-skill tracking, experience memory with feedback, and a completion chime for DeepSeek Harness.",
+  "version": "1.3.0",
+  "description": "Ronge Skill Studio: context-aware skill recommendations, remote Discover/install, MCP tool directory, plan/immersive modes, experience memory + feedback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -33,7 +33,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "scripts/*.mjs"
+    "scripts/*.mjs",
+    "sources/*.json"
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
