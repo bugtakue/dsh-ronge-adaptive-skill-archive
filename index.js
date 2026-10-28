@@ -236,11 +236,29 @@ function recordExperience(sessionId, header, state) {
       successes: previous.successes + 1,
       good: previous.good || 0,
       bad: previous.bad || 0,
+      totalDurationMs: Number(previous.totalDurationMs || 0) + entry.durationMs,
+      failureStreak: 0,
       lastUsed: entry.time,
     }
   }
   saveMemory()
   appendMemoryMarkdown(entry)
+}
+
+function recordFailedTurn(sessionId, header, state) {
+  const skills = [...state.skills].filter(Boolean)
+  if (skills.length === 0) return
+  const time = new Date().toISOString()
+  for (const name of skills) {
+    const previous = memory.skills[name] || { uses: 0, successes: 0, good: 0, bad: 0, lastUsed: null }
+    memory.skills[name] = {
+      ...previous,
+      uses: Number(previous.uses || 0) + 1,
+      failureStreak: Number(previous.failureStreak || 0) + 1,
+      lastUsed: time,
+    }
+  }
+  saveMemory()
 }
 
 function appendFeedbackMarkdown(entry, rating) {
@@ -276,16 +294,533 @@ function recordFeedback(id, rating) {
   return entry
 }
 
-function experienceSnapshot() {
-  const topSkills = Object.entries(memory.skills)
-    .map(([name, stat]) => ({ name, ...stat }))
-    .sort((left, right) => right.uses - left.uses)
+function experienceSnapshot(cwd) {
+  const aggregate = aggregateSkillStats(memory.skills)
+  const topSkills = Object.values(aggregate)
+    .sort((left, right) => right.uses - left.uses || left.name.localeCompare(right.name))
     .slice(0, 8)
+  const feedback = loadRecFeedback()
   return {
     topSkills,
     recent: memory.entries.slice(-5).reverse(),
     totalEntries: memory.entries.length,
     path: memoryMarkdownFile(),
+    health: experienceHealth(memory.skills, cwd),
+    recFeedback: { skills: feedback.skills, updatedAt: feedback.updatedAt },
+  }
+}
+
+// --- Security & trust (G1) -------------------------------------------------
+// Local, heuristic scan of a SKILL.md. It never uploads anything and never
+// executes a skill: it only flags the instruction text a user is about to trust.
+const RISK_RULES = [
+  {
+    id: 'shell-exec',
+    label: 'shell 执行',
+    severity: 'high',
+    pattern: /\b(?:child_process|execSync|spawnSync|os\.system|subprocess\.(?:run|call|Popen))\b/i,
+  },
+  {
+    id: 'pipe-to-shell',
+    label: '下载后直接执行',
+    severity: 'high',
+    pattern: /(?:curl|wget)[^\n|]{0,200}\|\s*(?:sh|bash|zsh)\b/i,
+  },
+  {
+    id: 'dynamic-eval',
+    label: '动态执行/解码',
+    severity: 'high',
+    pattern: /\b(?:(?:eval|new Function)\s*\(|base64\s+-d\b|atob\s*\()/i,
+  },
+  {
+    id: 'prompt-injection',
+    label: '提示注入模式',
+    severity: 'high',
+    pattern:
+      /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:the\s+)?(?:previous|prior|above|earlier)\s+(?:instructions|rules|prompts)|system\s+prompt|jailbreak/i,
+  },
+  {
+    id: 'network',
+    label: '网络访问',
+    severity: 'medium',
+    pattern: /\b(?:curl|wget|https?:\/\/|fetch\s*\(|requests\.(?:get|post)|axios\b)/i,
+  },
+  {
+    id: 'credentials',
+    label: '凭据/密钥访问',
+    severity: 'medium',
+    pattern:
+      /(?:\.ssh\/|id_rsa|\.aws\/credentials|(?:^|[^.\w])\.env\b|keychain|\.netrc|\.npmrc|api[_-]?key|secret[_-]?key)/i,
+  },
+  {
+    id: 'file-write',
+    label: '文件系统写入/提权',
+    severity: 'low',
+    pattern: /\b(?:rm\s+-rf|sudo\s+|chmod\s+\+?x|\bwriteFileSync\b|\bwriteFile\b)/i,
+  },
+]
+
+const RISK_WEIGHT = { high: 40, medium: 15, low: 5 }
+
+function scanSkillText(text) {
+  const source = String(text || '')
+  const lines = source.split(/\r?\n/)
+  const findings = []
+  for (const rule of RISK_RULES) {
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index]
+      if (!line || line.length > 4000) continue
+      if (!rule.pattern.test(line)) continue
+      findings.push({
+        rule: rule.id,
+        label: rule.label,
+        severity: rule.severity,
+        line: index + 1,
+        excerpt: line.trim().slice(0, 120),
+      })
+      break
+    }
+  }
+  const frontmatter = parseFrontmatter(source)
+  const allowedTools = String(frontmatter['allowed-tools'] || '')
+  if (
+    allowedTools &&
+    (allowedTools.includes('*') || /(?:^|[\s,])(?:Bash|shell|bash)(?:[\s,]|$)/.test(allowedTools))
+  ) {
+    findings.push({
+      rule: 'broad-tools',
+      label: 'allowed-tools 过宽',
+      severity: 'medium',
+      line: 1,
+      excerpt: ('allowed-tools: ' + allowedTools).slice(0, 120),
+    })
+  }
+  const score = findings.reduce((total, finding) => total + (RISK_WEIGHT[finding.severity] || 0), 0)
+  const level = findings.some((finding) => finding.severity === 'high')
+    ? 'high'
+    : score >= RISK_WEIGHT.medium
+      ? 'medium'
+      : 'low'
+  return { level, score, findings: findings.slice(0, 8) }
+}
+
+const OFFICIAL_ORGS = new Set(['anthropics', 'openai', 'github', 'microsoft', 'google', 'aws', 'vercel-labs'])
+
+function classifyTrust(skill, sourceMeta) {
+  const meta = sourceMeta || {}
+  const recorded = String(meta.trust || '').toLowerCase()
+  if (recorded === 'official' || recorded === 'verified') return recorded
+  const repo = String(meta.repo || '').toLowerCase()
+  const org = repo.includes('/') ? repo.split('/')[0] : ''
+  if (org && OFFICIAL_ORGS.has(org)) return 'official'
+  if (repo) return 'community'
+  if (skill && skill.source === 'bundled') return 'official'
+  if (skill && ['project-dsh', 'project-agents', 'profile', 'user-dsh', 'user-agents'].includes(skill.source)) {
+    return 'local'
+  }
+  return 'unknown'
+}
+
+const securityCache = new Map()
+
+function securityForSkill(skill) {
+  const fallback = { trust: classifyTrust(skill, null), license: null, security: null }
+  if (!skill || !skill.path) return fallback
+  try {
+    const stat = fs.statSync(skill.path)
+    const key = skill.path + ':' + stat.mtimeMs
+    const cached = securityCache.get(key)
+    if (cached) return cached
+    const text = fs.readFileSync(skill.path, 'utf8')
+    const frontmatter = parseFrontmatter(text)
+    const sourceMeta = readJsonFile(path.join(path.dirname(skill.path), SOURCE_META_FILE), null)
+    const result = {
+      trust: classifyTrust(skill, sourceMeta),
+      license: frontmatter.license ? String(frontmatter.license) : null,
+      security: scanSkillText(text),
+    }
+    if (securityCache.size > 800) securityCache.clear()
+    securityCache.set(key, result)
+    return result
+  } catch {
+    return fallback
+  }
+}
+
+// --- Update diff / lockfile / rollback (G5) --------------------------------
+function diffSkillLines(before, after, maxLines = 60) {
+  const left = String(before ?? '').split(/\r?\n/)
+  const right = String(after ?? '').split(/\r?\n/)
+  let start = 0
+  while (start < left.length && start < right.length && left[start] === right[start]) start += 1
+  let endLeft = left.length - 1
+  let endRight = right.length - 1
+  while (endLeft >= start && endRight >= start && left[endLeft] === right[endRight]) {
+    endLeft -= 1
+    endRight -= 1
+  }
+  const lines = []
+  let removed = 0
+  let added = 0
+  for (let index = start; index <= endLeft; index += 1) {
+    removed += 1
+    if (lines.length < maxLines) lines.push({ type: '-', text: String(left[index]).slice(0, 160) })
+  }
+  for (let index = start; index <= endRight; index += 1) {
+    added += 1
+    if (lines.length < maxLines) lines.push({ type: '+', text: String(right[index]).slice(0, 160) })
+  }
+  return { added, removed, changedAtLine: start + 1, lines }
+}
+
+function lockFile() {
+  return path.join(studioDir(), 'skills-lock.json')
+}
+
+function loadLock() {
+  const data = readJsonFile(lockFile(), null)
+  if (data && data.skills && typeof data.skills === 'object') return data
+  return { version: 1, updatedAt: null, skills: {} }
+}
+
+function saveLock(lock) {
+  lock.version = 1
+  lock.updatedAt = new Date().toISOString()
+  writeJsonFile(lockFile(), lock)
+}
+
+function upsertLock(entry) {
+  if (!entry || !entry.name) return null
+  const lock = loadLock()
+  const previous = lock.skills[entry.name] || {}
+  const next = { ...previous, ...entry, updatedAt: new Date().toISOString() }
+  if (previous.sha256 && previous.sha256 !== next.sha256) {
+    next.previousSha256 = previous.sha256
+    next.previousUpdatedAt = previous.updatedAt || null
+  }
+  lock.skills[entry.name] = next
+  saveLock(lock)
+  return next
+}
+
+function backupsDir(name) {
+  return path.join(studioDir(), 'backups', name)
+}
+
+function backupSkillFile(name, text) {
+  const dir = backupsDir(name)
+  fs.mkdirSync(dir, { recursive: true })
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const file = path.join(dir, stamp + '.md')
+  fs.writeFileSync(file, String(text ?? ''))
+  return file
+}
+
+function listBackups(name) {
+  try {
+    return fs
+      .readdirSync(backupsDir(name))
+      .filter((file) => file.endsWith('.md'))
+      .map((file) => {
+        const full = path.join(backupsDir(name), file)
+        const stat = fs.statSync(full)
+        return { file: full, name: file, mtime: stat.mtimeMs }
+      })
+      .sort((left, right) => right.mtime - left.mtime)
+  } catch {
+    return []
+  }
+}
+
+function installedSkillDir(name) {
+  const normalized = String(name || '').trim()
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalized)) {
+    throw new HttpError(400, 'skill name must be kebab-case')
+  }
+  return path.join(dshHome(), 'skills', normalized)
+}
+
+async function applySkillUpdate(name) {
+  const dir = installedSkillDir(name)
+  const file = path.join(dir, 'SKILL.md')
+  if (!fs.existsSync(file)) throw new HttpError(404, 'skill "' + name + '" is not installed')
+  const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null)
+  if (!source || !source.url) throw new HttpError(400, 'skill "' + name + '" has no recorded source')
+  const localText = fs.readFileSync(file, 'utf8')
+  const { text: remoteText } = await fetchRemoteSkill(source.url)
+  if (sha256(remoteText) === source.sha256) {
+    return { ok: true, name, changed: false, diff: { added: 0, removed: 0, lines: [] } }
+  }
+  const backup = backupSkillFile(name, localText)
+  fs.writeFileSync(file, remoteText)
+  const frontmatter = parseFrontmatter(remoteText)
+  const license = frontmatter.license ? String(frontmatter.license) : null
+  const nextSource = {
+    ...source,
+    sha256: sha256(remoteText),
+    license,
+    updatedAt: new Date().toISOString(),
+  }
+  fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(nextSource, null, 2))
+  upsertLock({
+    name,
+    url: source.url,
+    repo: source.repo || remoteRepoFromUrl(source.url),
+    sha256: nextSource.sha256,
+    trust: source.trust || 'community',
+    license,
+    installedAt: source.installedAt || null,
+    updatedAt: nextSource.updatedAt,
+  })
+  return {
+    ok: true,
+    name,
+    changed: true,
+    sha256: nextSource.sha256,
+    backup,
+    diff: diffSkillLines(localText, remoteText),
+  }
+}
+
+function rollbackSkill(name) {
+  const dir = installedSkillDir(name)
+  const file = path.join(dir, 'SKILL.md')
+  if (!fs.existsSync(file)) throw new HttpError(404, 'skill "' + name + '" is not installed')
+  const backups = listBackups(name)
+  if (!backups.length) throw new HttpError(404, 'no backup found for "' + name + '"')
+  const currentText = fs.readFileSync(file, 'utf8')
+  const restoredText = fs.readFileSync(backups[0].file, 'utf8')
+  const backup = backupSkillFile(name, currentText)
+  fs.writeFileSync(file, restoredText)
+  const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null) || {}
+  const nextSource = { ...source, sha256: sha256(restoredText), updatedAt: new Date().toISOString() }
+  fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(nextSource, null, 2))
+  upsertLock({ name, sha256: nextSource.sha256, url: source.url || null, updatedAt: nextSource.updatedAt })
+  return {
+    ok: true,
+    name,
+    restoredFrom: backups[0].name,
+    backup,
+    diff: diffSkillLines(currentText, restoredText),
+  }
+}
+
+async function applyAllSkillUpdates() {
+  const checked = await checkSkillUpdates()
+  const results = []
+  for (const update of checked.updates.slice(0, 40)) {
+    try {
+      results.push(await applySkillUpdate(update.name))
+    } catch (error) {
+      results.push({
+        ok: false,
+        name: update.name,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+  return {
+    ok: true,
+    checked: checked.checked,
+    updated: results.filter((result) => result.changed).length,
+    failed: results.filter((result) => result.ok === false).length,
+    results,
+  }
+}
+
+// --- Recommendation feedback & evaluation (G2/G3) --------------------------
+function recFeedbackFile() {
+  return path.join(studioDir(), 'rec-feedback.json')
+}
+
+function loadRecFeedback() {
+  const data = readJsonFile(recFeedbackFile(), null)
+  if (data && data.skills && typeof data.skills === 'object') return data
+  return { version: 1, updatedAt: null, skills: {} }
+}
+
+function recordRecommendationFeedback(name, verdict) {
+  const skillName = String(name || '').trim()
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(skillName)) {
+    throw new HttpError(400, 'skillName must be kebab-case')
+  }
+  if (!['adopt', 'good', 'bad'].includes(verdict)) {
+    throw new HttpError(400, 'verdict must be adopt, good, or bad')
+  }
+  const feedback = loadRecFeedback()
+  const stat = feedback.skills[skillName] || { adopt: 0, good: 0, bad: 0, lastAt: null }
+  stat[verdict] = (Number(stat[verdict]) || 0) + 1
+  stat.lastAt = new Date().toISOString()
+  feedback.skills[skillName] = stat
+  feedback.updatedAt = stat.lastAt
+  writeJsonFile(recFeedbackFile(), feedback)
+  return { stats: stat, updatedAt: feedback.updatedAt }
+}
+
+function evaluateRecommendations(cases, skills, skillStats = {}, k = 4) {
+  const list = Array.isArray(cases) ? cases : []
+  const perCase = []
+  let hits = 0
+  for (const item of list) {
+    if (!item || !item.context || !Array.isArray(item.expect) || !item.expect.length) continue
+    const top = recommendSkills(skills, item.context, skillStats)
+      .slice(0, k)
+      .map((skill) => skill.name)
+    const hit = item.expect.some((name) => top.includes(name))
+    if (hit) hits += 1
+    perCase.push({ context: item.context.slice(0, 120), expect: item.expect, top, hit })
+  }
+  return {
+    total: perCase.length,
+    hits,
+    recall: perCase.length ? Math.round((hits / perCase.length) * 100) / 100 : 0,
+    k,
+    cases: perCase,
+  }
+}
+
+// --- Experience depth (G4) -------------------------------------------------
+function aggregateSkillStats(skillStats) {
+  const output = {}
+  for (const [name, stat] of Object.entries(skillStats || {})) {
+    if (!name || !stat || typeof stat !== 'object') continue
+    const uses = Number(stat.uses || 0)
+    const successes = Number(stat.successes || 0)
+    const totalDurationMs = Number(stat.totalDurationMs || 0)
+    output[name] = {
+      name,
+      uses,
+      successes,
+      good: Number(stat.good || 0),
+      bad: Number(stat.bad || 0),
+      lastUsed: stat.lastUsed || null,
+      failureStreak: Number(stat.failureStreak || 0),
+      successRate: uses > 0 ? Math.round((successes / uses) * 100) / 100 : 0,
+      avgDurationMs: uses > 0 ? Math.round(totalDurationMs / uses) : 0,
+    }
+  }
+  return output
+}
+
+const STALE_DAYS = 45
+
+function experienceHealth(skillStats, cwd) {
+  const aggregate = aggregateSkillStats(skillStats)
+  const now = Date.now()
+  const health = { stale: [], failing: [], neverUsed: [], licenseUnknown: [] }
+  for (const stat of Object.values(aggregate)) {
+    const lastUsedAt = stat.lastUsed ? Date.parse(stat.lastUsed) : 0
+    if (lastUsedAt && now - lastUsedAt > STALE_DAYS * 86400000) {
+      health.stale.push({ name: stat.name, lastUsed: stat.lastUsed, uses: stat.uses })
+    }
+    if (stat.bad >= 2 || stat.failureStreak >= 2) {
+      health.failing.push({
+        name: stat.name,
+        bad: stat.bad,
+        failureStreak: stat.failureStreak,
+      })
+    }
+  }
+  let installed = []
+  try {
+    installed = scanSkills(cwd || process.cwd()).map((skill) => summarize(skill))
+  } catch {
+    installed = []
+  }
+  const known = new Set(Object.keys(aggregate))
+  for (const skill of installed) {
+    const extra = securityForSkill(skill)
+    if (!known.has(skill.name)) health.neverUsed.push({ name: skill.name, trust: extra.trust })
+    if (!extra.license) health.licenseUnknown.push({ name: skill.name, trust: extra.trust })
+  }
+  health.stale = health.stale.slice(0, 20)
+  health.failing = health.failing.slice(0, 20)
+  health.neverUsed = health.neverUsed.slice(0, 40)
+  health.licenseUnknown = health.licenseUnknown.slice(0, 40)
+  return { installed: installed.length, ...health }
+}
+
+function exportExperience() {
+  return {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    entries: memory.entries,
+    skills: memory.skills,
+    recFeedback: loadRecFeedback().skills,
+  }
+}
+
+function mergeExperienceData(current, payload) {
+  if (!payload || typeof payload !== 'object') throw new HttpError(400, 'payload is required')
+  const base = {
+    entries: Array.isArray(current?.entries) ? current.entries.slice() : [],
+    skills: { ...(current?.skills || {}) },
+    recFeedback: { ...(current?.recFeedback || {}) },
+  }
+  const incomingEntries = Array.isArray(payload.entries) ? payload.entries : []
+  const known = new Set(base.entries.map((entry) => entry && entry.id).filter(Boolean))
+  let addedEntries = 0
+  for (const entry of incomingEntries.slice(-1000)) {
+    if (!entry || typeof entry.id !== 'string' || known.has(entry.id)) continue
+    base.entries.push(entry)
+    known.add(entry.id)
+    addedEntries += 1
+  }
+  if (base.entries.length > 1000) base.entries = base.entries.slice(-1000)
+  let mergedSkills = 0
+  const incomingSkills = payload.skills && typeof payload.skills === 'object' ? payload.skills : {}
+  for (const [name, stat] of Object.entries(incomingSkills)) {
+    if (!name || !stat || typeof stat !== 'object') continue
+    const previous = base.skills[name] || {}
+    const pick = (key) => Math.max(Number(previous[key] || 0), Number(stat[key] || 0))
+    const dates = [previous.lastUsed, stat.lastUsed].filter(Boolean).sort()
+    base.skills[name] = {
+      uses: pick('uses'),
+      successes: pick('successes'),
+      good: pick('good'),
+      bad: pick('bad'),
+      totalDurationMs: pick('totalDurationMs'),
+      failureStreak: Number(previous.failureStreak || 0),
+      lastUsed: dates.length ? dates[dates.length - 1] : null,
+    }
+    mergedSkills += 1
+  }
+  let mergedFeedback = 0
+  const incomingFeedback =
+    payload.recFeedback && typeof payload.recFeedback === 'object' ? payload.recFeedback : {}
+  for (const [name, stat] of Object.entries(incomingFeedback)) {
+    if (!name || !stat || typeof stat !== 'object') continue
+    const previous = base.recFeedback[name] || {}
+    const pick = (key) => Math.max(Number(previous[key] || 0), Number(stat[key] || 0))
+    const dates = [previous.lastAt, stat.lastAt].filter(Boolean).sort()
+    base.recFeedback[name] = {
+      adopt: pick('adopt'),
+      good: pick('good'),
+      bad: pick('bad'),
+      lastAt: dates.length ? dates[dates.length - 1] : null,
+    }
+    mergedFeedback += 1
+  }
+  return { ...base, addedEntries, mergedSkills, mergedFeedback }
+}
+
+function importExperience(payload) {
+  const merged = mergeExperienceData(
+    { entries: memory.entries, skills: memory.skills, recFeedback: loadRecFeedback().skills },
+    payload,
+  )
+  memory.entries = merged.entries
+  memory.skills = merged.skills
+  saveMemory()
+  const feedback = loadRecFeedback()
+  feedback.skills = merged.recFeedback
+  feedback.updatedAt = new Date().toISOString()
+  writeJsonFile(recFeedbackFile(), feedback)
+  return {
+    ok: true,
+    addedEntries: merged.addedEntries,
+    mergedSkills: merged.mergedSkills,
+    mergedFeedback: merged.mergedFeedback,
   }
 }
 
@@ -503,20 +1038,39 @@ function installRemoteSkill(payload) {
     if (fs.existsSync(dir)) throw new HttpError(409, 'skill "' + name + '" already exists locally')
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(path.join(dir, 'SKILL.md'), text, { flag: 'wx' })
+    const repo = remoteRepoFromUrl(url)
+    const license = front.license ? String(front.license) : null
+    const trust = classifyTrust({ name, source: 'user-dsh' }, { repo, trust: String(payload.trust || '') })
+    const security = scanSkillText(text)
     const source = {
       url,
-      repo: remoteRepoFromUrl(url),
+      repo,
       name,
       sha256: sha256(text),
-      trust: String(payload.trust || 'community'),
+      trust,
+      license,
+      risk: security.level,
       installedAt: new Date().toISOString(),
     }
     fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(source, null, 2))
+    upsertLock({
+      name,
+      url,
+      repo,
+      sha256: source.sha256,
+      trust,
+      license,
+      installedAt: source.installedAt,
+      updatedAt: source.installedAt,
+    })
     return {
       ok: true,
       name,
       path: path.join(dir, 'SKILL.md'),
       source,
+      trust,
+      license,
+      security,
       note: 'Only SKILL.md was fetched. Referenced assets/scripts are not installed automatically.',
     }
   })
@@ -535,16 +1089,26 @@ async function checkSkillUpdates() {
     const dir = path.join(root, entry.name)
     const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null)
     if (!source || !source.url) continue
+    let localText = ''
+    try {
+      localText = fs.readFileSync(path.join(dir, 'SKILL.md'), 'utf8')
+    } catch {
+      localText = ''
+    }
     try {
       const { text } = await fetchRemoteSkill(source.url)
       const remoteHash = sha256(text)
       if (remoteHash !== source.sha256) {
+        const front = parseFrontmatter(text)
         updates.push({
           name: entry.name,
           url: source.url,
           localSha256: source.sha256,
           remoteSha256: remoteHash,
           trust: source.trust || 'community',
+          license: front.license ? String(front.license) : null,
+          risk: scanSkillText(text).level,
+          diff: diffSkillLines(localText, text),
         })
       }
     } catch {
@@ -1043,21 +1607,37 @@ function recommendSkills(skills, contextText, skillStats = {}) {
     const skillText = [skill.name, skill.description, skill.whenToUse || '', skill.intro || ''].join(' ')
     const skillTokens = tokenize(skillText)
     let score = 0
-    const reasons = []
+    const reasonsDetail = []
+    const seen = new Set()
+    let keywordCount = 0
+    const addReason = (kind, label, detail, weight) => {
+      if (!label || seen.has(kind + ':' + label)) return
+      if (kind === 'keyword') {
+        if (keywordCount >= 3) return
+        keywordCount += 1
+      }
+      seen.add(kind + ':' + label)
+      reasonsDetail.push({ kind, label, detail, weight: Math.round(weight * 10) / 10 })
+    }
     for (const token of skillTokens) {
       if (!contextTokens.has(token)) continue
       score += 1
-      if (reasons.length < 6 && !reasons.includes(token)) reasons.push(token)
+      addReason('keyword', token, '上下文命中「' + token + '」', 1)
     }
     if (skill.name && contextLower.includes(skill.name.toLowerCase())) {
       score += 8
-      if (!reasons.includes(skill.name)) reasons.unshift(skill.name)
+      reasonsDetail.unshift({
+        kind: 'name',
+        label: skill.name,
+        detail: '请求里直接提到了这个技能',
+        weight: 8,
+      })
     }
     const category = categoryOf(skill.name)
     for (const cue of CATEGORY_CUES[category] || []) {
       if (!contextLower.includes(cue.toLowerCase())) continue
       score += 0.6
-      if (reasons.length < 6 && !reasons.includes(cue)) reasons.push(cue)
+      addReason('category', cue, '类别线索「' + cue + '」', 0.6)
     }
     const stat = skillStats[skill.name]
     if (stat && stat.uses > 0) {
@@ -1066,15 +1646,25 @@ function recommendSkills(skills, contextText, skillStats = {}) {
       const completion = good + bad === 0 ? Math.min(2, (stat.successes || stat.uses) * 0.25) : 0
       const boost = Math.min(4, good * 0.8) - Math.min(2, bad * 0.5) + completion
       score += boost
-      if (reasons.length < 6) {
-        reasons.push(good > 0 ? `好评×${good}` : bad > 0 ? `差评×${bad}` : `完成×${stat.successes || stat.uses}`)
-      }
+      const label = good > 0 ? `好评×${good}` : bad > 0 ? `差评×${bad}` : `完成×${stat.successes || stat.uses}`
+      addReason(
+        'experience',
+        label,
+        `用过 ${stat.uses} 次，好评 ${good} / 差评 ${bad}`,
+        boost,
+      )
     }
     if (score > 0) {
+      const kindOrder = { name: 0, experience: 1, category: 2, keyword: 3 }
+      const orderedReasons = reasonsDetail
+        .slice()
+        .sort((left, right) => (kindOrder[left.kind] ?? 9) - (kindOrder[right.kind] ?? 9))
+        .slice(0, 6)
       scored.push({
         ...skill,
         score: Math.round(score * 10) / 10,
-        reasons: reasons.slice(0, 5),
+        reasons: orderedReasons.map((reason) => reason.label).slice(0, 5),
+        reasonsDetail: orderedReasons,
       })
     }
   }
@@ -1146,7 +1736,9 @@ async function buildCatalog(ctx, config, sessionId, lang) {
 
   const analysis = analyzeSession(ctx, sessionId, cwd)
   const language = detectLang(analysis.contextText, lang)
-  const summaries = sortSkills([...merged.values()]).map((skill) => localizeSkill(skill, language))
+  const summaries = sortSkills([...merged.values()])
+    .map((skill) => localizeSkill(skill, language))
+    .map((skill) => ({ ...skill, ...securityForSkill(skill) }))
   const recommendations = analysis.contextText
     ? recommendSkills(summaries, analysis.contextText, memory.skills)
     : []
@@ -1167,7 +1759,7 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     running: analysis.running,
     contextPreview: analysis.lastUserText.slice(0, 160),
     mode: studioMode,
-    experience: experienceSnapshot(),
+    experience: experienceSnapshot(cwd),
   }
 }
 
@@ -1353,7 +1945,16 @@ export function apply(ctx, config = {}) {
         const remoteUrl = url.searchParams.get('url') || ''
         const { url: checkedUrl, text } = await fetchRemoteSkill(remoteUrl)
         const front = parseFrontmatter(text)
-        sendJson(res, 200, { ok: true, url: checkedUrl, content: text, frontmatter: front })
+        const repo = remoteRepoFromUrl(checkedUrl)
+        sendJson(res, 200, {
+          ok: true,
+          url: checkedUrl,
+          content: text,
+          frontmatter: front,
+          trust: classifyTrust({ name: String(front.name || '') }, { repo }),
+          license: front.license ? String(front.license) : null,
+          security: scanSkillText(text),
+        })
       }),
     }),
   )
@@ -1377,6 +1978,91 @@ export function apply(ctx, config = {}) {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const result = await checkSkillUpdates()
         sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/update',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const updated = await applySkillUpdate(String(payload?.name ?? ''))
+        sendJson(res, 200, updated)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/update-all',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const result = await applyAllSkillUpdates()
+        sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/discover/rollback',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const restored = rollbackSkill(String(payload?.name ?? ''))
+        sendJson(res, 200, restored)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/recommend-feedback',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const result = recordRecommendationFeedback(
+          String(payload?.skillName ?? ''),
+          String(payload?.verdict ?? ''),
+        )
+        sendJson(res, 200, { ok: true, stats: result.stats, updatedAt: result.updatedAt })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/experience/export',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, { ok: true, payload: exportExperience() })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/experience/import',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const body = await readJson(req, 1024 * 1024)
+        const payload = body && body.payload && typeof body.payload === 'object' ? body.payload : body
+        const result = importExperience(payload)
+        sendJson(res, 200, result)
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/skill-studio/health',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
+        const url = new URL(req.url || '/', 'http://127.0.0.1')
+        const cwd = url.searchParams.get('cwd') || config?.cwd || process.cwd()
+        sendJson(res, 200, { ok: true, ...experienceHealth(memory.skills, cwd) })
       }),
     }),
   )
@@ -1491,10 +2177,24 @@ export function apply(ctx, config = {}) {
           lastChimeAt = now
           playChime()
         }
+      } else if (topLevel && state && state.skills.size > 0) {
+        recordFailedTurn(sid, header, state)
       }
       turnStates.delete(sid)
     }),
   )
 }
 
-export { detectLang, localizeSkill, parseSkillArguments, recommendSkills, tokenize }
+export {
+  aggregateSkillStats,
+  classifyTrust,
+  detectLang,
+  diffSkillLines,
+  evaluateRecommendations,
+  localizeSkill,
+  mergeExperienceData,
+  parseSkillArguments,
+  recommendSkills,
+  scanSkillText,
+  tokenize,
+}

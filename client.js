@@ -110,6 +110,43 @@ window.__ModuleLoader__.load({
       scopeScan: '本地扫描 + 内置',
       scopeGlobal: '全局目录',
       generated: '更新于',
+      suggest: '建议',
+      copySkill: '复制 /skill',
+      security: '安全',
+      secLow: '低风险',
+      secMedium: '中风险',
+      secHigh: '高风险',
+      trust: '信任',
+      trustOfficial: '官方',
+      trustVerified: '已验证',
+      trustCommunity: '社区',
+      trustLocal: '本地',
+      trustUnknown: '未知',
+      license: '许可',
+      findings: '检查项',
+      update: '更新',
+      updating: '更新中…',
+      updateAll: '全部更新',
+      rollback: '回滚',
+      updateOk: '已更新：',
+      rollbackOk: '已回滚：',
+      actionFailed: '操作失败',
+      experienceHealth: '技能健康',
+      healthStale: '陈旧',
+      healthFailing: '连续失败',
+      healthNeverUsed: '从未使用',
+      healthLicenseUnknown: '许可未知',
+      exportExperience: '导出经验',
+      exportBusy: '导出中…',
+      importExperience: '导入经验',
+      importBusy: '导入中…',
+      importPrompt: '粘贴经验 JSON：',
+      importOk: '已导入经验',
+      exportOk: '已导出经验 JSON',
+      importInvalid: 'JSON 解析失败',
+      usesLabel: '次数',
+      successRate: '成功率',
+      avgDuration: '平均耗时',
     }
 
     const dictEn = {
@@ -202,6 +239,43 @@ window.__ModuleLoader__.load({
       scopeScan: 'Local scan + bundled',
       scopeGlobal: 'Global catalog',
       generated: 'Updated',
+      suggest: 'Suggested',
+      copySkill: 'Copy /skill',
+      security: 'Security',
+      secLow: 'Low risk',
+      secMedium: 'Medium risk',
+      secHigh: 'High risk',
+      trust: 'Trust',
+      trustOfficial: 'Official',
+      trustVerified: 'Verified',
+      trustCommunity: 'Community',
+      trustLocal: 'Local',
+      trustUnknown: 'Unknown',
+      license: 'License',
+      findings: 'Findings',
+      update: 'Update',
+      updating: 'Updating…',
+      updateAll: 'Update all',
+      rollback: 'Roll back',
+      updateOk: 'Updated: ',
+      rollbackOk: 'Rolled back: ',
+      actionFailed: 'Action failed',
+      experienceHealth: 'Skill health',
+      healthStale: 'Stale',
+      healthFailing: 'Failing',
+      healthNeverUsed: 'Never used',
+      healthLicenseUnknown: 'License unknown',
+      exportExperience: 'Export experience',
+      exportBusy: 'Exporting…',
+      importExperience: 'Import experience',
+      importBusy: 'Importing…',
+      importPrompt: 'Paste the experience JSON:',
+      importOk: 'Experience imported',
+      exportOk: 'Experience JSON exported',
+      importInvalid: 'Invalid JSON',
+      usesLabel: 'Uses',
+      successRate: 'Success',
+      avgDuration: 'Avg time',
     }
 
     function useStore() {
@@ -281,6 +355,719 @@ window.__ModuleLoader__.load({
     function SkillButton(props) {
       const state = useStore()
       const t = useT()
+
+      return h(
+        React.Fragment,
+        null,
+        h('style', null, CSS),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: state.open ? 'sf-trigger sf-trigger-open' : 'sf-trigger',
+            title: t('open'),
+            'aria-label': t('open'),
+            onClick: () => store.set({ open: true, sessionId: props.sessionId || store.sessionId }),
+          },
+          h(IconSkills, { size: 15 }),
+          h('span', { className: 'sf-trigger-label' }, t('trigger')),
+        ),
+      )
+    }
+
+    function sourceLabel(t, source) {
+      if (source === 'user-dsh' || source === 'user-agents') return t('sourceUser')
+      if (source === 'bundled') return t('sourceBundled')
+      if (source === 'project-dsh' || source === 'project-agents') return t('sourceProject')
+      if (source === 'profile') return t('sourceProfile')
+      return t('sourceOther')
+    }
+
+    function categoryOf(name) {
+      if (/^office/.test(name)) return 'office'
+      if (/^(hyperframes|beat-promo|media-use)/.test(name)) return 'video'
+      if (/^cordis|^editing-cordis/.test(name) || name === 'agent-experience') return 'harness'
+      return 'other'
+    }
+
+    function writeClipboardText(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(String(text)).catch(() => {})
+        }
+      } catch {
+        // Clipboard is optional in non-secure contexts.
+      }
+    }
+
+    function trustBadge(t, trust) {
+      const value = typeof trust === 'string' ? trust.toLowerCase() : ''
+      const keys = {
+        official: 'trustOfficial',
+        verified: 'trustVerified',
+        community: 'trustCommunity',
+        local: 'trustLocal',
+        unknown: 'trustUnknown',
+      }
+      const key = keys[value]
+      if (!key) return null
+      return h(
+        'span',
+        { className: 'sf-badge sf-trust', title: t('trust') + ': ' + String(trust) },
+        t('trust') + ': ' + t(key),
+      )
+    }
+
+    function securityLevelKey(level) {
+      const value = typeof level === 'string' ? level.toLowerCase() : ''
+      if (value === 'high') return 'secHigh'
+      if (value === 'medium') return 'secMedium'
+      if (value === 'low') return 'secLow'
+      return null
+    }
+
+    function securityBadge(t, security) {
+      const level =
+        security && typeof security === 'object' ? security.level : typeof security === 'string' ? security : null
+      const key = securityLevelKey(level)
+      if (!key) return null
+      return h(
+        'span',
+        {
+          className: 'sf-badge sf-sec sf-sec-' + String(level).toLowerCase(),
+          title: t('security') + ': ' + t(key),
+        },
+        t('security') + ': ' + t(key),
+      )
+    }
+
+    function licenseBadge(t, license) {
+      if (typeof license !== 'string' || !license.trim()) return null
+      return h('span', { className: 'sf-badge', title: license }, t('license') + ': ' + license)
+    }
+
+    function badgeRow(badges, className) {
+      const items = (Array.isArray(badges) ? badges : []).filter(Boolean)
+      if (!items.length) return null
+      return h(
+        'div',
+        { className: className || 'sf-meta-row' },
+        items.map((item, index) =>
+          typeof React.cloneElement === 'function' && (item.key === undefined || item.key === null)
+            ? React.cloneElement(item, { key: index })
+            : item,
+        ),
+      )
+    }
+
+    function securityFindings(t, security) {
+      const findings = security && Array.isArray(security.findings) ? security.findings : []
+      const usable = findings.filter(
+        (finding) => finding && typeof finding === 'object' && (finding.rule || finding.excerpt),
+      )
+      if (!usable.length) return null
+      return h(
+        'div',
+        { className: 'sf-findings' },
+        h('span', { className: 'sf-findings-label' }, t('findings')),
+        usable.slice(0, 2).map((finding, index) =>
+          h(
+            'div',
+            { className: 'sf-finding', key: String(finding.rule || index) + ':' + index },
+            finding.rule ? h('code', { className: 'sf-finding-rule' }, String(finding.rule)) : null,
+            finding.line !== undefined && finding.line !== null && finding.line !== ''
+              ? h('span', { className: 'sf-finding-line' }, ' L' + String(finding.line))
+              : null,
+            finding.excerpt
+              ? h('span', { className: 'sf-finding-excerpt' }, ' ' + String(finding.excerpt).slice(0, 140))
+              : null,
+          ),
+        ),
+      )
+    }
+
+    function formatPercent(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number)) return '—'
+      const percent = number <= 1 ? number * 100 : number
+      return Math.round(percent) + '%'
+    }
+
+    function formatDuration(value) {
+      const number = Number(value)
+      if (!Number.isFinite(number) || number < 0) return '—'
+      if (number < 1000) return Math.round(number) + 'ms'
+      const seconds = number / 1000
+      if (seconds < 60) return seconds.toFixed(1).replace(/\.0$/, '') + 's'
+      return Math.round(seconds / 60) + 'm'
+    }
+
+    function healthEntryName(entry) {
+      if (typeof entry === 'string') return entry
+      if (!entry || typeof entry !== 'object') return ''
+      return String(entry.name || entry.skillName || entry.skill || entry.id || '')
+    }
+
+    function SkillCard(props) {
+      const skill = props.skill
+      const t = props.t
+      const expanded = props.expanded
+      const copied = props.copied
+      const onToggle = props.onToggle
+      const onCopy = props.onCopy
+      return h(
+        'div',
+        {
+          className: expanded ? 'sf-card sf-card-open' : 'sf-card',
+          onClick: onToggle,
+          role: 'button',
+          tabIndex: 0,
+          onKeyDown: (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onToggle()
+            }
+          },
+        },
+        h(
+          'div',
+          { className: 'sf-card-head' },
+          h('code', { className: 'sf-name' }, skill.name),
+          h('span', { className: 'sf-source' }, sourceLabel(t, skill.source)),
+        ),
+        h('p', { className: 'sf-desc' }, skill.intro || skill.description),
+        skill.whenToUse
+          ? h(
+              'p',
+              { className: 'sf-when' },
+              h('span', { className: 'sf-when-label' }, t('whenLabel')),
+              skill.whenToUse,
+            )
+          : null,
+        expanded
+          ? h(
+              'div',
+              { className: 'sf-detail' },
+              h('div', { className: 'sf-cat' }, categoryOf(skill.name)),
+              skill.path
+                ? h(
+                    'div',
+                    { className: 'sf-path' },
+                    h('span', { className: 'sf-detail-label' }, t('path')),
+                    h('code', null, skill.path),
+                  )
+                : null,
+              h(
+                'div',
+                { className: 'sf-flags' },
+                h('span', { className: 'sf-detail-label' }, t('flags')),
+                h('span', { className: 'sf-flag' }, t('modelOnly')),
+                h('span', { className: 'sf-flag' }, t('userOnly')),
+              ),
+              badgeRow([trustBadge(t, skill.trust), licenseBadge(t, skill.license), securityBadge(t, skill.security)]),
+              securityFindings(t, skill.security),
+            )
+          : null,
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'sf-copy',
+            onClick: (event) => {
+              event.stopPropagation()
+              onCopy(skill.name)
+            },
+          },
+          copied ? t('copied') : t('copy'),
+        ),
+      )
+    }
+
+    function SkillDrawer() {
+      const state = useStore()
+      const t = useT()
+      const [data, setData] = React.useState(null)
+      const [loading, setLoading] = React.useState(false)
+      const [error, setError] = React.useState(null)
+      const [query, setQuery] = React.useState('')
+      const [expanded, setExpanded] = React.useState(null)
+      const [copied, setCopied] = React.useState(null)
+      const [showCreate, setShowCreate] = React.useState(false)
+      const [form, setForm] = React.useState({ name: '', description: '', whenToUse: '' })
+      const [createBusy, setCreateBusy] = React.useState(false)
+      const [createError, setCreateError] = React.useState(null)
+      const [createdPath, setCreatedPath] = React.useState(null)
+      const [modeBusy, setModeBusy] = React.useState(false)
+      const [feedbackBusy, setFeedbackBusy] = React.useState(false)
+      const [view, setView] = React.useState('skills')
+      const [remoteQuery, setRemoteQuery] = React.useState('')
+      const [remoteResults, setRemoteResults] = React.useState([])
+      const [remoteLoading, setRemoteLoading] = React.useState(false)
+      const [remoteError, setRemoteError] = React.useState(null)
+      const [remotePreview, setRemotePreview] = React.useState(null)
+      const [remoteInstall, setRemoteInstall] = React.useState(null)
+      const [updates, setUpdates] = React.useState(null)
+      const [updateBusy, setUpdateBusy] = React.useState(null)
+      const [updateError, setUpdateError] = React.useState(null)
+      const [updateNotice, setUpdateNotice] = React.useState(null)
+      const [recoBusy, setRecoBusy] = React.useState(null)
+      const [xpBusy, setXpBusy] = React.useState(null)
+      const [xpStatus, setXpStatus] = React.useState(null)
+      const [toolsQuery, setToolsQuery] = React.useState('')
+      const [toolsResults, setToolsResults] = React.useState([])
+      const [toolsLoading, setToolsLoading] = React.useState(false)
+      const [toolsError, setToolsError] = React.useState(null)
+      const [libraryQuery, setLibraryQuery] = React.useState('')
+      const [libraryCategory, setLibraryCategory] = React.useState('')
+      const [libraryMinRating, setLibraryMinRating] = React.useState(0)
+      const [libraryResults, setLibraryResults] = React.useState([])
+      const [libraryMeta, setLibraryMeta] = React.useState(null)
+      const [libraryLoading, setLibraryLoading] = React.useState(false)
+      const [libraryError, setLibraryError] = React.useState(null)
+      const [libraryPage, setLibraryPage] = React.useState(1)
+      const searchRef = React.useRef(null)
+      const abortRef = React.useRef(null)
+
+      const load = React.useCallback(async (sessionId, silent = false) => {
+        if (abortRef.current) abortRef.current.abort()
+        const controller = new AbortController()
+        abortRef.current = controller
+        if (!silent) {
+          setLoading(true)
+          setError(null)
+        }
+        try {
+          const params = new URLSearchParams()
+          if (sessionId) params.set('sessionId', sessionId)
+          const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
+          if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
+          const suffix = params.toString() ? '?' + params.toString() : ''
+          const response = await fetch('/skill-studio/catalog.json' + suffix, {
+            cache: 'no-store',
+            signal: controller.signal,
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setData(payload)
+        } catch (err) {
+          if (err && err.name === 'AbortError') return
+          if (silent) return
+          setError(err instanceof Error ? err.message : String(err))
+          setData(null)
+        } finally {
+          if (!silent) setLoading(false)
+        }
+      }, [])
+
+      React.useEffect(() => {
+        if (!state.open) {
+          setQuery('')
+          setExpanded(null)
+          setError(null)
+          if (abortRef.current) abortRef.current.abort()
+          return undefined
+        }
+        load(state.sessionId)
+        const pollTimer = setInterval(() => load(state.sessionId, true), 10000)
+        const focusTimer = setTimeout(() => {
+          if (searchRef.current) searchRef.current.focus()
+        }, 80)
+        return () => {
+          clearTimeout(focusTimer)
+          clearInterval(pollTimer)
+          if (abortRef.current) abortRef.current.abort()
+        }
+      }, [state.open, state.sessionId, load])
+
+      React.useEffect(() => {
+        if (!state.open) return undefined
+        const onKey = (event) => {
+          if (event.key === 'Escape') store.set({ open: false })
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+      }, [state.open])
+
+      if (!state.open) return null
+
+      const skills = data && Array.isArray(data.skills) ? data.skills : []
+      const recommendations = data && Array.isArray(data.recommendations) ? data.recommendations : []
+      const activeSkills = data && Array.isArray(data.activeSkills) ? data.activeSkills : []
+      const recentSkills = data && Array.isArray(data.recentSkills) ? data.recentSkills : []
+      const shownSkills = activeSkills.length ? activeSkills : recentSkills
+      const currentMode = data && data.mode ? data.mode : 'off'
+      const experience = data && data.experience ? data.experience : null
+      const recFeedback =
+        experience && experience.recFeedback && experience.recFeedback.skills && typeof experience.recFeedback.skills === 'object'
+          ? experience.recFeedback.skills
+          : null
+      const normalized = query.trim().toLowerCase()
+      const filtered = normalized
+        ? skills.filter((skill) =>
+            [skill.name, skill.description, skill.intro, skill.whenToUse]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .includes(normalized),
+          )
+        : skills
+
+      const copyName = (name) => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(name).catch(() => {})
+          }
+        } catch {
+          // Clipboard is optional.
+        }
+        setCopied(name)
+        setTimeout(() => setCopied((current) => (current === name ? null : current)), 1200)
+      }
+
+      const sendRecommendFeedback = async (skillName, verdict) => {
+        if (!skillName || recoBusy) return
+        setRecoBusy({ name: skillName, verdict })
+        try {
+          const response = await fetch('/skill-studio/recommend-feedback', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ skillName, verdict }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          await load(state.sessionId, true)
+        } catch {
+          // Recommendation feedback is best-effort; failures stay silent.
+        } finally {
+          setRecoBusy(null)
+        }
+      }
+
+      const copyCommand = (name) => {
+        if (!name) return
+        writeClipboardText('/skill ' + name)
+        setCopied(name)
+        setTimeout(() => setCopied((current) => (current === name ? null : current)), 1500)
+        sendRecommendFeedback(name, 'adopt')
+      }
+
+      const changeMode = async (next) => {
+        const target = currentMode === next ? 'off' : next
+        setModeBusy(true)
+        setError(null)
+        try {
+          const response = await fetch('/skill-studio/mode', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ mode: target }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          await load(state.sessionId, true)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setModeBusy(false)
+        }
+      }
+
+      const sendFeedback = async (id, rating) => {
+        if (!id || feedbackBusy) return
+        setFeedbackBusy(true)
+        try {
+          const response = await fetch('/skill-studio/feedback', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id, rating }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          await load(state.sessionId, true)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setFeedbackBusy(false)
+        }
+      }
+
+      const loadRemote = async (q = remoteQuery) => {
+        setRemoteLoading(true)
+        setRemoteError(null)
+        try {
+          const response = await fetch('/skill-studio/discover?q=' + encodeURIComponent(q || ''), {
+            cache: 'no-store',
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemoteResults(Array.isArray(payload.entries) ? payload.entries : [])
+        } catch (err) {
+          setRemoteError(err instanceof Error ? err.message : String(err))
+          setRemoteResults([])
+        } finally {
+          setRemoteLoading(false)
+        }
+      }
+
+      const loadTools = async (q = toolsQuery) => {
+        setToolsLoading(true)
+        setToolsError(null)
+        try {
+          const response = await fetch('/skill-studio/tools?q=' + encodeURIComponent(q || ''), {
+            cache: 'no-store',
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setToolsResults(Array.isArray(payload.servers) ? payload.servers : [])
+        } catch (err) {
+          setToolsError(err instanceof Error ? err.message : String(err))
+          setToolsResults([])
+        } finally {
+          setToolsLoading(false)
+        }
+      }
+
+      const loadLibrary = async (page = 1, append = false, filters = {}) => {
+        setLibraryLoading(true)
+        setLibraryError(null)
+        try {
+          const params = new URLSearchParams({
+            q: filters.q !== undefined ? filters.q : libraryQuery,
+            category: filters.category !== undefined ? filters.category : libraryCategory,
+            minRating: String(filters.minRating !== undefined ? filters.minRating : libraryMinRating),
+            page: String(page),
+            limit: '40',
+          })
+          const response = await fetch('/skill-studio/library?' + params.toString(), { cache: 'no-store' })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setLibraryMeta({ total: payload.total, categories: payload.categories || {}, generatedAt: payload.generatedAt })
+          setLibraryPage(page)
+          setLibraryResults((current) => (append ? current.concat(payload.entries || []) : payload.entries || []))
+        } catch (err) {
+          setLibraryError(err instanceof Error ? err.message : String(err))
+          if (!append) setLibraryResults([])
+        } finally {
+          setLibraryLoading(false)
+        }
+      }
+
+      const openRemotePreview = async (entry) => {
+        setRemotePreview({ entry, content: '', loading: true, error: null })
+        try {
+          const response = await fetch(
+            '/skill-studio/discover/preview?url=' + encodeURIComponent(entry.url),
+            { cache: 'no-store' },
+          )
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemotePreview({
+            entry,
+            content: payload.content || '',
+            loading: false,
+            error: null,
+            security: payload.security || null,
+            license: payload.license || null,
+            trust: payload.trust || null,
+          })
+        } catch (err) {
+          setRemotePreview({
+            entry,
+            content: '',
+            loading: false,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        }
+      }
+
+      const installRemote = async (entry) => {
+        setRemoteInstall({ name: entry.name, status: 'installing' })
+        try {
+          const response = await fetch('/skill-studio/discover/install', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ url: entry.url, trust: entry.trust }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setRemoteInstall({ name: entry.name, status: 'installed', path: payload.path })
+          await load(state.sessionId, true)
+        } catch (err) {
+          setRemoteInstall({
+            name: entry.name,
+            status: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          })
+        }
+      }
+
+      const checkUpdates = async (silent = false) => {
+        try {
+          const response = await fetch('/skill-studio/discover/updates', { cache: 'no-store' })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setUpdates({ updates: payload.updates || [], checked: payload.checked || 0 })
+        } catch (err) {
+          if (!silent) setRemoteError(err instanceof Error ? err.message : String(err))
+        }
+      }
+
+      const performUpdateAction = async (kind, name) => {
+        if (updateBusy) return
+        if (kind !== 'all' && !name) return
+        setUpdateBusy({ kind, name: name || 'all' })
+        setUpdateError(null)
+        setUpdateNotice(null)
+        try {
+          let endpoint = '/skill-studio/discover/update'
+          let body = { name }
+          let doneKey = 'updateOk'
+          if (kind === 'all') {
+            endpoint = '/skill-studio/discover/update-all'
+            body = {}
+          } else if (kind === 'rollback') {
+            endpoint = '/skill-studio/discover/rollback'
+            doneKey = 'rollbackOk'
+          }
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          let summary = name || ''
+          if (kind === 'all' && Number.isFinite(Number(payload.updated))) {
+            summary = String(Number(payload.updated)) + ' ' + t('updatesFound')
+          }
+          setUpdateNotice(t(doneKey) + summary)
+          await checkUpdates(true)
+          await load(state.sessionId, true)
+        } catch (err) {
+          setUpdateError(
+            t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+          )
+        } finally {
+          setUpdateBusy(null)
+        }
+      }
+
+      const exportExperience = async () => {
+        if (xpBusy) return
+        setXpBusy('export')
+        setXpStatus(null)
+        try {
+          const response = await fetch('/skill-studio/experience/export', { cache: 'no-store' })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          const data =
+            payload && payload.payload && typeof payload.payload === 'object' ? payload.payload : payload
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = 'ronge-skill-studio-experience.json'
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+          setTimeout(() => {
+            try {
+              URL.revokeObjectURL(url)
+            } catch {
+              // Object URL cleanup is best-effort.
+            }
+          }, 1500)
+          setXpStatus({ kind: 'ok', text: t('exportOk') })
+        } catch (err) {
+          setXpStatus({
+            kind: 'error',
+            text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+          })
+        } finally {
+          setXpBusy(null)
+        }
+      }
+
+      const importExperience = async () => {
+        if (xpBusy) return
+        let text = ''
+        try {
+          text = window.prompt(t('importPrompt')) || ''
+        } catch {
+          return
+        }
+        if (!text.trim()) return
+        let parsed
+        try {
+          parsed = JSON.parse(text)
+        } catch (err) {
+          setXpStatus({
+            kind: 'error',
+            text: t('importInvalid') + ': ' + (err instanceof Error ? err.message : String(err)),
+          })
+          return
+        }
+        const payload =
+          parsed && typeof parsed === 'object' && parsed.payload && typeof parsed.payload === 'object'
+            ? parsed.payload
+            : parsed
+        setXpBusy('import')
+        setXpStatus(null)
+        try {
+          const response = await fetch('/skill-studio/experience/import', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ payload }),
+          })
+          const result = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(result.error || 'HTTP ' + response.status)
+          setXpStatus({ kind: 'ok', text: t('importOk') })
+          await load(state.sessionId, true)
+        } catch (err) {
+          setXpStatus({
+            kind: 'error',
+            text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+          })
+        } finally {
+          setXpBusy(null)
+        }
+      }
+
+      const changeView = (next) => {
+        setView(next)
+        if (next === 'discover' && remoteResults.length === 0) loadRemote('')
+        if (next === 'tools' && toolsResults.length === 0) loadTools('')
+        if (next === 'library' && libraryResults.length === 0) loadLibrary(1, false)
+      }
+
+      const submitCreate = async (event) => {        event.preventDefault()
+        setCreateBusy(true)
+        setCreateError(null)
+        setCreatedPath(null)
+        try {
+          const response = await fetch('/skill-studio/create', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(form),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          setCreatedPath(payload.path || null)
+          setForm({ name: '', description: '', whenToUse: '' })
+          await load(state.sessionId)
+        } catch (err) {
+          setCreateError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setCreateBusy(false)
+        }
+      }
+
+      const setField = (key) => (event) => {
+        const value = event.target.value
+        setForm((current) => ({ ...current, [key]: value }))
+      }
+
+      const close = () => store.set({ open: false })
+
       const renderLibrary = () =>
         h(
           React.Fragment,
@@ -431,6 +1218,17 @@ window.__ModuleLoader__.load({
                     : remotePreview.error
                       ? h('div', { className: 'sf-empty sf-error' }, remotePreview.error)
                       : h('pre', { className: 'sf-preview-code' }, String(remotePreview.content || '').slice(0, 6000)),
+                  badgeRow(
+                    [
+                      trustBadge(
+                        t,
+                        remotePreview.trust || (remotePreview.entry && remotePreview.entry.trust),
+                      ),
+                      securityBadge(t, remotePreview.security),
+                      licenseBadge(t, remotePreview.license),
+                    ],
+                    'sf-meta-row sf-preview-meta',
+                  ),
                   h(
                     'button',
                     { type: 'button', className: 'sf-primary', onClick: () => installRemote(remotePreview.entry) },
@@ -448,431 +1246,168 @@ window.__ModuleLoader__.load({
           ),
         )
 
-      return h(
-        React.Fragment,
-        null,
-        h('style', null, CSS),
-        h(
-          'button',
-          {
-            type: 'button',
-            className: state.open ? 'sf-trigger sf-trigger-open' : 'sf-trigger',
-            title: t('open'),
-            'aria-label': t('open'),
-            onClick: () => store.set({ open: true, sessionId: props.sessionId || store.sessionId }),
-          },
-          h(IconSkills, { size: 15 }),
-          h('span', { className: 'sf-trigger-label' }, t('trigger')),
-        ),
-      )
-    }
-
-    function sourceLabel(t, source) {
-      if (source === 'user-dsh' || source === 'user-agents') return t('sourceUser')
-      if (source === 'bundled') return t('sourceBundled')
-      if (source === 'project-dsh' || source === 'project-agents') return t('sourceProject')
-      if (source === 'profile') return t('sourceProfile')
-      return t('sourceOther')
-    }
-
-    function categoryOf(name) {
-      if (/^office/.test(name)) return 'office'
-      if (/^(hyperframes|beat-promo|media-use)/.test(name)) return 'video'
-      if (/^cordis|^editing-cordis/.test(name) || name === 'agent-experience') return 'harness'
-      return 'other'
-    }
-
-    function SkillCard(props) {
-      const skill = props.skill
-      const t = props.t
-      const expanded = props.expanded
-      const copied = props.copied
-      const onToggle = props.onToggle
-      const onCopy = props.onCopy
-      return h(
-        'div',
-        {
-          className: expanded ? 'sf-card sf-card-open' : 'sf-card',
-          onClick: onToggle,
-          role: 'button',
-          tabIndex: 0,
-          onKeyDown: (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              onToggle()
-            }
-          },
-        },
-        h(
+      const renderUpdates = () => {
+        if (!updates) return null
+        const items = Array.isArray(updates.updates) ? updates.updates : []
+        const busyAll = updateBusy && updateBusy.kind === 'all'
+        return h(
           'div',
-          { className: 'sf-card-head' },
-          h('code', { className: 'sf-name' }, skill.name),
-          h('span', { className: 'sf-source' }, sourceLabel(t, skill.source)),
-        ),
-        h('p', { className: 'sf-desc' }, skill.intro || skill.description),
-        skill.whenToUse
-          ? h(
-              'p',
-              { className: 'sf-when' },
-              h('span', { className: 'sf-when-label' }, t('whenLabel')),
-              skill.whenToUse,
-            )
-          : null,
-        expanded
-          ? h(
+          { className: 'sf-updates' },
+          h(
+            'div',
+            { className: 'sf-updates-head' },
+            h('span', null, items.length ? items.length + ' ' + t('updatesFound') : t('noUpdates')),
+            items.length
+              ? h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'sf-secondary',
+                    disabled: Boolean(updateBusy),
+                    onClick: () => performUpdateAction('all'),
+                  },
+                  busyAll ? t('updating') : t('updateAll'),
+                )
+              : null,
+          ),
+          updateError ? h('div', { className: 'sf-update-error sf-error' }, updateError) : null,
+          updateNotice ? h('div', { className: 'sf-update-ok' }, updateNotice) : null,
+          items.slice(0, 12).map((item, index) => {
+            const entry = item && typeof item === 'object' ? item : {}
+            const name = entry.name ? String(entry.name) : ''
+            const diff = entry.diff && typeof entry.diff === 'object' ? entry.diff : null
+            const added = diff && Number.isFinite(Number(diff.added)) ? Number(diff.added) : null
+            const removed = diff && Number.isFinite(Number(diff.removed)) ? Number(diff.removed) : null
+            const lines =
+              diff && Array.isArray(diff.lines)
+                ? diff.lines
+                    .filter((line) => line && (line.type === '+' || line.type === '-'))
+                    .slice(0, 3)
+                : []
+            const busy = updateBusy && updateBusy.name === name
+            return h(
               'div',
-              { className: 'sf-detail' },
-              h('div', { className: 'sf-cat' }, categoryOf(skill.name)),
-              skill.path
+              { className: 'sf-update-item', key: name || 'update-' + index },
+              h(
+                'div',
+                { className: 'sf-update-row' },
+                h('code', { className: 'sf-name' }, name),
+                added !== null || removed !== null
+                  ? h(
+                      'span',
+                      { className: 'sf-update-diff' },
+                      (added !== null ? '+' + added : '') + (removed !== null ? ' / -' + removed : ''),
+                    )
+                  : null,
+                licenseBadge(t, entry.license),
+                securityBadge(t, entry.risk),
+              ),
+              lines.length
                 ? h(
                     'div',
-                    { className: 'sf-path' },
-                    h('span', { className: 'sf-detail-label' }, t('path')),
-                    h('code', null, skill.path),
+                    { className: 'sf-diff' },
+                    lines.map((line, index) =>
+                      h(
+                        'div',
+                        {
+                          className: line.type === '+' ? 'sf-diff-line sf-diff-add' : 'sf-diff-line sf-diff-del',
+                          key: index,
+                        },
+                        (line.type === '+' ? '+ ' : '- ') + String(line.text === undefined ? '' : line.text),
+                      ),
+                    ),
                   )
                 : null,
               h(
                 'div',
-                { className: 'sf-flags' },
-                h('span', { className: 'sf-detail-label' }, t('flags')),
-                h('span', { className: 'sf-flag' }, t('modelOnly')),
-                h('span', { className: 'sf-flag' }, t('userOnly')),
+                { className: 'sf-update-actions' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'sf-secondary',
+                    disabled: Boolean(updateBusy),
+                    onClick: () => performUpdateAction('update', name),
+                  },
+                  busy && updateBusy.kind === 'update' ? t('updating') : t('update'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'sf-secondary',
+                    disabled: Boolean(updateBusy),
+                    onClick: () => performUpdateAction('rollback', name),
+                  },
+                  busy && updateBusy.kind === 'rollback' ? t('updating') : t('rollback'),
+                ),
               ),
             )
-          : null,
-        h(
-          'button',
-          {
-            type: 'button',
-            className: 'sf-copy',
-            onClick: (event) => {
-              event.stopPropagation()
-              onCopy(skill.name)
-            },
-          },
-          copied ? t('copied') : t('copy'),
-        ),
-      )
-    }
+          }),
+        )
+      }
 
-    function SkillDrawer() {
-      const state = useStore()
-      const t = useT()
-      const [data, setData] = React.useState(null)
-      const [loading, setLoading] = React.useState(false)
-      const [error, setError] = React.useState(null)
-      const [query, setQuery] = React.useState('')
-      const [expanded, setExpanded] = React.useState(null)
-      const [copied, setCopied] = React.useState(null)
-      const [showCreate, setShowCreate] = React.useState(false)
-      const [form, setForm] = React.useState({ name: '', description: '', whenToUse: '' })
-      const [createBusy, setCreateBusy] = React.useState(false)
-      const [createError, setCreateError] = React.useState(null)
-      const [createdPath, setCreatedPath] = React.useState(null)
-      const [modeBusy, setModeBusy] = React.useState(false)
-      const [feedbackBusy, setFeedbackBusy] = React.useState(false)
-      const [view, setView] = React.useState('skills')
-      const [remoteQuery, setRemoteQuery] = React.useState('')
-      const [remoteResults, setRemoteResults] = React.useState([])
-      const [remoteLoading, setRemoteLoading] = React.useState(false)
-      const [remoteError, setRemoteError] = React.useState(null)
-      const [remotePreview, setRemotePreview] = React.useState(null)
-      const [remoteInstall, setRemoteInstall] = React.useState(null)
-      const [updates, setUpdates] = React.useState(null)
-      const [toolsQuery, setToolsQuery] = React.useState('')
-      const [toolsResults, setToolsResults] = React.useState([])
-      const [toolsLoading, setToolsLoading] = React.useState(false)
-      const [toolsError, setToolsError] = React.useState(null)
-      const [libraryQuery, setLibraryQuery] = React.useState('')
-      const [libraryCategory, setLibraryCategory] = React.useState('')
-      const [libraryMinRating, setLibraryMinRating] = React.useState(0)
-      const [libraryResults, setLibraryResults] = React.useState([])
-      const [libraryMeta, setLibraryMeta] = React.useState(null)
-      const [libraryLoading, setLibraryLoading] = React.useState(false)
-      const [libraryError, setLibraryError] = React.useState(null)
-      const [libraryPage, setLibraryPage] = React.useState(1)
-      const searchRef = React.useRef(null)
-      const abortRef = React.useRef(null)
+      const renderExperienceTable = () => {
+        const topSkills =
+          experience && Array.isArray(experience.topSkills)
+            ? experience.topSkills.filter((stat) => stat && typeof stat === 'object')
+            : []
+        if (!topSkills.length) return null
+        return h(
+          'div',
+          { className: 'sf-xp-table' },
+          h(
+            'div',
+            { className: 'sf-xp-row sf-xp-row-head' },
+            h('span', null, t('tabSkills')),
+            h('span', null, t('usesLabel')),
+            h('span', null, t('successRate')),
+            h('span', null, t('avgDuration')),
+          ),
+          topSkills.slice(0, 8).map((stat) =>
+            h(
+              'div',
+              { className: 'sf-xp-row', key: stat.name },
+              h('code', { className: 'sf-xp-name' }, stat.name),
+              h('span', null, stat.uses === undefined || stat.uses === null ? '—' : String(stat.uses)),
+              h('span', null, formatPercent(stat.successRate)),
+              h('span', null, formatDuration(stat.avgDurationMs)),
+            ),
+          ),
+        )
+      }
 
-      const load = React.useCallback(async (sessionId, silent = false) => {
-        if (abortRef.current) abortRef.current.abort()
-        const controller = new AbortController()
-        abortRef.current = controller
-        if (!silent) {
-          setLoading(true)
-          setError(null)
-        }
-        try {
-          const params = new URLSearchParams()
-          if (sessionId) params.set('sessionId', sessionId)
-          const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
-          if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
-          const suffix = params.toString() ? '?' + params.toString() : ''
-          const response = await fetch('/skill-studio/catalog.json' + suffix, {
-            cache: 'no-store',
-            signal: controller.signal,
+      const renderExperienceHealth = () => {
+        const health =
+          experience && experience.health && typeof experience.health === 'object' ? experience.health : null
+        if (!health) return null
+        const groups = [
+          ['healthStale', 'stale'],
+          ['healthFailing', 'failing'],
+          ['healthNeverUsed', 'neverUsed'],
+          ['healthLicenseUnknown', 'licenseUnknown'],
+        ]
+        const rows = groups
+          .map(([key, field]) => {
+            const list = Array.isArray(health[field]) ? health[field] : []
+            const names = list.map(healthEntryName).filter(Boolean).slice(0, 5)
+            if (!names.length) return null
+            return h(
+              'div',
+              { className: 'sf-health-row', key: field },
+              h('span', { className: 'sf-health-label' }, t(key) + ' ' + list.length),
+              h('span', { className: 'sf-health-names' }, names.join(' · ')),
+            )
           })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setData(payload)
-        } catch (err) {
-          if (err && err.name === 'AbortError') return
-          if (silent) return
-          setError(err instanceof Error ? err.message : String(err))
-          setData(null)
-        } finally {
-          if (!silent) setLoading(false)
-        }
-      }, [])
-
-      React.useEffect(() => {
-        if (!state.open) {
-          setQuery('')
-          setExpanded(null)
-          setError(null)
-          if (abortRef.current) abortRef.current.abort()
-          return undefined
-        }
-        load(state.sessionId)
-        const pollTimer = setInterval(() => load(state.sessionId, true), 10000)
-        const focusTimer = setTimeout(() => {
-          if (searchRef.current) searchRef.current.focus()
-        }, 80)
-        return () => {
-          clearTimeout(focusTimer)
-          clearInterval(pollTimer)
-          if (abortRef.current) abortRef.current.abort()
-        }
-      }, [state.open, state.sessionId, load])
-
-      React.useEffect(() => {
-        if (!state.open) return undefined
-        const onKey = (event) => {
-          if (event.key === 'Escape') store.set({ open: false })
-        }
-        window.addEventListener('keydown', onKey)
-        return () => window.removeEventListener('keydown', onKey)
-      }, [state.open])
-
-      if (!state.open) return null
-
-      const skills = data && Array.isArray(data.skills) ? data.skills : []
-      const recommendations = data && Array.isArray(data.recommendations) ? data.recommendations : []
-      const activeSkills = data && Array.isArray(data.activeSkills) ? data.activeSkills : []
-      const recentSkills = data && Array.isArray(data.recentSkills) ? data.recentSkills : []
-      const shownSkills = activeSkills.length ? activeSkills : recentSkills
-      const currentMode = data && data.mode ? data.mode : 'off'
-      const experience = data && data.experience ? data.experience : null
-      const normalized = query.trim().toLowerCase()
-      const filtered = normalized
-        ? skills.filter((skill) =>
-            [skill.name, skill.description, skill.intro, skill.whenToUse]
-              .filter(Boolean)
-              .join(' ')
-              .toLowerCase()
-              .includes(normalized),
-          )
-        : skills
-
-      const copyName = (name) => {
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(name).catch(() => {})
-          }
-        } catch {
-          // Clipboard is optional.
-        }
-        setCopied(name)
-        setTimeout(() => setCopied((current) => (current === name ? null : current)), 1200)
+          .filter(Boolean)
+        if (!rows.length) return null
+        return h(
+          'div',
+          { className: 'sf-health' },
+          h('div', { className: 'sf-health-title' }, t('experienceHealth')),
+          rows,
+        )
       }
-
-      const changeMode = async (next) => {
-        const target = currentMode === next ? 'off' : next
-        setModeBusy(true)
-        setError(null)
-        try {
-          const response = await fetch('/skill-studio/mode', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ mode: target }),
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          await load(state.sessionId, true)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : String(err))
-        } finally {
-          setModeBusy(false)
-        }
-      }
-
-      const sendFeedback = async (id, rating) => {
-        if (!id || feedbackBusy) return
-        setFeedbackBusy(true)
-        try {
-          const response = await fetch('/skill-studio/feedback', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ id, rating }),
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          await load(state.sessionId, true)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : String(err))
-        } finally {
-          setFeedbackBusy(false)
-        }
-      }
-
-      const loadRemote = async (q = remoteQuery) => {
-        setRemoteLoading(true)
-        setRemoteError(null)
-        try {
-          const response = await fetch('/skill-studio/discover?q=' + encodeURIComponent(q || ''), {
-            cache: 'no-store',
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setRemoteResults(Array.isArray(payload.entries) ? payload.entries : [])
-        } catch (err) {
-          setRemoteError(err instanceof Error ? err.message : String(err))
-          setRemoteResults([])
-        } finally {
-          setRemoteLoading(false)
-        }
-      }
-
-      const loadTools = async (q = toolsQuery) => {
-        setToolsLoading(true)
-        setToolsError(null)
-        try {
-          const response = await fetch('/skill-studio/tools?q=' + encodeURIComponent(q || ''), {
-            cache: 'no-store',
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setToolsResults(Array.isArray(payload.servers) ? payload.servers : [])
-        } catch (err) {
-          setToolsError(err instanceof Error ? err.message : String(err))
-          setToolsResults([])
-        } finally {
-          setToolsLoading(false)
-        }
-      }
-
-      const loadLibrary = async (page = 1, append = false, filters = {}) => {
-        setLibraryLoading(true)
-        setLibraryError(null)
-        try {
-          const params = new URLSearchParams({
-            q: filters.q !== undefined ? filters.q : libraryQuery,
-            category: filters.category !== undefined ? filters.category : libraryCategory,
-            minRating: String(filters.minRating !== undefined ? filters.minRating : libraryMinRating),
-            page: String(page),
-            limit: '40',
-          })
-          const response = await fetch('/skill-studio/library?' + params.toString(), { cache: 'no-store' })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setLibraryMeta({ total: payload.total, categories: payload.categories || {}, generatedAt: payload.generatedAt })
-          setLibraryPage(page)
-          setLibraryResults((current) => (append ? current.concat(payload.entries || []) : payload.entries || []))
-        } catch (err) {
-          setLibraryError(err instanceof Error ? err.message : String(err))
-          if (!append) setLibraryResults([])
-        } finally {
-          setLibraryLoading(false)
-        }
-      }
-
-      const openRemotePreview = async (entry) => {
-        setRemotePreview({ entry, content: '', loading: true, error: null })
-        try {
-          const response = await fetch(
-            '/skill-studio/discover/preview?url=' + encodeURIComponent(entry.url),
-            { cache: 'no-store' },
-          )
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setRemotePreview({ entry, content: payload.content || '', loading: false, error: null })
-        } catch (err) {
-          setRemotePreview({
-            entry,
-            content: '',
-            loading: false,
-            error: err instanceof Error ? err.message : String(err),
-          })
-        }
-      }
-
-      const installRemote = async (entry) => {
-        setRemoteInstall({ name: entry.name, status: 'installing' })
-        try {
-          const response = await fetch('/skill-studio/discover/install', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ url: entry.url, trust: entry.trust }),
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setRemoteInstall({ name: entry.name, status: 'installed', path: payload.path })
-          await load(state.sessionId, true)
-        } catch (err) {
-          setRemoteInstall({
-            name: entry.name,
-            status: 'error',
-            error: err instanceof Error ? err.message : String(err),
-          })
-        }
-      }
-
-      const checkUpdates = async () => {
-        try {
-          const response = await fetch('/skill-studio/discover/updates', { cache: 'no-store' })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setUpdates({ updates: payload.updates || [], checked: payload.checked || 0 })
-        } catch (err) {
-          setRemoteError(err instanceof Error ? err.message : String(err))
-        }
-      }
-
-      const changeView = (next) => {
-        setView(next)
-        if (next === 'discover' && remoteResults.length === 0) loadRemote('')
-        if (next === 'tools' && toolsResults.length === 0) loadTools('')
-        if (next === 'library' && libraryResults.length === 0) loadLibrary(1, false)
-      }
-
-      const submitCreate = async (event) => {        event.preventDefault()
-        setCreateBusy(true)
-        setCreateError(null)
-        setCreatedPath(null)
-        try {
-          const response = await fetch('/skill-studio/create', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(form),
-          })
-          const payload = await response.json().catch(() => ({}))
-          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
-          setCreatedPath(payload.path || null)
-          setForm({ name: '', description: '', whenToUse: '' })
-          await load(state.sessionId)
-        } catch (err) {
-          setCreateError(err instanceof Error ? err.message : String(err))
-        } finally {
-          setCreateBusy(false)
-        }
-      }
-
-      const setField = (key) => (event) => {
-        const value = event.target.value
-        setForm((current) => ({ ...current, [key]: value }))
-      }
-
-      const close = () => store.set({ open: false })
 
       const renderDiscover = () =>
         h(
@@ -910,15 +1445,7 @@ window.__ModuleLoader__.load({
             h('button', { type: 'button', className: 'sf-secondary', onClick: () => loadRemote(remoteQuery) }, t('searchBtn')),
           ),
           h('div', { className: 'sf-subhint' }, t('remoteHint')),
-          updates
-            ? h(
-                'div',
-                { className: 'sf-update-note' },
-                updates.updates.length
-                  ? updates.updates.length + ' ' + t('updatesFound') + ': ' + updates.updates.map((item) => item.name).join(', ')
-                  : t('noUpdates'),
-              )
-            : null,
+          renderUpdates(),
           remoteInstall
             ? h(
                 'div',
@@ -987,6 +1514,17 @@ window.__ModuleLoader__.load({
                           { className: 'sf-preview-code' },
                           String(remotePreview.content || '').slice(0, 6000),
                         ),
+                  badgeRow(
+                    [
+                      trustBadge(
+                        t,
+                        remotePreview.trust || (remotePreview.entry && remotePreview.entry.trust),
+                      ),
+                      securityBadge(t, remotePreview.security),
+                      licenseBadge(t, remotePreview.license),
+                    ],
+                    'sf-meta-row sf-preview-meta',
+                  ),
                   h(
                     'button',
                     {
@@ -1196,6 +1734,27 @@ window.__ModuleLoader__.load({
               currentMode === 'plan' ? t('planHint') : currentMode === 'immersive' ? t('immersiveHint') : '',
             ),
           ),
+          recommendations.length
+            ? h(
+                'div',
+                { className: 'sf-suggest' },
+                h('span', { className: 'sf-mode-label' }, t('suggest')),
+                recommendations.slice(0, 2).map((item) =>
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      key: 'suggest-' + item.name,
+                      className: copied === item.name ? 'sf-chip sf-chip-active' : 'sf-chip',
+                      title: t('copySkill'),
+                      disabled: Boolean(recoBusy && recoBusy.name === item.name),
+                      onClick: () => copyCommand(item.name),
+                    },
+                    copied === item.name ? t('copied') : item.name,
+                  ),
+                ),
+              )
+            : null,
           activeSkills.length || recentSkills.length
             ? h(
                 'div',
@@ -1206,7 +1765,7 @@ window.__ModuleLoader__.load({
                 ),
               )
             : null,
-          experience && experience.topSkills && experience.topSkills.length
+          experience
             ? h(
                 React.Fragment,
                 null,
@@ -1214,9 +1773,14 @@ window.__ModuleLoader__.load({
                   'div',
                   { className: 'sf-xp', title: experience.path || '' },
                   h('span', { className: 'sf-xp-label' }, t('experience')),
-                  experience.topSkills.slice(0, 5).map((stat) =>
-                    h('span', { key: stat.name, className: 'sf-xp-chip' }, stat.name + ' ×' + stat.uses),
-                  ),
+                  Array.isArray(experience.topSkills)
+                    ? experience.topSkills
+                        .filter((stat) => stat && stat.name)
+                        .slice(0, 5)
+                        .map((stat) =>
+                          h('span', { key: stat.name, className: 'sf-xp-chip' }, stat.name + ' ×' + stat.uses),
+                        )
+                    : null,
                   experience.recent && experience.recent[0]
                     ? h(
                         'span',
@@ -1224,7 +1788,41 @@ window.__ModuleLoader__.load({
                         t('lastTask') + String(experience.recent[0].task || '').slice(0, 36),
                       )
                     : null,
+                  h(
+                    'span',
+                    { className: 'sf-xp-tools' },
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'sf-fb',
+                        disabled: xpBusy === 'export',
+                        onClick: () => exportExperience(),
+                      },
+                      xpBusy === 'export' ? t('exportBusy') : t('exportExperience'),
+                    ),
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'sf-fb',
+                        disabled: xpBusy === 'import',
+                        onClick: () => importExperience(),
+                      },
+                      xpBusy === 'import' ? t('importBusy') : t('importExperience'),
+                    ),
+                  ),
                 ),
+                xpStatus
+                  ? h(
+                      'div',
+                      {
+                        className:
+                          xpStatus.kind === 'error' ? 'sf-xp-status sf-error' : 'sf-xp-status sf-ok',
+                      },
+                      xpStatus.text,
+                    )
+                  : null,
                 experience.recent && experience.recent[0] && experience.recent[0].outcome
                   ? h(
                       'div',
@@ -1258,6 +1856,8 @@ window.__ModuleLoader__.load({
                       ),
                     )
                   : null,
+                renderExperienceTable(),
+                renderExperienceHealth(),
               )
             : null,
           h(
@@ -1285,24 +1885,111 @@ window.__ModuleLoader__.load({
                   data && data.contextPreview
                     ? h('div', { className: 'sf-reco-context' }, t('basedOn') + data.contextPreview)
                     : null,
-                  recommendations.map((item) =>
-                    h(
-                      'button',
+                  recommendations.map((item) => {
+                    const detail = Array.isArray(item.reasonsDetail)
+                      ? item.reasonsDetail
+                          .filter((entry) => entry && typeof entry.label === 'string' && entry.label.trim())
+                          .slice(0, 3)
+                      : []
+                    const counts =
+                      recFeedback && recFeedback[item.name] && typeof recFeedback[item.name] === 'object'
+                        ? recFeedback[item.name]
+                        : null
+                    const busy = Boolean(recoBusy && recoBusy.name === item.name)
+                    return h(
+                      'div',
                       {
-                        type: 'button',
+                        role: 'button',
+                        tabIndex: 0,
                         key: item.name,
                         className: 'sf-reco-item',
                         onClick: () => {
                           setQuery(item.name)
                           setExpanded(item.name)
                         },
+                        onKeyDown: (event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            setQuery(item.name)
+                            setExpanded(item.name)
+                          }
+                        },
                       },
                       h('span', { className: 'sf-reco-name' }, item.name),
                       h('span', { className: 'sf-reco-score' }, String(item.score ?? '')),
-                      h('span', { className: 'sf-reco-reasons' }, (item.reasons || []).join(' · ')),
-                      h('span', { className: 'sf-reco-intro' }, item.intro || item.description),
-                    ),
-                  ),
+                      detail.length
+                        ? h(
+                            'span',
+                            { className: 'sf-reco-badges' },
+                            detail.map((reason, index) =>
+                              h(
+                                'span',
+                                {
+                                  key: String(reason.kind || 'reason') + ':' + index,
+                                  className: 'sf-reco-badge',
+                                  title: reason.detail ? String(reason.detail) : '',
+                                },
+                                String(reason.label),
+                              ),
+                            ),
+                          )
+                        : (item.reasons || []).length
+                          ? h('span', { className: 'sf-reco-reasons' }, (item.reasons || []).join(' · '))
+                          : null,
+                      h('span', { className: 'sf-reco-intro' }, item.intro || item.description || ''),
+                      h(
+                        'div',
+                        { className: 'sf-reco-actions' },
+                        h(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'sf-reco-btn',
+                            disabled: busy,
+                            title: t('copySkill'),
+                            onClick: (event) => {
+                              event.stopPropagation()
+                              copyCommand(item.name)
+                            },
+                          },
+                          (copied === item.name ? t('copied') : t('copySkill')) +
+                            (counts && Number.isFinite(Number(counts.adopt)) && Number(counts.adopt) > 0
+                              ? ' ' + Number(counts.adopt)
+                              : ''),
+                        ),
+                        h(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'sf-reco-btn',
+                            disabled: busy,
+                            onClick: (event) => {
+                              event.stopPropagation()
+                              sendRecommendFeedback(item.name, 'good')
+                            },
+                          },
+                          '👍 ' +
+                            t('good') +
+                            (counts && Number.isFinite(Number(counts.good)) ? ' ' + Number(counts.good) : ''),
+                        ),
+                        h(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'sf-reco-btn',
+                            disabled: busy,
+                            onClick: (event) => {
+                              event.stopPropagation()
+                              sendRecommendFeedback(item.name, 'bad')
+                            },
+                          },
+                          '👎 ' +
+                            t('bad') +
+                            (counts && Number.isFinite(Number(counts.bad)) ? ' ' + Number(counts.bad) : ''),
+                        ),
+                      ),
+                    )
+                  }),
                 )
               : null,
             !loading && !error && filtered.length === 0
@@ -1511,6 +2198,58 @@ window.__ModuleLoader__.load({
 .sf-secondary:hover{background:var(--dsw-alias-bg-layer-2)}
 .sf-create-error{color:var(--dsw-alias-state-error-primary);font-size:11px;line-height:1.5}
 .sf-create-ok{color:var(--dsw-alias-state-success-primary);font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+.sf-suggest{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:0 18px 10px}
+.sf-suggest .sf-chip:disabled{opacity:.55;cursor:default}
+.sf-meta-row{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sf-badge{padding:1px 6px;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.5}
+.sf-badge.sf-sec{font-weight:600}
+.sf-badge.sf-sec-low{color:var(--dsw-alias-state-success-primary)}
+.sf-badge.sf-sec-medium{color:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary)}
+.sf-badge.sf-sec-high{color:var(--dsw-alias-state-error-primary);border-color:var(--dsw-alias-state-error-primary)}
+.sf-findings{display:flex;flex-direction:column;gap:2px;margin-top:5px}
+.sf-findings-label{color:var(--dsw-alias-label-secondary);opacity:.8;font-size:10px;margin-bottom:1px}
+.sf-finding{font-size:10px;line-height:1.45;color:var(--dsw-alias-label-secondary);overflow-wrap:anywhere}
+.sf-finding-rule{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dsw-alias-label-primary)}
+.sf-finding-line{opacity:.85}
+.sf-preview-meta{margin:0 0 8px}
+.sf-reco-badges{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.sf-reco-badge{padding:1px 6px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.5}
+.sf-reco-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.sf-reco-btn{padding:1px 7px;border:1px solid var(--dsw-alias-border-l1);border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:10px;cursor:pointer}
+.sf-reco-btn:hover{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
+.sf-reco-btn:disabled{opacity:.55;cursor:default}
+.sf-updates{flex:none;margin:0 18px 10px;padding:8px 10px;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;background:var(--dsw-alias-bg-base);max-height:38vh;overflow-y:auto}
+.sf-updates-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--dsw-alias-label-secondary)}
+.sf-updates-head .sf-secondary{height:24px;font-size:10px;padding:0 8px}
+.sf-updates-head .sf-secondary:disabled{opacity:.55;cursor:default}
+.sf-update-item{margin-top:8px;padding-top:8px;border-top:1px dashed var(--dsw-alias-border-l1)}
+.sf-update-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.sf-update-diff{color:var(--dsw-alias-brand-primary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
+.sf-update-error{font-size:10px;line-height:1.5;margin-top:6px;overflow-wrap:anywhere}
+.sf-update-ok{font-size:10px;color:var(--dsw-alias-state-success-primary);line-height:1.5;margin-top:6px;overflow-wrap:anywhere}
+.sf-diff{margin-top:5px;padding:5px 6px;border-radius:6px;background:var(--dsw-alias-bg-layer-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;line-height:1.5;max-height:86px;overflow:auto}
+.sf-diff-line{white-space:pre-wrap;overflow-wrap:anywhere}
+.sf-diff-add{color:var(--dsw-alias-state-success-primary)}
+.sf-diff-del{color:var(--dsw-alias-state-error-primary)}
+.sf-update-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
+.sf-update-actions .sf-secondary{height:24px;font-size:10px;padding:0 8px}
+.sf-update-actions .sf-secondary:disabled{opacity:.55;cursor:default}
+.sf-xp-tools{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;margin-left:auto}
+.sf-xp-tools .sf-fb:disabled{opacity:.55;cursor:default}
+.sf-xp-status{padding:0 18px 8px;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+.sf-ok{color:var(--dsw-alias-state-success-primary)}
+.sf-xp-table{margin:0 18px 10px;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;overflow:hidden}
+.sf-xp-row{display:grid;grid-template-columns:minmax(0,1fr) 40px 52px 62px;gap:6px;padding:4px 8px;font-size:10px;line-height:1.5;border-top:1px solid var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary)}
+.sf-xp-row:first-child{border-top:0}
+.sf-xp-row span{overflow-wrap:anywhere;text-align:right}
+.sf-xp-row span:first-child{text-align:left}
+.sf-xp-row-head{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-weight:600}
+.sf-xp-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dsw-alias-label-primary);overflow-wrap:anywhere}
+.sf-health{margin:0 18px 12px;font-size:10px}
+.sf-health-title{color:var(--dsw-alias-label-secondary);font-weight:600;margin-bottom:4px}
+.sf-health-row{display:flex;gap:6px;line-height:1.5;margin-top:2px;overflow-wrap:anywhere}
+.sf-health-label{flex:none;color:var(--dsw-alias-label-secondary);opacity:.85}
+.sf-health-names{color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
 @media (max-width:640px){.sf-trigger-label{display:none}.sf-drawer{width:100%}}
 `
 

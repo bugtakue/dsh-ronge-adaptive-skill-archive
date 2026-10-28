@@ -1,7 +1,7 @@
 {
   "name": "ronge-skill-studio",
-  "version": "1.4.2",
-  "description": "荣哥技能卷轴收藏馆（可沉浸式体验版本）: 6,399 public skills, context-aware recommendations, remote Discover/install, MCP tools, plan/immersive modes, experience memory + feedback, and a completion chime for DeepSeek Harness.",
+  "version": "1.5.0",
+  "description": "荣哥技能卷轴收藏馆（可沉浸式体验版本）: 6,399 public skills, context-aware recommendations, plan/immersive modes, experience memory + feedback, pre-install safety scan, update diff/rollback, and a completion chime for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -35,11 +35,13 @@
     "icon.svg",
     "scripts/*.mjs",
     "sources/*.json",
-    "library/*.json"
+    "library/*.json",
+    "test/fixtures/*.json"
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "eval:recommend": "node scripts/eval-recommend.mjs"
   },
   "dsh": {
     "bundle": {

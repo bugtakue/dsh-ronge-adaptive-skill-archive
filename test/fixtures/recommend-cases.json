@@ -1,0 +1,12 @@
+[
+  { "context": "帮我做一个 30 秒卡点宣传片，先出分镜和节奏", "expect": ["beat-promo-director"] },
+  { "context": "把这份 docx 报告改写一下，导出 word 文档", "expect": ["office-docx"] },
+  { "context": "做一个 excel 表格，用公式算总和和数据透视", "expect": ["office-xlsx"] },
+  { "context": "给 harness 写一个插件面板，加一个新工具", "expect": ["cordis-plugin-development"] },
+  { "context": "设计一个 skill，优化上下文加载和多步工作流", "expect": ["agent-experience"] },
+  { "context": "用 hyperframes 渲染一段视频，加转场和片头动画", "expect": ["hyperframes"] },
+  { "context": "找一段背景音乐和音效，给视频配音", "expect": ["media-use"] },
+  { "context": "把幻灯片渲染成图片，检查排版", "expect": ["office-render"] },
+  { "context": "改一个 agent preset 的 cordis 组合配置", "expect": ["editing-cordis-compositions"] },
+  { "context": "用 hyperframes-cli 检查项目然后渲染预览", "expect": ["hyperframes-cli"] }
+]

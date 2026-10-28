@@ -4,7 +4,7 @@
 
 > 一个给 DeepSeek Harness 的上下文感知技能工作台：**它会读当前会话和项目，主动告诉你「现在适合用哪个 Skill」，实时显示「正在用哪些 Skill」，还能进入计划/沉浸模式，并把每次任务的技能使用写成经验记忆。**
 
-一个 bundle，九个能力：
+一个 bundle，十三个能力：
 
 - 🧠 **Skill Radar · 智能推荐**：根据当前会话最近的内容和项目目录，给技能打分排序，显示 Top 4 与匹配原因。
 - 🟢 **Now Using · 正在使用**：从会话的 `skill` 工具调用里读出当前 turn 正在用的技能；不在运行时显示「最近使用」。
@@ -17,6 +17,10 @@
 - 🌐 **Discover · 远程发现**：从精选 GitHub 源搜索 SKILL.md，预览后安装；记录来源/哈希，支持更新检查。
 - 🧰 **Tools · MCP 目录**：浏览官方 MCP registry 里的服务器；工具和 skill 分开展示。
 - 📚 **Scroll Library · 荣哥技能卷轴收藏馆**：GitHub 公开 SKILL.md 的分类 + 评级索引，按分类/评分浏览、预览、安装。
+- 🛡️ **Safety Radar · 安装前安全提示**：本地静态扫描 shell 执行 / 下载后直接执行 / 动态解码 / 提示注入 / 网络访问 / 凭据路径 / 过宽 `allowed-tools`，给出低/中/高风险与命中行号；同时解析 `license` 与来源信任级别（official / verified / community / local / unknown）。不联网、不上传、不执行。
+- 🔄 **Update Center · 更新与回滚**：`skills-lock.json` 记录来源 / 哈希 / 信任 / 许可证；检查更新时返回**内容 diff**；支持单条更新、一键全部更新（更新前自动备份到 `~/.dsh/skill-studio/backups/<skill>/`）与回滚。
+- 🧪 **Recommendation Eval · 推荐评估**：推荐理由升级为结构化 `reasonsDetail`（名称 / 关键词 / 类别 / 经验四类）；内置离线金标集与 `npm run eval:recommend`（Recall@K）；面板可对推荐点「采用 / 👍 / 👎」，写入 `rec-feedback.json`。
+- 📊 **Experience+ · 经验深化**：跨会话成功率、平均耗时、连续失败；健康报告（长期不用 / 连续失败 / 从未使用 / 许可证未知）；经验支持 JSON 导出 / 导入。
 - 外加：技能目录、搜索、来源/路径、一键新建 Skill、Agent 路由提示。
 
 ![技能入口](docs/header-button.png)
@@ -65,6 +69,9 @@
 
 推荐算法会把熟练度算进去：`score += min(4, uses × 0.8)`，并在理由里显示「经验×N」。所以用得越多、越稳定有效的 skill，越容易被优先推荐——这就是「越做越好」的经验值。
 
+- **v1.5.0 起**：每 skill 额外统计成功率、平均耗时、连续失败（失败的顶层 turn 也记一次 uses + `failureStreak`）；面板「经验」页有统计表与健康报告（长期不用 / 连续失败 / 从未使用 / 许可证未知）。
+- **导出 / 导入**：`GET /skill-studio/experience/export` 返回带 `version: 2` 的 JSON；`POST /skill-studio/experience/import` 按 entry id 去重、按计数取较大值合并，适合换机或小团队共享经验。
+
 ```md
 ## 2026-10-28T12:00:00.000Z · 为宣传片写分镜
 - Skills: `beat-promo-director`, `media-use`
@@ -74,6 +81,29 @@
 ```
 
 ---
+
+## 安装前安全提示（v1.5.0）
+
+安装/预览任何第三方 SKILL.md 前，Host 会在**本机**跑一遍启发式扫描（`scanSkillText`）：
+
+- 命中的规则：shell 执行（`child_process` / `execSync` / `subprocess`）、`curl | bash`、动态解码（`eval` / `base64 -d` / `atob`）、提示注入语句、网络访问、凭据路径（`.ssh` / `.env` / keychain / api key）、文件写入、过宽 `allowed-tools`（`Bash(*)` 或裸 `Bash`）。
+- 输出：`{ level: low|medium|high, score, findings: [{rule, label, severity, line, excerpt}] }`，命中行号可在预览里直接定位。
+- 同时给出 `trust`（来自已记录的来源 repo / trust，命中官方组织 allowlist 记为 official）与 `license`（frontmatter `license`，缺失为 `null`）。
+- 免责：这是**启发式提示，不是安全保证**（静态扫描无法覆盖全部攻击面），安装前仍须自己预览全文。
+
+## 更新中心（v1.5.0）
+
+- `~/.dsh/skill-studio/skills-lock.json`：记录每个已安装 skill 的 `url / repo / sha256 / trust / license / installedAt / updatedAt / previousSha256`。
+- `GET /skill-studio/discover/updates`：除了哈希变化，还返回 `diff: {added, removed, changedAtLine, lines[]}` 与远端 `license` / `risk`。
+- `POST /skill-studio/discover/update`（单条）、`POST /skill-studio/discover/update-all`（全部，单条失败不影响其他）、`POST /skill-studio/discover/rollback`（回滚到上一次备份）。
+- 覆盖前一定备份：`~/.dsh/skill-studio/backups/<skill>/<timestamp>.md`；回滚本身也会先备份当前版本。
+- 边界不变：只拉 `raw.githubusercontent.com/**/SKILL.md`、≤256 KiB、不自动拉脚本/资源。
+
+## 推荐评估与反馈（v1.5.0）
+
+- 推荐结果同时返回 `reasons`（旧字符串）与 `reasonsDetail`（结构化：`kind` = name / keyword / category / experience，附 `label`、`detail`、`weight`）。
+- 离线金标集：`test/fixtures/recommend-cases.json` + `test/fixtures/eval-skills.json`；`npm run eval:recommend` 输出 Recall@K（默认 K=4，阈值 0.75，可用 `EVAL_K` / `EVAL_THRESHOLD` 覆盖）。
+- 推荐反馈：`POST /skill-studio/recommend-feedback {skillName, verdict: adopt|good|bad}` → 写入 `rec-feedback.json`；面板上「复制 /skill」记 adopt，👍/👎 记质量反馈。它只做统计与展示，**不直接改推荐权重**（避免把点击率当成效果）。
 
 ## 发现远程技能 / Discover
 
@@ -184,7 +214,14 @@ Host (index.js)
   POST /skill-studio/discover/refresh      -> GitHub 索引刷新
   GET  /skill-studio/discover/preview?url= -> SKILL.md 预览
   POST /skill-studio/discover/install      -> 安装到 ~/.dsh/skills
-  GET  /skill-studio/discover/updates      -> 更新检查
+  GET  /skill-studio/discover/updates      -> 更新检查（含内容 diff / license / risk）
+  POST /skill-studio/discover/update       -> 应用单条更新（先备份，再覆盖）
+  POST /skill-studio/discover/update-all   -> 应用全部更新（单条失败不影响其他）
+  POST /skill-studio/discover/rollback     -> 回滚到上一次备份
+  POST /skill-studio/recommend-feedback    -> 推荐反馈 adopt / good / bad
+  GET  /skill-studio/experience/export     -> 导出经验（version 2）
+  POST /skill-studio/experience/import     -> 合并导入经验
+  GET  /skill-studio/health?cwd=...        -> 技能健康报告
   GET  /skill-studio/tools?q=...           -> MCP registry 目录
   GET  /skill-studio/library?q=&category=&minRating=&page= -> 卷轴馆索引
   session/event 监听
@@ -208,11 +245,12 @@ Client (client.js)
 
 这些是接下来可以继续加的方向（欢迎 PR）：
 
-- **输入框推荐 chips**：在 composer 上方直接给出 1–2 个推荐，点一下插入 `/skill <name>`。
+- ~~**输入框推荐 chips**~~（v1.5.0 部分完成：面板顶部已有 Top 2 chips，可一键复制 `/skill <name>`）：下一步是接进 composer。
 - **按项目置顶**：每个 workspace 记住常用 skill，打开面板先显示 pinned。
-- **使用统计**：跨会话统计 skill 调用次数、最近使用、平均耗时。
+- ~~**使用统计**~~（v1.5.0 已做：跨会话成功率 / 平均耗时 / 连续失败）。
 - **自然语言意图搜索**：本地 embedding / 词典混合，搜「帮我做张海报」也能命中 media/image 类技能。
-- **技能健康检查**：frontmatter 缺字段、重名、断链、禁用状态一次标出。
+- ~~**技能健康检查**~~（v1.5.0 已做：长期不用 / 连续失败 / 从未使用 / 许可证未知）。
+- **frontmatter 完整性检查**：缺字段、重名、断链、禁用状态一次标出（健康报告的下一个迭代）。
 - **静音时段 / 窗口失焦才响**：更多提示音策略。
 - **原生右侧栏 tab**：不再用抽屉，直接成为右侧栏的一页。
 - **快捷键**：`Cmd+Shift+S` 打开面板。
@@ -222,6 +260,8 @@ Client (client.js)
 ## 隐私与安全
 
 - 推荐分析**只在本机**完成，不调用外部模型/网络。
+- 安装前安全扫描同样**只在本机**完成：不联网、不上传、不执行 skill 内容，只读 SKILL.md 文本并给出启发式提示（不是安全保证）。
+- 经验 / 推荐反馈 / lock 文件全部落在 `~/.dsh/skill-studio/`：`experience.json/md`、`rec-feedback.json`、`skills-lock.json`、`backups/`；不写日志到外部。
 - 只读取当前会话的最近事件和项目根目录文件名；不上传、不写日志。
 - 新建技能只写入 `~/.dsh/skills/<kebab-case-name>/SKILL.md`，不覆盖已有目录。
 - 名称白名单：`^[a-z0-9]+(?:-[a-z0-9]+)*$`，拒绝 `/`、`..`、绝对路径。
@@ -233,7 +273,8 @@ Client (client.js)
 
 ```bash
 npm run check     # client factory id 必须等于 package name
-npm test          # 推荐/语言检测/参数解析单元测试
+npm test          # 单元测试 + 路由集成测试（mock host，不联网）
+npm run eval:recommend   # 离线推荐金标集 Recall@K（默认 K=4，阈值 0.75）
 node --check index.js
 node --check client.js
 ```
@@ -259,4 +300,4 @@ MIT。见 [LICENSE](./LICENSE)。
 
 ## English
 
-**荣哥技能卷轴收藏馆（可沉浸式体验版本）** is a context-aware skill cockpit for DeepSeek Harness. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.
+**荣哥技能卷轴收藏馆（可沉浸式体验版本）** is a context-aware skill cockpit for DeepSeek Harness. v1.5.0 adds a local pre-install safety scan, trust/license badges, update diff + update-all + rollback, structured recommendation reasons with an offline Recall@K eval, and cross-session experience stats with export/import. It reads the current session's recent messages and project file names, ranks the most relevant skills with match reasons, and shows which skills are active/recent from real `skill` tool calls. It also plays a short completion chime for top-level tasks (subagents stay silent). Browse/search/create skills, all locally, with no external model calls. MIT licensed.

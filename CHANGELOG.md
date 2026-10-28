@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.0 — 2026-10-28
+
+- **Safety Radar**: local, heuristic pre-install scan of SKILL.md (shell execution, pipe-to-shell, dynamic eval, prompt injection, network, credential paths, file writes, over-broad `allowed-tools`) with `low/medium/high` level and line-level findings; no upload, no execution.
+- **Trust & license**: each skill now reports a trust level (`official` / `verified` / `community` / `local` / `unknown`) resolved from recorded source metadata + known org allowlist, plus the `license` frontmatter field (or `null`).
+- **Update Center**: `skills-lock.json` records source URL / repo / SHA-256 / trust / license; update checks return a content diff; new endpoints apply one update, apply all updates, and roll back to the previous backup (`~/.dsh/skill-studio/backups/<skill>/`).
+- **Recommendation evaluation**: `reasons` now also ship as structured `reasonsDetail` (name / keyword / category / experience); offline labelled cases + `npm run eval:recommend` report Recall@K; recommendation quality feedback (`adopt` / `good` / `bad`) stored in `rec-feedback.json`.
+- **Experience+**: aggregate success rate, average duration, failure streak per skill; failed top-level turns record a failure streak; health report (stale / failing / never used / license unknown); `GET /skill-studio/experience/export` + `POST /skill-studio/experience/import` (versioned, dedupe by entry id, merge counters).
+- Client: recommendation reason badges, copy-`/skill` and 👍/👎 actions, top-2 suggestion chips, trust/license/risk badges, update diff + update-all + rollback controls, experience table / health / export-import UI.
+- Tests: `test/features.test.mjs` (pure helpers), `test/routes.test.mjs` (loopback routes with a mock host), eval fixtures/script; version bumped to 1.5.0.
+
+
 ## v1.4.2 — 2026-10-28
 
 - Renamed the product to **荣哥技能卷轴收藏馆（可沉浸式体验版本）** / **Ronge's Skill Scroll Archive (Immersive Edition)**.

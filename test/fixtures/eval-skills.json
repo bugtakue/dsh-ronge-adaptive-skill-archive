@@ -1,0 +1,62 @@
+[
+  {
+    "name": "beat-promo-director",
+    "description": "卡点动态排版宣传片导演（kinetic typography / beat-synced promo）",
+    "whenToUse": "要做 10–40 秒、带音乐、卡点剪辑、大字排版的宣传片时使用",
+    "intro": "卡点 宣传片 分镜 节奏 大字排版 音乐"
+  },
+  {
+    "name": "hyperframes",
+    "description": "用 HTML 渲染视频的 HyperFrames 框架",
+    "whenToUse": "制作、编辑、动画或渲染任何 HyperFrames 视频时先读",
+    "intro": "hyperframes 视频 渲染 动画 转场 片头"
+  },
+  {
+    "name": "hyperframes-cli",
+    "description": "HyperFrames CLI：脚手架、检查、预览、渲染",
+    "whenToUse": "用 hyperframes-cli 检查项目或渲染视频时使用",
+    "intro": "hyperframes-cli 命令行 渲染 检查 预览"
+  },
+  {
+    "name": "media-use",
+    "description": "获取或制作视频所需素材：音乐、音效、图片、配音",
+    "whenToUse": "需要背景音乐、音效、图片、图标、配音时使用",
+    "intro": "音乐 音效 图片 配音 素材 调色"
+  },
+  {
+    "name": "office-docx",
+    "description": "创建、读取、编辑和验证 Word 文档 (.docx)",
+    "whenToUse": "处理 docx 文档、报告、合同、模板时使用",
+    "intro": "word docx 文档 报告 编辑"
+  },
+  {
+    "name": "office-xlsx",
+    "description": "读取、创建、编辑 Excel 工作簿、数据和公式 (.xlsx)",
+    "whenToUse": "处理 excel 表格、公式、数据透视时使用",
+    "intro": "excel xlsx 表格 公式 数据"
+  },
+  {
+    "name": "office-render",
+    "description": "把文档渲染成图片，检查视觉排版",
+    "whenToUse": "需要把 docx/pptx/pdf 渲染成图片检查版式时使用",
+    "intro": "渲染 图片 排版 幻灯片 预览"
+  },
+  {
+    "name": "cordis-plugin-development",
+    "description": "设计、审查、安装、配置 Harness 插件、页面、面板、工具或 MCP 连接",
+    "whenToUse": "给 Harness 写插件、加面板、加工具时使用",
+    "intro": "harness 插件 面板 工具 mcp 配置"
+  },
+  {
+    "name": "editing-cordis-compositions",
+    "description": "创建、修改、校验 agent preset 或其他 Cordis composition",
+    "whenToUse": "写 agent preset、cordis 配置、组合时使用",
+    "intro": "agent preset cordis 组合 配置"
+  },
+  {
+    "name": "agent-experience",
+    "description": "设计模型-facing 工具定义、skill 编写、上下文加载与多步工作流",
+    "whenToUse": "设计 skill、优化上下文加载、设计多步工作流时使用",
+    "intro": "skill 设计 上下文 工作流 工具"
+  }
+]
