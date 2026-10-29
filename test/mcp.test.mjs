@@ -93,7 +93,7 @@ test('mcp server speaks the MCP stdio protocol and exposes the tools', async () 
       clientInfo: { name: 'test', version: '0' },
       capabilities: {},
     })
-    assert.equal(init.result.serverInfo.name, 'ronge-adaptive-skill-archive')
+    assert.equal(init.result.serverInfo.name, 'dsh-ronge-adaptive-skill-archive')
     assert.ok(init.result.serverInfo.version)
     client.notify('notifications/initialized')
 

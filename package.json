@@ -1,15 +1,15 @@
 {
-  "name": "ronge-adaptive-skill-archive",
-  "version": "2.8.2",
+  "name": "dsh-ronge-adaptive-skill-archive",
+  "version": "3.0.0",
   "description": "荣哥技能卷轴收藏馆 / Ronge's Adaptive Skill Cockpit: a context-aware, self-evolving skill cockpit for DeepSeek Harness — recommendations with reasons, 10% exploration quota, category/skill affinity learning, live usage, plan/immersive modes, experience memory, pre-install safety scan, update diff/rollback and a 6,399-skill public index.",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git"
+    "url": "git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git"
   },
-  "homepage": "https://github.com/bugtakue/ronge-adaptive-skill-archive#readme",
+  "homepage": "https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive#readme",
   "bugs": {
-    "url": "https://github.com/bugtakue/ronge-adaptive-skill-archive/issues"
+    "url": "https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/issues"
   },
   "author": "bugtakue",
   "keywords": [
@@ -70,6 +70,6 @@
   },
   "license": "MIT",
   "bin": {
-    "ronge-adaptive-skill-archive": "./scripts/cli.mjs"
+    "dsh-ronge-adaptive-skill-archive": "./scripts/cli.mjs"
   }
 }

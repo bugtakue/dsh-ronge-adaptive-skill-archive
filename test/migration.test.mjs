@@ -9,6 +9,9 @@ const home = path.join(tmp, 'home')
 const legacy = path.join(home, 'skill-studio')
 fs.mkdirSync(legacy, { recursive: true })
 fs.writeFileSync(path.join(legacy, 'config.json'), JSON.stringify({ mode: 'immersive' }))
+const legacyProduct = path.join(home, 'ronge-adaptive-skill-archive')
+fs.mkdirSync(legacyProduct, { recursive: true })
+fs.writeFileSync(path.join(legacyProduct, 'rec-feedback.json'), JSON.stringify({ version: 1, skills: { pdf: { good: 1 } } }))
 fs.writeFileSync(
   path.join(legacy, 'experience.json'),
   JSON.stringify({
@@ -34,12 +37,14 @@ const ctx = {
 }
 apply(ctx, { cwd: tmp })
 
-const current = path.join(home, 'ronge-adaptive-skill-archive')
+const current = path.join(home, 'dsh-ronge-adaptive-skill-archive')
 test('legacy data directory is copied to the new name', () => {
   assert.ok(fs.existsSync(current), 'new data dir exists')
   assert.ok(fs.existsSync(path.join(current, 'config.json')))
   assert.ok(fs.existsSync(path.join(current, 'experience.json')))
   assert.ok(fs.existsSync(legacy), 'legacy dir is kept')
+  assert.ok(fs.existsSync(path.join(current, 'rec-feedback.json')), 'previous product dir merged')
+  assert.ok(fs.existsSync(legacyProduct), 'previous product dir is kept')
 })
 
 test('legacy experience is loaded after migration', () => {

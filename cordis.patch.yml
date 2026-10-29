@@ -1,4 +1,4 @@
 - insert:
-    - id: ronge-adaptive-skill-archive
-      name: 'ronge-adaptive-skill-archive'
+    - id: dsh-ronge-adaptive-skill-archive
+      name: 'dsh-ronge-adaptive-skill-archive'
       config: {}

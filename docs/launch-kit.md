@@ -21,8 +21,8 @@ Context-aware, self-evolving skill cockpit for DeepSeek Harness: recommendations
 
 ### Website
 
-- 若把 `docs/` 设为 GitHub Pages 源：`https://bugtakue.github.io/ronge-adaptive-skill-archive/landing.html`
-- 未开 Pages 时先填仓库地址：`https://github.com/bugtakue/ronge-adaptive-skill-archive`
+- 若把 `docs/` 设为 GitHub Pages 源：`https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/landing.html`
+- 未开 Pages 时先填仓库地址：`https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive`
 
 ### Topics（GitHub topics，建议按此顺序，最多 20 个）
 
@@ -78,7 +78,7 @@ Release 不要写：未来版本承诺、竞品贬低、未发布平台的「已
 > Everything runs locally. No telemetry. MIT.
 > Single-host by design (DSH only) — feedback welcome, especially "the recommendation was wrong" reports.
 >
-> https://github.com/bugtakue/ronge-adaptive-skill-archive
+> https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive
 
 ### 中文短帖（即刻 / 小红书 / 掘金动态）
 
@@ -93,7 +93,7 @@ Release 不要写：未来版本承诺、竞品贬低、未发布平台的「已
 >
 > 全部本地完成，无遥测，MIT。只服务 DSH 单宿主，欢迎拿真实任务来「打脸」推荐结果。
 >
-> https://github.com/bugtakue/ronge-adaptive-skill-archive
+> https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive
 
 ### 发帖纪律
 

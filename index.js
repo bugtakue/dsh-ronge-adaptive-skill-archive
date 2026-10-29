@@ -1,16 +1,16 @@
 /**
- * 荣哥技能卷轴收藏馆（可沉浸式体验版本 / ronge-adaptive-skill-archive） — Host half.
+ * 荣哥技能卷轴收藏馆（可沉浸式体验版本 / dsh-ronge-adaptive-skill-archive） — Host half.
  *
  * One bundle, three jobs:
- *   1. GET  /ronge-adaptive-skill-archive/catalog.json?sessionId=... → catalog + recommendations + active skills
- *   2. POST /ronge-adaptive-skill-archive/create                    → create a user skill
+ *   1. GET  /dsh-ronge-adaptive-skill-archive/catalog.json?sessionId=... → catalog + recommendations + active skills
+ *   2. POST /dsh-ronge-adaptive-skill-archive/create                    → create a user skill
  *   3. session/event listener                        → completion chime (top-level turns only)
  *
  * The catalog is read through the live `ctx.skills` registry of the requesting
  * session's Agent when available, so it matches what that agent actually sees.
  * A filesystem scan is the fallback for agentless requests.
  */
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -244,28 +244,70 @@ let memory = { version: 1, updatedAt: null, entries: [], skills: {} }
 let lastChimeAt = 0
 const turnStates = new Map()
 
-const LEGACY_STUDIO_DIR_NAME = 'skill-studio'
-const STUDIO_DIR_NAME = 'ronge-adaptive-skill-archive'
+const LEGACY_STUDIO_DIR_NAMES = ['skill-studio', 'ronge-adaptive-skill-archive']
+const STUDIO_DIR_NAME = 'dsh-ronge-adaptive-skill-archive'
 
-function legacyStudioDir() {
-  return path.join(dshHome(), LEGACY_STUDIO_DIR_NAME)
+function legacyStudioDirs() {
+  return LEGACY_STUDIO_DIR_NAMES.map((name) => path.join(dshHome(), name))
 }
 
 function studioDir() {
   return path.join(dshHome(), STUDIO_DIR_NAME)
 }
 
-function migrateLegacyStudioDir() {
-  const legacy = legacyStudioDir()
-  const current = studioDir()
-  if (fs.existsSync(current) || !fs.existsSync(legacy)) return
+function jsonRichness(value) {
+  if (!value || typeof value !== 'object') return 0
+  if (Array.isArray(value.entries)) return value.entries.length * 10 + Object.keys(value.skills || {}).length
+  if (Array.isArray(value.history)) return value.history.length * 10 + Number(value.observationsSinceEval || 0) + Object.keys(value.weights || {}).length
+  if (value.skills && typeof value.skills === 'object') return Object.keys(value.skills).length
+  return Object.keys(value).length
+}
+
+function mergeLegacyJsonFile(legacyFile, targetFile) {
+  if (!fs.existsSync(legacyFile)) return
+  if (!fs.existsSync(targetFile)) {
+    fs.copyFileSync(legacyFile, targetFile)
+    return
+  }
   try {
-    fs.cpSync(legacy, current, { recursive: true })
+    const legacyValue = JSON.parse(fs.readFileSync(legacyFile, 'utf8'))
+    const targetValue = JSON.parse(fs.readFileSync(targetFile, 'utf8'))
+    if (jsonRichness(legacyValue) > jsonRichness(targetValue)) fs.copyFileSync(legacyFile, targetFile)
   } catch {
-    // Migration is best-effort; the old directory is never deleted.
+    // Ignore unparsable legacy files; never block startup.
   }
 }
 
+function migrateLegacyStudioDir() {
+  const current = studioDir()
+  const sources = legacyStudioDirs().filter((dir) => fs.existsSync(dir) && dir !== current)
+  if (sources.length === 0) return
+  try {
+    if (!fs.existsSync(current)) {
+      fs.cpSync(sources[0], current, { recursive: true })
+      sources.shift()
+    }
+    // Merge missing or richer data from older names; never overwrite a richer
+    // target and never delete an old directory.
+    const mergeJson = ['experience.json', 'evolution.json', 'rec-feedback.json', 'skills-lock.json', 'sources.json', 'remote-index.json']
+    for (const legacy of sources) {
+      for (const entry of fs.readdirSync(legacy, { withFileTypes: true })) {
+        const target = path.join(current, entry.name)
+        if (entry.isDirectory()) {
+          if (!fs.existsSync(target)) fs.cpSync(path.join(legacy, entry.name), target, { recursive: true })
+          continue
+        }
+        if (!mergeJson.includes(entry.name)) {
+          if (!fs.existsSync(target)) fs.copyFileSync(path.join(legacy, entry.name), target)
+          continue
+        }
+        mergeLegacyJsonFile(path.join(legacy, entry.name), target)
+      }
+    }
+  } catch {
+    // Migration is best-effort; old directories are never deleted.
+  }
+}
 function memoryFile() {
   return path.join(studioDir(), 'experience.json')
 }
@@ -1792,16 +1834,68 @@ function validateRemoteUrl(raw) {
   return url.toString()
 }
 
+let cachedSystemProxy = null
+
+function systemProxyUrl() {
+  if (cachedSystemProxy !== null) return cachedSystemProxy
+  const fromEnv = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy
+  if (fromEnv) {
+    cachedSystemProxy = fromEnv
+    return cachedSystemProxy
+  }
+  if (process.platform !== 'darwin') {
+    cachedSystemProxy = ''
+    return cachedSystemProxy
+  }
+  try {
+    const output = execFileSync('scutil', ['--proxy'], { encoding: 'utf8', timeout: 3000 })
+    const enabled = /HTTPSEnable\s*:\s*1/.test(output) || /HTTPEnable\s*:\s*1/.test(output)
+    if (!enabled) {
+      cachedSystemProxy = ''
+      return cachedSystemProxy
+    }
+    const host = (output.match(/HTTPSProxy\s*:\s*(\S+)/) || output.match(/HTTPProxy\s*:\s*(\S+)/) || [])[1]
+    const port = (output.match(/HTTPSPort\s*:\s*(\d+)/) || output.match(/HTTPPort\s*:\s*(\d+)/) || [])[1]
+    cachedSystemProxy = host && port ? 'http://' + host + ':' + port : ''
+  } catch {
+    cachedSystemProxy = ''
+  }
+  return cachedSystemProxy
+}
+
+function curlFetch(url, proxy) {
+  const args = ['-fsSL', '--max-time', '25', '--user-agent', 'ronge-skill-studio', '--max-filesize', '262144']
+  if (proxy) args.push('--proxy', proxy)
+  args.push(url)
+  const text = execFileSync('curl', args, { encoding: 'utf8', timeout: 30000, maxBuffer: 300 * 1024 })
+  if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+  return text
+}
+
 async function fetchRemoteSkill(raw) {
   const url = validateRemoteUrl(raw)
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'ronge-skill-studio' },
-    signal: AbortSignal.timeout(20000),
-  })
-  if (!response.ok) throw new HttpError(502, 'remote fetch failed: HTTP ' + response.status)
-  const text = await response.text()
-  if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
-  return { url, text }
+  const proxy = systemProxyUrl()
+  // curl respects the local system/mixed proxy and avoids Node's lack of
+  // automatic system-proxy support; keep fetch as fallback.
+  try {
+    return { url, text: curlFetch(url, proxy) }
+  } catch (curlError) {
+    if (proxy) {
+      // If the proxy path failed, still try a direct connection.
+    }
+    try {
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'ronge-skill-studio' },
+        signal: AbortSignal.timeout(20000),
+      })
+      if (!response.ok) throw new HttpError(502, 'remote fetch failed: HTTP ' + response.status)
+      const text = await response.text()
+      if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+      return { url, text }
+    } catch (fetchError) {
+      throw new HttpError(502, 'remote fetch failed: ' + String(curlError.message || curlError).slice(0, 200))
+    }
+  }
 }
 
 function remoteRepoFromUrl(raw) {
@@ -3182,7 +3276,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/catalog.json',
+      path: '/dsh-ronge-adaptive-skill-archive/catalog.json',
       handler: route(async (req, res) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') {
           throw new HttpError(405, 'method not allowed')
@@ -3204,7 +3298,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/create',
+      path: '/dsh-ronge-adaptive-skill-archive/create',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3216,7 +3310,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/mode',
+      path: '/dsh-ronge-adaptive-skill-archive/mode',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3232,7 +3326,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/feedback',
+      path: '/dsh-ronge-adaptive-skill-archive/feedback',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3249,7 +3343,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover',
+      path: '/dsh-ronge-adaptive-skill-archive/discover',
       handler: route(async (req, res) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
@@ -3283,7 +3377,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/refresh',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/refresh',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await refreshRemoteIndex()
@@ -3299,7 +3393,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/preview',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/preview',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
@@ -3322,7 +3416,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/install',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/install',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3334,7 +3428,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/updates',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/updates',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const result = await checkSkillUpdates()
@@ -3345,7 +3439,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/update',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/update',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3357,7 +3451,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/update-all',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/update-all',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         let payload = {}
@@ -3374,7 +3468,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/discover/rollback',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/rollback',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3386,7 +3480,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/recommend-feedback',
+      path: '/dsh-ronge-adaptive-skill-archive/recommend-feedback',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3407,7 +3501,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/experience/export',
+      path: '/dsh-ronge-adaptive-skill-archive/experience/export',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         sendJson(res, 200, { ok: true, payload: exportExperience() })
@@ -3417,7 +3511,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/experience/import',
+      path: '/dsh-ronge-adaptive-skill-archive/experience/import',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const body = await readJson(req, 1024 * 1024)
@@ -3430,7 +3524,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/health',
+      path: '/dsh-ronge-adaptive-skill-archive/health',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
@@ -3442,7 +3536,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/evolution',
+      path: '/dsh-ronge-adaptive-skill-archive/evolution',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         sendJson(res, 200, { ok: true, ...evolutionSnapshot() })
@@ -3452,7 +3546,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/evolution/evaluate',
+      path: '/dsh-ronge-adaptive-skill-archive/evolution/evaluate',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         sendJson(res, 200, runEvolution('manual'))
@@ -3462,7 +3556,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/evolution/config',
+      path: '/dsh-ronge-adaptive-skill-archive/evolution/config',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
@@ -3475,7 +3569,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/evolution/rollback',
+      path: '/dsh-ronge-adaptive-skill-archive/evolution/rollback',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         sendJson(res, 200, rollbackEvolution())
@@ -3485,7 +3579,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/evolution/reset',
+      path: '/dsh-ronge-adaptive-skill-archive/evolution/reset',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         sendJson(res, 200, resetEvolution())
@@ -3495,7 +3589,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/library',
+      path: '/dsh-ronge-adaptive-skill-archive/library',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
@@ -3520,7 +3614,7 @@ export function apply(ctx, config = {}) {
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
-      path: '/ronge-adaptive-skill-archive/tools',
+      path: '/dsh-ronge-adaptive-skill-archive/tools',
       handler: route(async (req, res) => {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
@@ -3538,14 +3632,14 @@ export function apply(ctx, config = {}) {
   if (systemPrompt) {
     ctx.effect(() =>
       systemPrompt.section({
-        name: 'ronge-adaptive-skill-archive',
+        name: 'dsh-ronge-adaptive-skill-archive',
         order: 880,
         text: ROUTING_SECTION,
       }),
     )
     ctx.effect(() =>
       systemPrompt.section({
-        name: 'ronge-adaptive-skill-archive-mode',
+        name: 'dsh-ronge-adaptive-skill-archive-mode',
         order: 881,
         text: () => MODE_TEXT[studioMode] || '',
       }),
@@ -3644,4 +3738,6 @@ export {
   assessRemoteSkill,
   assessSkillUpdate,
   uniqueSkillName,
+  fetchRemoteSkill,
+  systemProxyUrl,
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Cross-agent MCP server: the recommendation / experience / evolution engine
- * of ronge-adaptive-skill-archive, usable from Claude Code, Codex, Cursor and
+ * of dsh-ronge-adaptive-skill-archive, usable from Claude Code, Codex, Cursor and
  * any other MCP client.
  *
  * Transport: stdio, newline-delimited JSON-RPC 2.0 (MCP 2024-11-05).
@@ -993,7 +993,7 @@ async function handleMessage(message) {
         result: {
           protocolVersion: '2024-11-05',
           capabilities: { tools: {}, prompts: {}, resources: {} },
-          serverInfo: { name: 'ronge-adaptive-skill-archive', version: PKG.version },
+          serverInfo: { name: 'dsh-ronge-adaptive-skill-archive', version: PKG.version },
         },
       })
       return

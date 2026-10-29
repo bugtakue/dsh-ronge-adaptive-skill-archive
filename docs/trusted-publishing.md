@@ -8,10 +8,10 @@ npm 的包设置页（Trusted Publishing 入口）要求**重新输入账号密�
 
 ## 步骤
 
-1. 打开 <https://www.npmjs.com/package/ronge-adaptive-skill-archive/access>，输入 npm 密码。
+1. 打开 <https://www.npmjs.com/package/dsh-ronge-adaptive-skill-archive/access>，输入 npm 密码。
 2. 找到 **Trusted Publishing** / **Trusted Publishers**，选择 **GitHub Actions**。
 3. 填写：
-   - Repository: `bugtakue/ronge-adaptive-skill-archive`
+   - Repository: `bugtakue/dsh-ronge-adaptive-skill-archive`
    - Workflow file: `publish.yml`
    - Environment: 留空
    - 勾选 **Allow publish**（按需也可勾 stage publish）

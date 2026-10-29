@@ -7,7 +7,7 @@
 先确保能从 npm 取到包（`npx` 需要）：
 
 ```bash
-npx -y ronge-adaptive-skill-archive mcp
+npx -y dsh-ronge-adaptive-skill-archive mcp
 ```
 
 它会以 MCP stdio server 启动，数据写到 `~/.ronge-adaptive-skill-cockpit/cross-agent.json`（可用 `RONGE_SKILL_HOME` 改）。
@@ -15,7 +15,7 @@ npx -y ronge-adaptive-skill-archive mcp
 ### Claude Code
 
 ```bash
-claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
+claude mcp add ronge -- npx -y dsh-ronge-adaptive-skill-archive mcp
 # 查看
 claude mcp list
 ```
@@ -27,7 +27,7 @@ claude mcp list
 ```toml
 [mcp_servers.ronge]
 command = "npx"
-args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
+args = ["-y", "dsh-ronge-adaptive-skill-archive", "mcp"]
 ```
 
 ### Cursor
@@ -39,13 +39,13 @@ args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
   "mcpServers": {
     "ronge": {
       "command": "npx",
-      "args": ["-y", "ronge-adaptive-skill-archive", "mcp"]
+      "args": ["-y", "dsh-ronge-adaptive-skill-archive", "mcp"]
     }
   }
 }
 ```
 
-其他客户端照搬 `command: npx` + `args: ["-y","ronge-adaptive-skill-archive","mcp"]` 即可。
+其他客户端照搬 `command: npx` + `args: ["-y","dsh-ronge-adaptive-skill-archive","mcp"]` 即可。
 
 ## 2. 工具
 
@@ -101,7 +101,7 @@ Claude Code 里可以直接输入 `/mcp__ronge__recommend` 触发；Codex/Cursor
 - `discover_skills` / `search_skills` 的向量在本机内存中即时计算，不联网、不下载模型。
 - `scan_skill_text`/`install_skill` 是**启发式扫描，不是安全保证**；安装前仍建议人工看源码。
 - `install_skill` 只接受 `https://raw.githubusercontent.com/**/SKILL.md` 且 ≤256 KiB；写入前备份旧文件；高风险内容需显式 `force: true`。
-- 与 DSH 插件的数据目录**分开**（`~/.ronge-adaptive-skill-cockpit/` vs `~/.dsh/ronge-adaptive-skill-archive/`）；两边可同时用，各自学习。
+- 与 DSH 插件的数据目录**分开**（`~/.ronge-adaptive-skill-cockpit/` vs `~/.dsh/dsh-ronge-adaptive-skill-archive/`）；两边可同时用，各自学习。
 
 ## 6. 边界
 

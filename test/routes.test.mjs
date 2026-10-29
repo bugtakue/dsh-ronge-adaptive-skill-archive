@@ -95,8 +95,8 @@ function call(routePath, options = {}) {
 }
 
 test('catalog attaches trust, license and security to scanned skills', async () => {
-  const { status, body } = await call('/ronge-adaptive-skill-archive/catalog.json', {
-    url: '/ronge-adaptive-skill-archive/catalog.json',
+  const { status, body } = await call('/dsh-ronge-adaptive-skill-archive/catalog.json', {
+    url: '/dsh-ronge-adaptive-skill-archive/catalog.json',
   })
   assert.equal(status, 200)
   assert.equal(body.ok, true)
@@ -113,7 +113,7 @@ test('catalog attaches trust, license and security to scanned skills', async () 
 })
 
 test('health endpoint reports license-unknown and never-used skills', async () => {
-  const { status, body } = await call('/ronge-adaptive-skill-archive/health', { url: '/ronge-adaptive-skill-archive/health' })
+  const { status, body } = await call('/dsh-ronge-adaptive-skill-archive/health', { url: '/dsh-ronge-adaptive-skill-archive/health' })
   assert.equal(status, 200)
   assert.equal(body.ok, true)
   assert.ok(body.installed >= 2)
@@ -122,7 +122,7 @@ test('health endpoint reports license-unknown and never-used skills', async () =
 })
 
 test('recommend-feedback records adopt/good/bad counters', async () => {
-  const ok = await call('/ronge-adaptive-skill-archive/recommend-feedback', {
+  const ok = await call('/dsh-ronge-adaptive-skill-archive/recommend-feedback', {
     method: 'POST',
     body: { skillName: 'risky-demo', verdict: 'adopt' },
   })
@@ -130,7 +130,7 @@ test('recommend-feedback records adopt/good/bad counters', async () => {
   assert.equal(ok.body.ok, true)
   assert.equal(ok.body.stats.adopt, 1)
 
-  const bad = await call('/ronge-adaptive-skill-archive/recommend-feedback', {
+  const bad = await call('/dsh-ronge-adaptive-skill-archive/recommend-feedback', {
     method: 'POST',
     body: { skillName: 'risky-demo', verdict: 'nope' },
   })
@@ -138,13 +138,13 @@ test('recommend-feedback records adopt/good/bad counters', async () => {
 })
 
 test('experience export returns a versioned payload and import merges it', async () => {
-  const exported = await call('/ronge-adaptive-skill-archive/experience/export', {
-    url: '/ronge-adaptive-skill-archive/experience/export',
+  const exported = await call('/dsh-ronge-adaptive-skill-archive/experience/export', {
+    url: '/dsh-ronge-adaptive-skill-archive/experience/export',
   })
   assert.equal(exported.status, 200)
   assert.equal(exported.body.payload.version, 2)
 
-  const imported = await call('/ronge-adaptive-skill-archive/experience/import', {
+  const imported = await call('/dsh-ronge-adaptive-skill-archive/experience/import', {
     method: 'POST',
     body: {
       payload: {
@@ -160,8 +160,8 @@ test('experience export returns a versioned payload and import merges it', async
   assert.equal(imported.body.mergedSkills, 1)
   assert.equal(imported.body.mergedFeedback, 1)
 
-  const again = await call('/ronge-adaptive-skill-archive/experience/export', {
-    url: '/ronge-adaptive-skill-archive/experience/export',
+  const again = await call('/dsh-ronge-adaptive-skill-archive/experience/export', {
+    url: '/dsh-ronge-adaptive-skill-archive/experience/export',
   })
   assert.ok(again.body.payload.entries.some((entry) => entry.id === 'imported-entry'))
   assert.equal(again.body.payload.skills['plain-demo'].uses, 3)
@@ -169,20 +169,20 @@ test('experience export returns a versioned payload and import merges it', async
 })
 
 test('update and rollback endpoints fail cleanly for unknown skills', async () => {
-  const updated = await call('/ronge-adaptive-skill-archive/discover/update', {
+  const updated = await call('/dsh-ronge-adaptive-skill-archive/discover/update', {
     method: 'POST',
     body: { name: 'not-installed' },
   })
   assert.equal(updated.status, 404)
   assert.equal(updated.body.ok, false)
 
-  const rolledBack = await call('/ronge-adaptive-skill-archive/discover/rollback', {
+  const rolledBack = await call('/dsh-ronge-adaptive-skill-archive/discover/rollback', {
     method: 'POST',
     body: { name: 'not-installed' },
   })
   assert.equal(rolledBack.status, 404)
 
-  const invalid = await call('/ronge-adaptive-skill-archive/discover/update', {
+  const invalid = await call('/dsh-ronge-adaptive-skill-archive/discover/update', {
     method: 'POST',
     body: { name: '../escape' },
   })
@@ -191,28 +191,28 @@ test('update and rollback endpoints fail cleanly for unknown skills', async () =
 
 
 test('self-evolution: snapshot, auto-tune from feedback, rollback', async () => {
-  const snapshot = await call('/ronge-adaptive-skill-archive/evolution', { url: '/ronge-adaptive-skill-archive/evolution' })
+  const snapshot = await call('/dsh-ronge-adaptive-skill-archive/evolution', { url: '/dsh-ronge-adaptive-skill-archive/evolution' })
   assert.equal(snapshot.status, 200)
   assert.equal(snapshot.body.ok, true)
   assert.equal(snapshot.body.weights.name, 8)
   assert.equal(snapshot.body.canRollback, false)
 
-  const manual = await call('/ronge-adaptive-skill-archive/evolution/evaluate', { method: 'POST', body: {} })
+  const manual = await call('/dsh-ronge-adaptive-skill-archive/evolution/evaluate', { method: 'POST', body: {} })
   assert.equal(manual.status, 200)
   assert.equal(manual.body.changed, 0)
 
-  const emptyRollback = await call('/ronge-adaptive-skill-archive/evolution/rollback', { method: 'POST', body: {} })
+  const emptyRollback = await call('/dsh-ronge-adaptive-skill-archive/evolution/rollback', { method: 'POST', body: {} })
   assert.equal(emptyRollback.status, 409)
 
   for (let index = 0; index < 10; index += 1) {
-    const response = await call('/ronge-adaptive-skill-archive/recommend-feedback', {
+    const response = await call('/dsh-ronge-adaptive-skill-archive/recommend-feedback', {
       method: 'POST',
       body: { skillName: 'plain-demo', verdict: 'good', kind: 'name' },
     })
     assert.equal(response.status, 200)
   }
 
-  const evolved = await call('/ronge-adaptive-skill-archive/evolution', { url: '/ronge-adaptive-skill-archive/evolution' })
+  const evolved = await call('/dsh-ronge-adaptive-skill-archive/evolution', { url: '/dsh-ronge-adaptive-skill-archive/evolution' })
   assert.equal(evolved.status, 200)
   assert.ok(evolved.body.stats.observations >= 10)
   assert.equal(evolved.body.observationsSinceEval, 0)
@@ -220,30 +220,30 @@ test('self-evolution: snapshot, auto-tune from feedback, rollback', async () => 
   assert.ok(evolved.body.weights.name > 8)
   assert.equal(evolved.body.canRollback, true)
 
-  const rollback = await call('/ronge-adaptive-skill-archive/evolution/rollback', { method: 'POST', body: {} })
+  const rollback = await call('/dsh-ronge-adaptive-skill-archive/evolution/rollback', { method: 'POST', body: {} })
   assert.equal(rollback.status, 200)
   assert.equal(rollback.body.weights.name, 8)
   assert.equal(rollback.body.snapshot.canRollback, false)
 
-  const reset = await call('/ronge-adaptive-skill-archive/evolution/reset', { method: 'POST', body: {} })
+  const reset = await call('/dsh-ronge-adaptive-skill-archive/evolution/reset', { method: 'POST', body: {} })
   assert.equal(reset.status, 200)
   assert.equal(reset.body.weights.name, 8)
 })
 
 
 test('catalog language follows the panel locale and localizes intros', async () => {
-  const zh = await call('/ronge-adaptive-skill-archive/catalog.json', { url: '/ronge-adaptive-skill-archive/catalog.json?lang=zh' })
+  const zh = await call('/dsh-ronge-adaptive-skill-archive/catalog.json', { url: '/dsh-ronge-adaptive-skill-archive/catalog.json?lang=zh' })
   assert.equal(zh.status, 200)
   assert.equal(zh.body.lang, 'zh')
   const risky = zh.body.skills.find((skill) => skill.name === 'risky-demo')
   assert.ok(risky)
   assert.match(risky.intro, /[\u4e00-\u9fff]/, 'zh intros contain Chinese')
-  const en = await call('/ronge-adaptive-skill-archive/catalog.json', { url: '/ronge-adaptive-skill-archive/catalog.json?lang=en' })
+  const en = await call('/dsh-ronge-adaptive-skill-archive/catalog.json', { url: '/dsh-ronge-adaptive-skill-archive/catalog.json?lang=en' })
   assert.equal(en.body.lang, 'en')
 })
 
 test('library returns localized intro and category labels', async () => {
-  const zh = await call('/ronge-adaptive-skill-archive/library', { url: '/ronge-adaptive-skill-archive/library?q=pdf&lang=zh' })
+  const zh = await call('/dsh-ronge-adaptive-skill-archive/library', { url: '/dsh-ronge-adaptive-skill-archive/library?q=pdf&lang=zh' })
   assert.equal(zh.status, 200)
   assert.equal(zh.body.ok, true)
   assert.ok(zh.body.categoryLabels && zh.body.categoryLabels.ai)
@@ -256,7 +256,7 @@ test('library returns localized intro and category labels', async () => {
 
 
 test('evolution config exposes exploration rate and category weights', async () => {
-  const snapshot = await call('/ronge-adaptive-skill-archive/evolution')
+  const snapshot = await call('/dsh-ronge-adaptive-skill-archive/evolution')
   assert.equal(snapshot.status, 200)
   assert.equal(snapshot.body.ok, true)
   assert.equal(snapshot.body.explorationRate, 0.1)
@@ -265,7 +265,7 @@ test('evolution config exposes exploration rate and category weights', async () 
   assert.equal(typeof snapshot.body.learning.skillsTracked, 'number')
   assert.equal(snapshot.body.canRollback, false)
 
-  const configured = await call('/ronge-adaptive-skill-archive/evolution/config', {
+  const configured = await call('/dsh-ronge-adaptive-skill-archive/evolution/config', {
     method: 'POST',
     body: { explorationRate: 0.2 },
   })
@@ -273,19 +273,19 @@ test('evolution config exposes exploration rate and category weights', async () 
   assert.equal(configured.body.explorationRate, 0.2)
   assert.equal(configured.body.snapshot.explorationRate, 0.2)
 
-  const reset = await call('/ronge-adaptive-skill-archive/evolution/config', {
+  const reset = await call('/dsh-ronge-adaptive-skill-archive/evolution/config', {
     method: 'POST',
     body: { explorationRate: 0 },
   })
   assert.equal(reset.body.explorationRate, 0)
 
-  const invalid = await call('/ronge-adaptive-skill-archive/evolution/config', {
+  const invalid = await call('/dsh-ronge-adaptive-skill-archive/evolution/config', {
     method: 'POST',
     body: {},
   })
   assert.equal(invalid.status, 400)
 
-  const clamped = await call('/ronge-adaptive-skill-archive/evolution/config', {
+  const clamped = await call('/dsh-ronge-adaptive-skill-archive/evolution/config', {
     method: 'POST',
     body: { explorationRate: 9 },
   })

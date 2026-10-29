@@ -21,7 +21,7 @@ function run(args, env = {}) {
 test('cli help/version expose the npx entry points', () => {
   const help = run(['--help'])
   assert.equal(help.code, 0)
-  assert.match(help.out, /npx ronge-adaptive-skill-archive/)
+  assert.match(help.out, /npx dsh-ronge-adaptive-skill-archive/)
   assert.match(help.out, /doctor/)
   assert.match(help.out, /eval/)
   const version = run(['version'])
@@ -32,8 +32,8 @@ test('cli help/version expose the npx entry points', () => {
 test('cli default prints the three install paths', () => {
   const result = run([])
   assert.equal(result.code, 0)
-  assert.match(result.out, /plugin_manager install_bundle target=ronge-adaptive-skill-archive@/)
-  assert.match(result.out, /git\+https:\/\/github\.com\/bugtakue\/ronge-adaptive-skill-archive/)
+  assert.match(result.out, /plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@/)
+  assert.match(result.out, /git\+https:\/\/github\.com\/bugtakue\/dsh-ronge-adaptive-skill-archive/)
   assert.match(result.out, /plugin_manager install_bundle target=/)
 })
 
@@ -47,7 +47,7 @@ test('cli doctor checks profile, data dir and library', () => {
   )
   fs.writeFileSync(path.join(profile, 'cordis.patch.yml'), '')
   const home = path.join(temp, 'dsh')
-  const data = path.join(home, 'ronge-adaptive-skill-archive')
+  const data = path.join(home, 'dsh-ronge-adaptive-skill-archive')
   fs.mkdirSync(data, { recursive: true })
   fs.writeFileSync(path.join(data, 'experience.json'), JSON.stringify({ entries: [{}, {}], skills: { a: {} } }))
   fs.writeFileSync(path.join(data, 'evolution.json'), JSON.stringify({ explorationRate: 0.1 }))

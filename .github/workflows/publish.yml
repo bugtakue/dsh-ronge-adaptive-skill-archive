@@ -50,6 +50,16 @@ jobs:
           npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: deprecate the old package name
+        if: steps.version.outputs.skip == 'false'
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "NPM_TOKEN secret is not configured; skipping old-package deprecation."
+            exit 0
+          fi
+          npm deprecate "ronge-adaptive-skill-archive@*" "Renamed to dsh-ronge-adaptive-skill-archive. Use: plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0" || true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: ensure latest dist-tag points at this version
         if: steps.version.outputs.skip == 'false'
         run: |
@@ -58,6 +68,6 @@ jobs:
             exit 0
           fi
           VERSION=$(node -e "process.stdout.write(require('./package.json').version)")
-          npm dist-tag add "ronge-adaptive-skill-archive@$VERSION" latest
+          npm dist-tag add "dsh-ronge-adaptive-skill-archive@$VERSION" latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

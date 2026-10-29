@@ -8,19 +8,19 @@
 <p align="center"><b>不是「最大的技能库」，而是「最懂你此刻该用哪个技能的驾驶舱」——本地、可解释、会记住效果。</b></p>
 
 <p align="center">
-  <a href="https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml"><img src="https://github.com/bugtakue/ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml"><img src="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/version-2.1.2-blue.svg" alt="version 2.1.2">
-  <a href="https://www.npmjs.com/package/ronge-adaptive-skill-archive"><img src="https://img.shields.io/npm/v/ronge-adaptive-skill-archive?label=npm" alt="npm"></a>
+  <img src="https://img.shields.io/badge/version-3.0.0-blue.svg" alt="version 3.0.0">
+  <a href="https://www.npmjs.com/package/dsh-ronge-adaptive-skill-archive"><img src="https://img.shields.io/npm/v/dsh-ronge-adaptive-skill-archive?label=npm" alt="npm"></a>
   <img src="https://img.shields.io/badge/DeepSeek%20Harness-plugin-1f6feb.svg" alt="DeepSeek Harness plugin">
 </p>
 
 <p align="center">
-  <a href="https://bugtakue.github.io/ronge-adaptive-skill-archive/">🌐 在线落地页 / Landing page</a>
+  <a href="https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/">🌐 在线落地页 / Landing page</a>
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bugtakue/ronge-adaptive-skill-archive/main/docs/panel.png" width="360" alt="技能面板：卷轴馆 tab，6,399 条 GitHub 公开 SKILL.md 索引">
+  <img src="https://raw.githubusercontent.com/bugtakue/dsh-ronge-adaptive-skill-archive/main/docs/panel.png" width="360" alt="技能面板：卷轴馆 tab，6,399 条 GitHub 公开 SKILL.md 索引">
   <br>
   <sub>会话右侧的「技能」抽屉：6,399 条公开 SKILL.md 索引、上下文推荐、正在使用、经验与自进化都在这里。</sub>
 </p>
@@ -29,11 +29,11 @@
 
 ```bash
 # 1) 先跑 npx 助手：检查环境 + 打印这台机器该用的安装命令（不装任何东西）
-npx ronge-adaptive-skill-archive
-#    想先体检：npx ronge-adaptive-skill-archive doctor
+npx dsh-ronge-adaptive-skill-archive
+#    想先体检：npx dsh-ronge-adaptive-skill-archive doctor
 
 # 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行
-plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0
 
 # 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
@@ -78,12 +78,12 @@ plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3
 
 ```bash
 # Claude Code
-claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
+claude mcp add ronge -- npx -y dsh-ronge-adaptive-skill-archive mcp
 
 # Codex: ~/.codex/config.toml
 # [mcp_servers.ronge]
 # command = "npx"
-# args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
+# args = ["-y", "dsh-ronge-adaptive-skill-archive", "mcp"]
 
 # Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
 ```
@@ -176,17 +176,18 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 | 方式 | 命令 | 适合 |
 |---|---|---|
-| **npx 助手** | `npx ronge-adaptive-skill-archive`（体检：`npx ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
-| **npm** | `plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3` | 已发布到 npm，版本解析最顺 |
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.3` | 不用 npm、固定版本、可审源码 |
-| **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
+| **npx 助手** | `npx dsh-ronge-adaptive-skill-archive`（体检：`npx dsh-ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
+| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0` | 已发布到 npm，版本解析最顺 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v3.0.0` | 不用 npm、固定版本、可审源码 |
+| **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
-### 升级（v1.x / v2.0.0 → v2.1.0）
+### 升级（旧包名 → v3.0.0）
 
-- 已装 **v2.0.0**：直接覆盖安装 v2.1.0，数据目录、经验与权重沿用。
-- 从 **v1.x** 升级：v1.x 与 v2.x 的包名、路由前缀不同，同一 profile 不能同时启用——先移除旧 bundle，再装 v2.1.0；旧数据目录会在首次启动时**自动复制**（旧目录保留，不删除）。
+- **v3.0.0 是 breaking rename**：包名、路由、bundle id、数据目录都改为 `dsh-ronge-adaptive-skill-archive`；显示名不变。
+- 同一 profile 不能同时启用旧包和新包——先移除旧 bundle，再装 v3.0.0；旧数据目录（`skill-studio`、`ronge-adaptive-skill-archive`）会在首次启动时**自动合并复制**到新目录（旧目录保留）。
+- 旧 npm 包会 deprecate 并指向新包；旧 GitHub URL 自动跳转。
 
-重命名细节见 [v2.0.0 发布说明](docs/release-notes-v2.0.0.md)，v2.1.0 的变更见 [CHANGELOG](CHANGELOG.md)。
+重命名细节见 [v3.0.0 发布说明](docs/release-notes-v3.0.0.md)，完整变更见 [CHANGELOG](CHANGELOG.md)。
 
 ### 6,399 索引的能力边界（重要）
 
@@ -207,12 +208,12 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 | 路径 | 内容 |
 |---|---|
-| `~/.dsh/ronge-adaptive-skill-archive/config.json` | 模式（plan / immersive） |
-| `~/.dsh/ronge-adaptive-skill-archive/experience.md` / `.json` | 经验（人读 / 机读） |
-| `~/.dsh/ronge-adaptive-skill-archive/evolution.json` | 权重、探索配额、变更历史 |
-| `~/.dsh/ronge-adaptive-skill-archive/rec-feedback.json` | 推荐反馈 |
-| `~/.dsh/ronge-adaptive-skill-archive/skills-lock.json` | 安装来源 / SHA-256 / 信任 / 许可证 |
-| `~/.dsh/ronge-adaptive-skill-archive/backups/<skill>/<timestamp>.md` | 更新前备份 |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/config.json` | 模式（plan / immersive） |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/experience.md` / `.json` | 经验（人读 / 机读） |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/evolution.json` | 权重、探索配额、变更历史 |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/rec-feedback.json` | 推荐反馈 |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/skills-lock.json` | 安装来源 / SHA-256 / 信任 / 许可证 |
+| `~/.dsh/dsh-ronge-adaptive-skill-archive/backups/<skill>/<timestamp>.md` | 更新前备份 |
 | `~/.dsh/skills/<name>/SKILL.md` | 已安装 / 新建的技能 |
 
 技能来源（优先级从高到低）：项目 `.dsh/skills` → 项目 `.agents/skills` → profile 目录 → `~/.dsh/skills` → 用户 agents 目录 → 预设包，并合并会话 `ctx.skills` 注册表。
@@ -248,7 +249,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 │  catalog · 推荐 · 经验 · 自进化 · 安全扫描 · lock/diff/回滚  │
 │  卷轴馆索引 · 更新中心 · 提示音 · system prompt 注入          │
 │                    │                                        │
-│   ~/.dsh/ronge-adaptive-skill-archive/  ← 配置/经验/权重     │
+│   ~/.dsh/dsh-ronge-adaptive-skill-archive/  ← 配置/经验/权重     │
 │   ~/.dsh/skills/                        ← 安装/新建的 skill  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -281,7 +282,7 @@ npm run eval:recommend   # 离线推荐金标集 Recall@K
 node --check index.js && node --check client.js
 ```
 
-欢迎从 [Issues](https://github.com/bugtakue/ronge-adaptive-skill-archive/issues) 里的「推荐不准」「某个 skill 该降权」开始——这类反馈比 star 更有用。
+欢迎从 [Issues](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/issues) 里的「推荐不准」「某个 skill 该降权」开始——这类反馈比 star 更有用。
 
 ---
 
@@ -300,7 +301,7 @@ MIT。见 [LICENSE](LICENSE)。
 
 ## English
 
-**Ronge's Adaptive Skill Cockpit (Immersive Edition)** is a context-aware, self-evolving skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/ronge-adaptive-skill-archive). A single bundle adds a right-side drawer that answers three questions most skill tools ignore: *which skill fits this task now*, *which skills am I actually using*, and *which ones actually work for me*.
+**Ronge's Adaptive Skill Cockpit (Immersive Edition)** is a context-aware, self-evolving skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive). A single bundle adds a right-side drawer that answers three questions most skill tools ignore: *which skill fits this task now*, *which skills am I actually using*, and *which ones actually work for me*.
 
 - **Contextual recommendations with reasons** — recent session messages + project file names → Top 4, with name / keyword / category / experience / affinity reasons. Local heuristic, no model calls.
 - **Now using** — read from real `skill` tool calls, not inferred.
@@ -314,7 +315,7 @@ MIT。见 [LICENSE](LICENSE)。
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v2.1.2
+plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v3.0.0
 # then open any session → 「技能」in the header → switch Plan / Immersive
 ```
 

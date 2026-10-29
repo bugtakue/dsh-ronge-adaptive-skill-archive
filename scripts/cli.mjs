@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * npx ronge-adaptive-skill-archive — installer helper, doctor and offline tools.
+ * npx dsh-ronge-adaptive-skill-archive — installer helper, doctor and offline tools.
  *
  * This CLI never edits the DSH profile and never installs by itself: the
  * supported install path is the DSH `plugin_manager install_bundle` tool. The
@@ -43,7 +43,7 @@ function banner() {
 }
 
 function dataDir() {
-  return path.join(process.env.DSH_HOME || path.join(os.homedir(), '.dsh'), 'ronge-adaptive-skill-archive')
+  return path.join(process.env.DSH_HOME || path.join(os.homedir(), '.dsh'), 'dsh-ronge-adaptive-skill-archive')
 }
 
 function legacyDataDir() {
@@ -64,7 +64,7 @@ function printInstall() {
   line(`  ${C.bold}${installerCommand()}${C.reset}`)
   line('')
   dim('  没有 npm / 离线安装：')
-  line(`  plugin_manager install_bundle target=git+https://github.com/bugtakue/ronge-adaptive-skill-archive.git#v${pkg.version}`)
+  line(`  plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v${pkg.version}`)
   line(`  plugin_manager install_bundle target=${ROOT}`)
   line('')
   head('装好后')
@@ -75,7 +75,7 @@ function printInstall() {
   line(`  npx ${pkg.name} eval      跑离线推荐评估（Recall@4）`)
   line(`  npx ${pkg.name} market    DSH 插件市场索引信息`)
   line(`  npx ${pkg.name} mcp       启动跨智能体 MCP server（Claude Code / Codex / Cursor）`)
-  line(`  ${C.cyan}https://bugtakue.github.io/ronge-adaptive-skill-archive/${C.reset}`)
+  line(`  ${C.cyan}https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/${C.reset}`)
   line('')
 }
 
@@ -178,7 +178,7 @@ function market() {
   ok(`install target：${target}`)
   line('')
   dim('  把 docs/plugin-market.json 托管到 https URL（如 GitHub raw / Pages），加到 DSH 自定义插件市场索引即可被 Discover 搜到。')
-  line(`  ${C.cyan}https://raw.githubusercontent.com/bugtakue/ronge-adaptive-skill-archive/main/docs/plugin-market.json${C.reset}`)
+  line(`  ${C.cyan}https://raw.githubusercontent.com/bugtakue/dsh-ronge-adaptive-skill-archive/main/docs/plugin-market.json${C.reset}`)
   line('')
 }
 
@@ -192,7 +192,7 @@ function help() {
   line(`  npx ${pkg.name} version    版本`)
   line('')
   dim('  npm: https://www.npmjs.com/package/' + pkg.name)
-  dim('  docs: https://bugtakue.github.io/ronge-adaptive-skill-archive/')
+  dim('  docs: https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/')
   line('')
 }
 

@@ -1,6 +1,6 @@
 # v2.1.0 — 10% 自我探索 + 更深的在线学习 + UI/UX 重做
 
-> 发布类型：minor｜发布日期：2026-10-28｜tag：`v2.1.0`｜npm：`ronge-adaptive-skill-archive@2.1.0`
+> 发布类型：minor｜发布日期：2026-10-28｜tag：`v2.1.0`｜npm：`dsh-ronge-adaptive-skill-archive@2.1.0`
 
 ## 一句话
 
@@ -13,7 +13,7 @@
 - **分类权重学习**：`video / office / harness / other` 四类权重（0.5–2），按该类技能的 👍/👎 自动升降，直接参与打分。
 - **技能亲和度（手感）**：每次任务成功/失败、推荐 👍/👎 都用 EWMA 更新该技能亲和度（0–1，样本数可解释），推荐里体现为「手感×N」理由。
 - **反馈归因增强**：反馈同时归因到「理由类型 + 技能类别 + 技能」，探索反馈单独统计（展示/反馈/采用）。
-- 所有学习参数落盘 `~/.dsh/ronge-adaptive-skill-archive/evolution.json`，可查看、回滚、重置；新增 `POST /ronge-adaptive-skill-archive/evolution/config {explorationRate}`。
+- 所有学习参数落盘 `~/.dsh/dsh-ronge-adaptive-skill-archive/evolution.json`，可查看、回滚、重置；新增 `POST /dsh-ronge-adaptive-skill-archive/evolution/config {explorationRate}`。
 
 ## UI/UX 重做
 
@@ -29,8 +29,8 @@
 ## 升级
 
 ```bash
-plugin_manager install_bundle target=/Volumes/Xunji SSD/ronge-adaptive-skill-archive
-# 或 npm 发布后：plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.0
+plugin_manager install_bundle target=/Volumes/Xunji SSD/dsh-ronge-adaptive-skill-archive
+# 或 npm 发布后：plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@2.1.0
 ```
 
 - 数据兼容：v2.0.0 的 `evolution.json` 自动升级（新增字段有默认值）；旧 v1.x 数据仍按 `skill-studio` → 新目录迁移。

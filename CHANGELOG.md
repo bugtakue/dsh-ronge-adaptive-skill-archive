@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.0.0 — 2026-10-29
+
+- **Breaking rename**：包名/GitHub 仓库/本地目录 → `dsh-ronge-adaptive-skill-archive`；显示名「荣哥技能卷轴收藏馆」不变。
+- bundle id、client factory id、slot id 前缀、locale scope、HTTP 路由前缀、MCP server name、CLI/bin、market index install target 全部同步；旧路由不再注册。
+- 数据目录迁移到 `~/.dsh/dsh-ronge-adaptive-skill-archive`：自动合并 `~/.dsh/skill-studio` 和旧 `~/.dsh/ronge-adaptive-skill-archive`，不删除旧目录。
+- 旧 npm 包 `ronge-adaptive-skill-archive` 将 deprecate，提示新包名；旧 GitHub URL 由 GitHub 重定向。
+- 本次迁移不影响已有 skills、经验、自进化、更新记录。
+- 测试 55/55。
+
+
 ## v2.8.2 — 2026-10-29
 
 - **信号分抑制仓库热度误伤**：按仓库技能数量计算 repo focus；只有一个附带 SKILL.md 的热门仓库不再把单条技能顶到最高（high 从 65 条降到 31 条，medium 3,588，low 2,780）；筛选改为 40/55/70+。
@@ -172,7 +182,7 @@
 
 ## v2.2.0 — 2026-10-29
 
-- **跨智能体 MCP server**：`npx ronge-adaptive-skill-archive mcp` 以 MCP stdio 暴露推荐/索引/安全扫描/安装/反馈/经验 6 个工具，Claude Code、Codex、Cursor 等任意 MCP 客户端可用；DSH 抽屉 UI 仍为 DSH 专属。
+- **跨智能体 MCP server**：`npx dsh-ronge-adaptive-skill-archive mcp` 以 MCP stdio 暴露推荐/索引/安全扫描/安装/反馈/经验 6 个工具，Claude Code、Codex、Cursor 等任意 MCP 客户端可用；DSH 抽屉 UI 仍为 DSH 专属。
 - 推荐引擎复用 DSH 同一套 `recommendSkills`（含 10% 探索、分类权重、技能亲和度）；经验/自进化数据独立存 `~/.ronge-adaptive-skill-cockpit/cross-agent.json`，与 DSH 数据目录分开。
 - `install_skill` 支持 Claude Code / Codex / DSH / agents 技能目录，raw.githubusercontent.com/SKILL.md、≤256 KiB、安装前启发式扫描、旧文件备份、高风险需 `force`。
 - CLI 新增 `mcp` 子命令；新增 `test/mcp.test.mjs`（协议握手、tools/list、推荐、搜索、扫描、反馈、经验）。
@@ -181,23 +191,23 @@
 
 ## v2.1.3 — 2026-10-29
 
-- **`npx ronge-adaptive-skill-archive` 安装助手**：默认打印本机该用的安装命令；`doctor` 检查 Node / DSH profile / 已安装 bundle / 数据目录 / 经验 / 自进化 / 卷轴馆索引；`eval` 离线跑推荐评估 Recall@4；`market` 打印 DSH 插件市场索引信息。CLI 不做任何 profile 写入，实际安装仍走 `plugin_manager`。
+- **`npx dsh-ronge-adaptive-skill-archive` 安装助手**：默认打印本机该用的安装命令；`doctor` 检查 Node / DSH profile / 已安装 bundle / 数据目录 / 经验 / 自进化 / 卷轴馆索引；`eval` 离线跑推荐评估 Recall@4；`market` 打印 DSH 插件市场索引信息。CLI 不做任何 profile 写入，实际安装仍走 `plugin_manager`。
 - README 首屏改为「npx 体检 → 一行安装」三步；安装表增加「不用 npm」的 GitHub tag / 本地目录两种方式；说明 npx 不是 npm 的替代品。
-- `package.json` 增加 `bin`（`ronge-adaptive-skill-archive`）与 `npm start`。
+- `package.json` 增加 `bin`（`dsh-ronge-adaptive-skill-archive`）与 `npm start`。
 - 新增 `test/cli.test.mjs`（help/version/doctor/market/eval）。
 - 功能等价 v2.1.2。
 
 
 ## v2.1.2 — 2026-10-29
 
-- **首次发布到 npm**：`ronge-adaptive-skill-archive@2.1.2`（MIT）；README 主截图改为 GitHub raw 绝对地址，npm 页面也能正常显示；加入 npm 版本 badge。
+- **首次发布到 npm**：`dsh-ronge-adaptive-skill-archive@2.1.2`（MIT）；README 主截图改为 GitHub raw 绝对地址，npm 页面也能正常显示；加入 npm 版本 badge。
 - GitHub Actions `publish` 已配置 `NPM_TOKEN`，后续 tag 推送会自动发布（无 token 时优雅跳过）。
 - 功能等价 v2.1.1（无运行时变更）。
 
 
 ## v2.1.1 — 2026-10-28
 
-- **GitHub 发布链路**：新增 `docs/index.html`（Pages 根路径跳转到 `landing.html`），开启 GitHub Pages 后可直接访问 `https://bugtakue.github.io/ronge-adaptive-skill-archive/`。
+- **GitHub 发布链路**：新增 `docs/index.html`（Pages 根路径跳转到 `landing.html`），开启 GitHub Pages 后可直接访问 `https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/`。
 - 首个通过 tag 触发的 `publish` workflow 因 tag 在 workflow 注册前推送未运行；v2.1.1 用来验证 CI 发布流水线（无 `NPM_TOKEN` 时优雅跳过 npm publish，仅跑 check/test）。
 - 无功能变更（等价 v2.1.0）。
 
@@ -207,14 +217,14 @@
 - **10% self-exploration quota (自探索配额)**：默认把 1 个推荐位留给平时很少被推荐的技能（`explorationRate` 默认 0.1、范围 0–0.3，可 UI 三档切换）；探索结果（adopt/good/bad）单独计数，采用率长期过低会自动调低配额、采用率高会自动调高。
 - **Deeper online learning（越用越好用）**：新增「分类权重」（video/office/harness/other，0.5–2，按该类反馈自动升降）与「技能亲和度」（每次成功/失败/👍/👎 更新 EWMA，推荐分里体现为「手感」理由）；全局权重、分类权重、探索配额统一进 `evolution.json`，均可回滚/重置。
 - **UI/UX 全面重做**：设计 token（间距/圆角/阴影/字号/过渡）、品牌头 + 分段 tabs + 吸顶工具区、推荐卡（排名/分数/理由 badge/操作）、按类别分组的技能列表、经验统计卡片、健康告警、自进化权重与探索进度条、统一卡片/空状态/skeleton、移动端与 focus-visible/aria。
-- 新增 `POST /ronge-adaptive-skill-archive/evolution/config {explorationRate}`；catalog 的 `evolution` 增加 `explorationRate/categoryWeights/categoryLabels/learning`，推荐项可带 `exploration:true` 与 `kind:'explore'` 理由。
+- 新增 `POST /dsh-ronge-adaptive-skill-archive/evolution/config {explorationRate}`；catalog 的 `evolution` 增加 `explorationRate/categoryWeights/categoryLabels/learning`，推荐项可带 `exploration:true` 与 `kind:'explore'` 理由。
 - Tests：探索配额/分类权重/亲和度/配置端点（36/36）；Host E2E 17/17；浏览器 UI 17/17（含探索配额与探索卡断言）。
 
 
 ## v2.0.0 — 2026-10-28
 
-- **BREAKING rename**: package/repo `ronge-skill-studio` → **`ronge-adaptive-skill-archive`**. Client factory id, cordis bundle id, HTTP route prefix (`/ronge-adaptive-skill-archive/*`), locale scope and system-prompt section ids all follow the new name.
-- **Data migration**: `~/.dsh/skill-studio/` is copied (old dir kept) to `~/.dsh/ronge-adaptive-skill-archive/` on first start; `experience.json/md`, `config.json`, `evolution.json`, `rec-feedback.json`, `skills-lock.json`, `backups/`, `remote-index.json` carry over. Installed skills' `.skill-studio-source.json` stays compatible.
+- **BREAKING rename**: package/repo `ronge-skill-studio` → **`dsh-ronge-adaptive-skill-archive`**. Client factory id, cordis bundle id, HTTP route prefix (`/dsh-ronge-adaptive-skill-archive/*`), locale scope and system-prompt section ids all follow the new name.
+- **Data migration**: `~/.dsh/skill-studio/` is copied (old dir kept) to `~/.dsh/dsh-ronge-adaptive-skill-archive/` on first start; `experience.json/md`, `config.json`, `evolution.json`, `rec-feedback.json`, `skills-lock.json`, `backups/`, `remote-index.json` carry over. Installed skills' `.skill-studio-source.json` stays compatible.
 - Display name unchanged: Chinese 荣哥技能卷轴收藏馆（可沉浸式体验版本） / English Ronge's Adaptive Skill Cockpit (Immersive Edition).
 - All existing v1.6.1 fixes included (library crash, session switch, Chinese intros, self-evolution, safety scan, update center).
 

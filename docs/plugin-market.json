@@ -46,7 +46,7 @@
   },
   "plugins": [
     {
-      "name": "ronge-adaptive-skill-archive",
+      "name": "dsh-ronge-adaptive-skill-archive",
       "title": {
         "en": "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
         "zh": "荣哥技能卷轴收藏馆（可沉浸式体验版本）"
@@ -56,9 +56,9 @@
         "zh": "6,399 条公开技能索引、上下文推荐、计划/沉浸模式、安装前安全扫描、更新 diff/回滚、经验记忆与反馈闭环。"
       },
       "author": "bugtakue",
-      "homepage": "https://github.com/bugtakue/ronge-adaptive-skill-archive",
+      "homepage": "https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive",
       "repository": {
-        "url": "https://github.com/bugtakue/ronge-adaptive-skill-archive"
+        "url": "https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive"
       },
       "metadata": {
         "category": "skills",
@@ -78,8 +78,8 @@
       },
       "versions": [
         {
-          "version": "2.8.2",
-          "publishTimestamp": 1793255849,
+          "version": "3.0.0",
+          "publishTimestamp": 1793279514,
           "source": {
             "type": "npm"
           }
