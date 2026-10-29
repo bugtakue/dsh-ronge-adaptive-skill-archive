@@ -80,7 +80,7 @@ window.__ModuleLoader__.load({
       tabUpdates: '更新',
       tabLibrary: '卷轴馆',
       libraryTitle: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
-      libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和评级浏览',
+      libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和完整度浏览',
       all: '全部',
       loadMore: '加载更多',
       noLibrary: '没有匹配的卷轴',
@@ -308,7 +308,7 @@ window.__ModuleLoader__.load({
       tabUpdates: 'Updates',
       tabLibrary: 'Scrolls',
       libraryTitle: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
-      libraryHint: 'Index of public GitHub SKILL.md files, by category and rating',
+      libraryHint: 'Index of public GitHub SKILL.md files, by category and completeness',
       all: 'All',
       loadMore: 'Load more',
       noLibrary: 'No matching scrolls',
@@ -2220,7 +2220,7 @@ window.__ModuleLoader__.load({
             h(
               'div',
               { className: 'sf-chiprow' },
-              h('span', { className: 'sf-mode-label' }, t('ratingLabel')),
+              h('span', { className: 'sf-mode-label' }, t('qualityLabel')),
               [0, 55, 70, 85].map((value) =>
                 h(
                   'button',
