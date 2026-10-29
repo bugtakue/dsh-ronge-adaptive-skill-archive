@@ -72,6 +72,24 @@ plugin_manager install_bundle target=ronge-adaptive-skill-archive@2.1.3
 
 ---
 
+## 在其他智能体里用（Claude Code / Codex / Cursor）
+
+同一个推荐 + 经验 + 自进化引擎，通过 **MCP（stdio）** 接入任意支持 MCP 的智能体：
+
+```bash
+# Claude Code
+claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
+
+# Codex: ~/.codex/config.toml
+# [mcp_servers.ronge]
+# command = "npx"
+# args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
+
+# Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
+```
+
+提供 `recommend_skills`（带理由）、`search_skills`（6,399 条索引）、`scan_skill_text`（安装前扫描）、`install_skill`（写入 Claude Code / Codex / DSH 技能目录，带备份）、`record_outcome`（反馈驱动自进化）、`experience_summary`。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
+
 ## 核心功能
 
 ### 上下文推荐（带理由）

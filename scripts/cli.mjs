@@ -74,6 +74,7 @@ function printInstall() {
   line(`  npx ${pkg.name} doctor    检查 Node / profile / 数据目录 / 已装版本`)
   line(`  npx ${pkg.name} eval      跑离线推荐评估（Recall@4）`)
   line(`  npx ${pkg.name} market    DSH 插件市场索引信息`)
+  line(`  npx ${pkg.name} mcp       启动跨智能体 MCP server（Claude Code / Codex / Cursor）`)
   line(`  ${C.cyan}https://bugtakue.github.io/ronge-adaptive-skill-archive/${C.reset}`)
   line('')
 }
@@ -187,6 +188,7 @@ function help() {
   line(`  npx ${pkg.name} doctor     环境与安装检查`)
   line(`  npx ${pkg.name} eval       离线推荐评估 Recall@4`)
   line(`  npx ${pkg.name} market     DSH 市场索引信息`)
+  line(`  npx ${pkg.name} mcp        启动跨智能体 MCP server（stdio）`)
   line(`  npx ${pkg.name} version    版本`)
   line('')
   dim('  npm: https://www.npmjs.com/package/' + pkg.name)
@@ -211,6 +213,11 @@ switch (command) {
   case 'index':
     market()
     break
+  case 'mcp': {
+    const { startMcpServer } = await import(path.join(ROOT, 'mcp', 'server.mjs'))
+    startMcpServer()
+    break
+  }
   case 'version':
   case '--version':
   case '-v':

@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.2.0 — 2026-10-29
+
+- **跨智能体 MCP server**：`npx ronge-adaptive-skill-archive mcp` 以 MCP stdio 暴露推荐/索引/安全扫描/安装/反馈/经验 6 个工具，Claude Code、Codex、Cursor 等任意 MCP 客户端可用；DSH 抽屉 UI 仍为 DSH 专属。
+- 推荐引擎复用 DSH 同一套 `recommendSkills`（含 10% 探索、分类权重、技能亲和度）；经验/自进化数据独立存 `~/.ronge-adaptive-skill-cockpit/cross-agent.json`，与 DSH 数据目录分开。
+- `install_skill` 支持 Claude Code / Codex / DSH / agents 技能目录，raw.githubusercontent.com/SKILL.md、≤256 KiB、安装前启发式扫描、旧文件备份、高风险需 `force`。
+- CLI 新增 `mcp` 子命令；新增 `test/mcp.test.mjs`（协议握手、tools/list、推荐、搜索、扫描、反馈、经验）。
+- README 增加跨智能体接入段；新增 `docs/cross-agent.md`。
+
+
 ## v2.1.3 — 2026-10-29
 
 - **`npx ronge-adaptive-skill-archive` 安装助手**：默认打印本机该用的安装命令；`doctor` 检查 Node / DSH profile / 已安装 bundle / 数据目录 / 经验 / 自进化 / 卷轴馆索引；`eval` 离线跑推荐评估 Recall@4；`market` 打印 DSH 插件市场索引信息。CLI 不做任何 profile 写入，实际安装仍走 `plugin_manager`。
