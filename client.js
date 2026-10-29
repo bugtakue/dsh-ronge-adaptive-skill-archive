@@ -39,10 +39,12 @@ window.__ModuleLoader__.load({
       onlyNew: '未安装',
       allSkills: '全部',
       newFromLibrary: '库里还没装的',
-      newFromLibraryHint: '按当前上下文从 6,399 条索引里挑的未安装技能',
+      newFromLibraryHint: '按最近 12 条消息 + 推荐类别挑的未安装技能',
       installedBadge: '已安装',
       recommend: '推荐',
-      recommendHint: '根据当前会话内容',
+      recommendHint: '根据最近 12 条消息 + 项目文件',
+      recentMessages: '最近消息',
+      projectFiles: '项目文件',
       basedOn: '基于：',
       noRecommend: '暂无推荐，先聊几句或点刷新',
       activeNow: '正在使用',
@@ -248,10 +250,12 @@ window.__ModuleLoader__.load({
       onlyNew: 'Not installed',
       allSkills: 'All',
       newFromLibrary: 'Not in your library yet',
-      newFromLibraryHint: 'Uninstalled picks from the 6,399 index for this context',
+      newFromLibraryHint: 'Uninstalled picks from the 6,399 index, using the last 12 messages + recommended categories',
       installedBadge: 'Installed',
       recommend: 'Recommended',
-      recommendHint: 'From the current session',
+      recommendHint: 'From the last 12 messages + project files',
+      recentMessages: 'recent messages',
+      projectFiles: 'project files',
       basedOn: 'Based on: ',
       noRecommend: 'No recommendation yet — chat a little, then refresh',
       activeNow: 'In use',
@@ -3257,12 +3261,25 @@ window.__ModuleLoader__.load({
             hint: t('recommendHint'),
             badge: recommendations.length ? String(recommendations.length) : '',
           }),
-          data && data.contextPreview
+          data && (data.contextPreview || data.contextWindow)
             ? h(
                 'div',
                 { className: 'sf-reco-context' },
                 h('span', { className: 'sf-reco-context-label' }, t('basedOn')),
-                h('span', { className: 'sf-reco-context-text' }, String(data.contextPreview)),
+                h('span', { className: 'sf-reco-context-text' }, String(data.contextPreview || '')),
+                data.contextWindow
+                  ? h(
+                      'span',
+                      { className: 'sf-reco-context-meta' },
+                      t('recentMessages') +
+                        ' ' +
+                        String(data.contextWindow.messages || 0) +
+                        ' · ' +
+                        t('projectFiles') +
+                        ' ' +
+                        String(data.contextWindow.files || 0),
+                    )
+                  : null,
               )
             : null,
           recommendations.length
@@ -4086,6 +4103,7 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-combo-toast-open:hover{background:color-mix(in srgb,var(--sf-success) 10%,transparent)}
 .sf-combo-toast-close{flex:none;display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--sf-ink-3);cursor:pointer}
 .sf-combo-toast-close:hover{background:var(--sf-tint-2);color:var(--sf-ink)}
+.sf-reco-context-meta{display:block;margin-top:3px;font-size:9.5px;color:var(--sf-ink-3);font-variant-numeric:tabular-nums}
 @media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
 @media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
 

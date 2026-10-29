@@ -2376,9 +2376,12 @@ function analyzeSession(ctx, sessionId, cwd) {
     // cwd may be a file or unavailable; recommendations still use messages.
   }
 
-  const contextText = [contextUserTexts.slice(-8).join('\n'), fileNames.join(' ')].join('\n').trim()
+  const contextMessages = contextUserTexts.slice(-12)
+  const contextText = [contextMessages.join('\n'), fileNames.join(' ')].join('\n').trim()
   return {
     running: lastType !== 'turn/end',
+    contextMessages: contextMessages.length,
+    contextFiles: fileNames.length,
     activeSkills: dedupeSkillCalls(skillCalls.filter((call) => call.turn === maxTurn)).slice(-3),
     recentSkills: dedupeSkillCalls(skillCalls).slice(-6),
     activeTurn: maxTurn,
@@ -2621,9 +2624,9 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     addEntries(result.entries || [])
   }
   if (found.length < 3) {
-    const tokens = [...tokenize(analysis.lastUserText || analysis.contextText || '')]
-      .filter((token) => token.length >= 3)
-      .slice(-6)
+    const tokens = [...tokenize(analysis.contextText || analysis.lastUserText || '')]
+      .filter((token) => token.length >= 2)
+      .slice(-10)
     if (tokens.length) {
       const result = searchLibrary(tokens.join(' '), '', 4, 1, 12, language, {
         excludeInstalled: true,
@@ -2751,6 +2754,10 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     recentSkills: analysis.recentSkills,
     running: analysis.running,
     contextPreview: analysis.lastUserText.slice(0, 160),
+    contextWindow: {
+      messages: Number(analysis.contextMessages || 0),
+      files: Number(analysis.contextFiles || 0),
+    },
     mode: studioMode,
     experience: experienceSnapshot(cwd),
     evolution: evolutionSnapshot(),
