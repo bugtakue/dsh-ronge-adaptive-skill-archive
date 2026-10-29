@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.0.1 — 2026-10-29
+
+- **安全修复（红队 P1-1）**：安全扫描改为对归一化全文匹配，修复 `curl ... \` 续行、CRLF、超长白空格 padding 绕过高风险门禁；补 4 条回归测试。
+- **P2 收口**：索引刷新 raw 抓取禁 redirect；MCP bin 通过 `.bin` 符号链接调用可正常启动（realpath 比较）。
+- 测试 119/119。
+
+
 ## v5.0.0 — 2026-10-29
 
 ### 智能引擎（核心）
@@ -18,7 +25,7 @@
 ### 评测与增长
 - 60 条 held-out、12 领域：planCoverage **0.60**、compositionValidity **1.00**、capabilityCoverage **0.839**、hintRecall **0.383**、gapDetection **1.00**；基线 keyword 0.083/0.217/0.25/0.532。
 - README/landing/launch kit/claims/attribution 重写；明确不刷星、不保证榜首、不宣称绝对无漏洞。
-- `npm test` **115/115**；Host E2E 20/20；UI E2E 27/27。
+- `npm test` **119/119**；Host E2E 20/20；UI E2E 27/27。
 
 
 ## v3.0.1 — 2026-10-29

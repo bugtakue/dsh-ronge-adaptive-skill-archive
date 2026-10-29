@@ -1675,6 +1675,7 @@ async function refreshRemoteIndex() {
             item.path
           const response = await fetch(rawUrl, {
             headers: { 'User-Agent': 'ronge-skill-studio' },
+            redirect: 'error',
             signal: AbortSignal.timeout(15000),
           })
           if (!response.ok) continue

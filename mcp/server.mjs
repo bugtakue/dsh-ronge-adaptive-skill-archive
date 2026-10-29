@@ -1128,7 +1128,17 @@ export function startMcpServer() {
   process.stdin.on('end', () => process.exit(0))
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+function invokedAsMain() {
+  try {
+    if (!process.argv[1]) return false
+    const invoked = fs.realpathSync(path.resolve(process.argv[1]))
+    return invoked === fs.realpathSync(fileURLToPath(import.meta.url))
+  } catch {
+    return false
+  }
+}
+
+if (invokedAsMain()) {
   startMcpServer()
 }
 
