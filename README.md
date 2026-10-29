@@ -181,6 +181,12 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 | **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v3.0.0` | 不用 npm、固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
+### DSH 兼容性（已测 0.2.1-rc.3）
+
+- 当前 bundle 在 **DeepSeek Harness Desktop 0.2.1-rc.3** 上验证：Host 路由、Client slot（技能按钮 + 右侧抽屉）、locale 元数据、图标、npm 安装与数据迁移均通过。
+- **替换已安装包后需重启 DSH** 才会加载新的 Host 模块；浏览器刷新加载 Client。
+- 兼容性检查：`npm run check:dsh`；完整说明见 [docs/dsh-compatibility.md](docs/dsh-compatibility.md)。
+
 ### 升级（旧包名 → v3.0.0）
 
 - **v3.0.0 是 breaking rename**：包名、路由、bundle id、数据目录都改为 `dsh-ronge-adaptive-skill-archive`；显示名不变。

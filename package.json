@@ -1,6 +1,6 @@
 {
   "name": "dsh-ronge-adaptive-skill-archive",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "荣哥技能卷轴收藏馆 / Ronge's Adaptive Skill Cockpit: a context-aware, self-evolving skill cockpit for DeepSeek Harness — recommendations with reasons, 10% exploration quota, category/skill affinity learning, live usage, plan/immersive modes, experience memory, pre-install safety scan, update diff/rollback and a 6,399-skill public index.",
   "type": "module",
   "repository": {
@@ -45,7 +45,8 @@
     "docs/cross-agent.md",
     "docs/eval.md",
     "library/repo-metadata.json",
-    "test/fixtures/discover-cases.json"
+    "test/fixtures/discover-cases.json",
+    "docs/dsh-compatibility.md"
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
@@ -54,7 +55,8 @@
     "build:market-index": "node scripts/build-market-index.mjs",
     "start": "node scripts/cli.mjs",
     "eval:real": "node scripts/eval-real.mjs",
-    "eval:discover": "node scripts/eval-discover.mjs"
+    "eval:discover": "node scripts/eval-discover.mjs",
+    "check:dsh": "node scripts/dsh-compat-check.mjs"
   },
   "dsh": {
     "bundle": {

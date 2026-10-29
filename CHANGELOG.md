@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.0.1 — 2026-10-29
+
+- **DSH 兼容性基线固化**：新增 `npm run check:dsh`，静态校验 bundle manifest、factory id、slots、路由命名空间、数据迁移、locale/icon 显示元数据与 market index。
+- 新增 `docs/dsh-compatibility.md`：记录 DSH Desktop 0.2.1-rc.3 的安装/重启/卸载/数据迁移/代理边界与已验证项。
+- README 增加 DSH 兼容性说明；测试 57/57。
+- 功能等价 v3.0.0。
+
+
 ## v3.0.0 — 2026-10-29
 
 - **Breaking rename**：包名/GitHub 仓库/本地目录 → `dsh-ronge-adaptive-skill-archive`；显示名「荣哥技能卷轴收藏馆」不变。
