@@ -88,7 +88,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 # Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
 ```
 
-提供 `recommend_skills`（带理由）、`search_skills`（6,399 条索引）、`scan_skill_text`（安装前扫描）、`install_skill`（写入 Claude Code / Codex / DSH 技能目录，带备份）、`record_outcome`（反馈驱动自进化）、`experience_summary`。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
+提供 `recommend_skills`（带理由）、`search_skills`（6,399 条索引）、`scan_skill_text`（安装前扫描）、`install_skill`（写入 Claude Code / Codex / DSH 技能目录，带备份）、`record_outcome`（反馈驱动自进化）、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
 
 ## 核心功能
 

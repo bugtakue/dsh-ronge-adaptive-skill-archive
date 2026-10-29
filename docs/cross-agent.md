@@ -65,20 +65,34 @@ args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
 3. 任务结束：`record_outcome({ skill: "office-xlsx", verdict: "good" })`
 4. 定期看 `experience_summary()`，或用 `search_skills` + `install_skill` 补新技能
 
-## 3. 扫描哪些技能目录
+## 3. Prompts 与 Resources（Claude Code 快捷入口）
+
+MCP server 同时暴露 **prompts**（模型/用户可选的预置指令）和 **resources**（只读上下文）：
+
+| 类型 | 名称 | 用法 |
+|---|---|---|
+| prompt | `recommend` | Claude Code 中显示为 `/mcp__ronge__recommend`，参数 `context`/`cwd`；引导 Agent 先调 `recommend_skills` 再选技能 |
+| prompt | `skill-workflow` | `/mcp__ronge__skill-workflow`：推荐 → 加载 → `record_outcome` 完整闭环 |
+| resource | `ronge://experience/summary` | 学习/自进化摘要（JSON） |
+| resource | `ronge://library/{name}` | 索引中某个技能的元数据 + rawUrl |
+| resource | `ronge://skill/{name}` | 已安装 SKILL.md 内容（8 KiB 截断并标注） |
+
+Claude Code 里可以直接输入 `/mcp__ronge__recommend` 触发；Codex/Cursor 按各自客户端的 prompts/resources 支持情况使用。
+
+## 4. 扫描哪些技能目录
 
 - `~/.claude/skills`、`~/.codex/skills`、`~/.agents/skills`、`~/.dsh/skills`
 - 当前目录下同名目录（项目级 skill）
 - 可用 `RONGE_SKILL_DIRS` 覆盖（路径分隔符分隔，测试/自定义布局用）
 
-## 4. 隐私与安全
+## 5. 隐私与安全
 
 - 全本地：无遥测、无账号、不上传上下文；`cross-agent.json` 在你机器上。
 - `scan_skill_text`/`install_skill` 是**启发式扫描，不是安全保证**；安装前仍建议人工看源码。
 - `install_skill` 只接受 `https://raw.githubusercontent.com/**/SKILL.md` 且 ≤256 KiB；写入前备份旧文件；高风险内容需显式 `force: true`。
 - 与 DSH 插件的数据目录**分开**（`~/.ronge-adaptive-skill-cockpit/` vs `~/.dsh/ronge-adaptive-skill-archive/`）；两边可同时用，各自学习。
 
-## 5. 边界
+## 6. 边界
 
 - MCP 版没有 DSH 的「正在使用 / 完成提示音 / 会话自动上下文」——上下文需要由智能体显式传给 `recommend_skills`。
 - 推荐质量依赖已安装 skill 的描述质量；建议 SKILL.md 写清 `description` / `whenToUse`。

@@ -418,6 +418,59 @@ async function installSkill({ url, agent = 'claude-code', targetDir, force = fal
   }
 }
 
+const PROMPTS = [
+  {
+    name: 'recommend',
+    title: 'Recommend skills for this task',
+    description:
+      'Ask the cockpit to recommend up to four installed skills for a task, then load the best one. Use this before choosing a skill for a non-trivial request.',
+    arguments: [
+      { name: 'context', description: 'The user request or a short task summary.', required: true },
+      { name: 'cwd', description: 'Optional project directory for extra context.', required: false },
+    ],
+  },
+  {
+    name: 'skill-workflow',
+    title: 'Recommend → load → record outcome',
+    description:
+      'Run the full learning loop: recommend skills, load the chosen one, and record what happened so the recommender improves.',
+    arguments: [
+      { name: 'context', description: 'The user request or a short task summary.', required: true },
+      { name: 'cwd', description: 'Optional project directory for extra context.', required: false },
+    ],
+  },
+]
+
+const RESOURCES = [
+  {
+    uri: 'ronge://experience/summary',
+    name: 'Experience and self-evolution summary',
+    description: 'Tracked skills, recent outcomes, learned weights, category weights and exploration quota.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'ronge://library/index',
+    name: 'Public SKILL.md library summary',
+    description: 'Size, snapshot date and category counts of the bundled 6,399-entry index.',
+    mimeType: 'application/json',
+  },
+]
+
+const RESOURCE_TEMPLATES = [
+  {
+    uriTemplate: 'ronge://library/{name}',
+    name: 'Library skill detail',
+    description: 'Metadata and raw GitHub URL for one skill in the public index.',
+    mimeType: 'application/json',
+  },
+  {
+    uriTemplate: 'ronge://skill/{name}',
+    name: 'Installed skill content',
+    description: 'The installed SKILL.md content (truncated to 8 KiB) for one skill.',
+    mimeType: 'text/markdown',
+  },
+]
+
 const TOOLS = [
   {
     name: 'recommend_skills',
@@ -525,6 +578,122 @@ async function callTool(name, args) {
   }
 }
 
+function promptMessages(name, args) {
+  const input = args && typeof args === 'object' ? args : {}
+  const context = String(input.context || '').trim()
+  const cwd = String(input.cwd || '').trim()
+  if (name === 'recommend') {
+    return {
+      description: 'Recommend installed skills for the current task, then load the best match.',
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text:
+              'Call the `recommend_skills` tool of the ronge server with context: ' +
+              JSON.stringify(context || 'the current user request') +
+              (cwd ? ' and cwd: ' + JSON.stringify(cwd) : '') +
+              '. Then tell the user which 1–3 skills you will use and why, and load them before starting the task. ' +
+              'After the task, call `record_outcome` for the skills you used.',
+          },
+        },
+      ],
+    }
+  }
+  if (name === 'skill-workflow') {
+    return {
+      description: 'Run recommend → load → record outcome.',
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text:
+              'For this task: 1) call `recommend_skills` with context ' +
+              JSON.stringify(context || 'the current user request') +
+              (cwd ? ' and cwd: ' + JSON.stringify(cwd) : '') +
+              '. 2) Load the most relevant recommended skill(s). 3) Do the task. ' +
+              '4) Call `record_outcome` with success/failed/good/bad for each skill used, plus a short note. ' +
+              '5) If a useful skill is missing, call `search_skills` and then `install_skill`.',
+          },
+        },
+      ],
+    }
+  }
+  throw new Error('unknown prompt: ' + name)
+}
+
+function readResource(uri) {
+  const target = String(uri || '')
+  if (target === 'ronge://experience/summary') {
+    return { contents: [{ uri: target, mimeType: 'application/json', text: JSON.stringify(experienceSummary(), null, 2) }] }
+  }
+  if (target === 'ronge://library/index') {
+    const library = getLibrary()
+    const categories = {}
+    for (const entry of library.entries || []) {
+      categories[entry.category] = (categories[entry.category] || 0) + 1
+    }
+    return {
+      contents: [
+        {
+          uri: target,
+          mimeType: 'application/json',
+          text: JSON.stringify({ name: library.name, generatedAt: library.generatedAt, total: library.total, categories }, null, 2),
+        },
+      ],
+    }
+  }
+  const libraryMatch = target.match(/^ronge:\/\/library\/(.+)$/)
+  if (libraryMatch) {
+    const name = decodeURIComponent(libraryMatch[1])
+    const entry = (getLibrary().entries || []).find((item) => item.name === name)
+    if (!entry) throw new Error('library skill not found: ' + name)
+    return {
+      contents: [
+        {
+          uri: target,
+          mimeType: 'application/json',
+          text: JSON.stringify(
+            {
+              name: entry.name,
+              description: entry.description,
+              category: entry.category,
+              rating: entry.rating,
+              trust: entry.trust,
+              rawUrl: entry.rawUrl,
+              repo: entry.repo,
+              path: entry.path,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    }
+  }
+  const skillMatch = target.match(/^ronge:\/\/skill\/(.+)$/)
+  if (skillMatch) {
+    const name = decodeURIComponent(skillMatch[1])
+    const skill = scanInstalledSkills().find((item) => item.name === name)
+    if (!skill) throw new Error('installed skill not found: ' + name)
+    const text = fs.readFileSync(skill.path, 'utf8')
+    const truncated = Buffer.byteLength(text) > 8192
+    const body = truncated ? Buffer.from(text).subarray(0, 8192).toString('utf8') : text
+    return {
+      contents: [
+        {
+          uri: target,
+          mimeType: 'text/markdown',
+          text: body + (truncated ? '\n\n<!-- truncated at 8 KiB; read ' + skill.path + ' for the full file -->' : ''),
+        },
+      ],
+    }
+  }
+  throw new Error('unknown resource: ' + target)
+}
+
 function writeMessage(message) {
   process.stdout.write(JSON.stringify(message) + '\n')
 }
@@ -540,7 +709,7 @@ async function handleMessage(message) {
         id,
         result: {
           protocolVersion: '2024-11-05',
-          capabilities: { tools: {} },
+          capabilities: { tools: {}, prompts: {}, resources: {} },
           serverInfo: { name: 'ronge-adaptive-skill-archive', version: PKG.version },
         },
       })
@@ -553,6 +722,26 @@ async function handleMessage(message) {
     }
     if (method === 'tools/list') {
       writeMessage({ jsonrpc: '2.0', id, result: { tools: TOOLS } })
+      return
+    }
+    if (method === 'prompts/list') {
+      writeMessage({ jsonrpc: '2.0', id, result: { prompts: PROMPTS } })
+      return
+    }
+    if (method === 'prompts/get') {
+      writeMessage({ jsonrpc: '2.0', id, result: promptMessages(params?.name, params?.arguments) })
+      return
+    }
+    if (method === 'resources/list') {
+      writeMessage({ jsonrpc: '2.0', id, result: { resources: RESOURCES } })
+      return
+    }
+    if (method === 'resources/templates/list') {
+      writeMessage({ jsonrpc: '2.0', id, result: { resourceTemplates: RESOURCE_TEMPLATES } })
+      return
+    }
+    if (method === 'resources/read') {
+      writeMessage({ jsonrpc: '2.0', id, result: readResource(params?.uri) })
       return
     }
     if (method === 'tools/call') {
@@ -613,4 +802,4 @@ export function startMcpServer() {
   process.stdin.on('end', () => process.exit(0))
 }
 
-export const __testing = { buildRecommendations, searchLibrary, recordOutcome, experienceSummary, installSkill, scanInstalledSkills }
+export const __testing = { buildRecommendations, searchLibrary, recordOutcome, experienceSummary, installSkill, scanInstalledSkills, promptMessages, readResource }

@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.3.0 — 2026-10-29
+
+- **MCP prompts + resources**：新增 `prompts/list|get`（`recommend`、`skill-workflow`，Claude Code 中即 `/mcp__ronge__recommend`）与 `resources/list|read|templates/list`（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`，SKILL.md 读取截断 8 KiB 并标注）。
+- **Trusted Publishing（OIDC）准备**：已写好迁移步骤（`docs/trusted-publishing.md`）。npm 包设置页要求账号密码 + 2FA，无法自动化完成，因此 CI 暂保留 `NPM_TOKEN`；账号本人 1 分钟即可启用，启用后按文档切 OIDC、删除 token。
+- npm 页面 README 已验证正常渲染（2.2.0 起）；`0.0.0-stage` 占位版本已 deprecate。
+- 测试扩展 MCP prompts/resources 协议用例。
+
+
 ## v2.2.0 — 2026-10-29
 
 - **跨智能体 MCP server**：`npx ronge-adaptive-skill-archive mcp` 以 MCP stdio 暴露推荐/索引/安全扫描/安装/反馈/经验 6 个工具，Claude Code、Codex、Cursor 等任意 MCP 客户端可用；DSH 抽屉 UI 仍为 DSH 专属。
