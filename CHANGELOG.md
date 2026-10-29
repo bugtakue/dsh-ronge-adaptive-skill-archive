@@ -1,5 +1,26 @@
 # Changelog
 
+## v5.0.0 — 2026-10-29
+
+### 智能引擎（核心）
+- 新增 12 领域 taxonomy、57 个能力、20 个意图；`library/capability-index.json` 覆盖 **4,808 个唯一技能名 / 6,399 条候选**（重名合并，unknown 926 条诚实标注）。
+- `decomposeTask`：交付物、约束、主/次意图、子任务；能识别「docx 合同核对 + 30 秒视频」的主意图。
+- `composeSkillPlan`：2–5 技能、四种 pattern、stages/handoff/conflicts/missing/draftNeeded/estimates/confidence；跨域能力过滤，不再把 video 技能塞进合同阶段。
+- `draftSkill`：生成 SKILL.md draft + lint + 相似名 + 安全扫描，**不写盘、不执行**。
+- DSH 原生工具：`skill_archive_plan`、`skill_archive_compose`、`skill_archive_draft_skill`；HTTP `/intelligence/*`；无 install/force 工具。
+
+### 安全与工程
+- 共享 `lib/security.js`、`lib/fsx.js`；Host 远端抓取禁重定向、严格 URL、256 KiB、代理/curl 一致。
+- 原子写入、per-resource 锁、备份 10 份上限；`force` 需 `DSH_RONGE_ALLOW_FORCE=1` + reason header；写路由 Origin/Sec-Fetch-Site 校验。
+- MCP：`scan_skill_text` 只收文本（去 SSRF）；`install_skill` 不再覆盖、无模型 force、唯一名 + frontmatter rename + source meta；targetDir realpath containment。
+- 客户端：智能组合/创作 UI、AbortController、外链 https 白名单、焦点圈/Escape/aria-live/reduced-motion。
+
+### 评测与增长
+- 60 条 held-out、12 领域：planCoverage **0.60**、compositionValidity **1.00**、capabilityCoverage **0.839**、hintRecall **0.383**、gapDetection **1.00**；基线 keyword 0.083/0.217/0.25/0.532。
+- README/landing/launch kit/claims/attribution 重写；明确不刷星、不保证榜首、不宣称绝对无漏洞。
+- `npm test` **115/115**；Host E2E 20/20；UI E2E 27/27。
+
+
 ## v3.0.1 — 2026-10-29
 
 - **DSH 兼容性基线固化**：新增 `npm run check:dsh`，静态校验 bundle manifest、factory id、slots、路由命名空间、数据迁移、locale/icon 显示元数据与 market index。

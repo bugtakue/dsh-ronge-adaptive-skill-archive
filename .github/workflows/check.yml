@@ -6,11 +6,29 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: 20
+          - os: ubuntu-latest
+            node: 22
+          - os: ubuntu-latest
+            node: 24
+          - os: macos-latest
+            node: 22
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
       - run: npm run check
       - run: npm test
+      - run: npm run check:dsh
+      - run: node scripts/benchmark.mjs --smoke
+      - run: node scripts/build-market-index.mjs
+      - run: git diff --exit-code -- docs/plugin-market.json
+      - run: npm pack --dry-run --json > /tmp/pack.json
+      - run: node -e "const p=require('/tmp/pack.json')[0]; if(!p.files.some(f=>f.path==='lib/intelligence/index.js')) process.exit(1); if(p.size>4_000_000) process.exit(1); console.log('pack',p.files.length,p.size)"

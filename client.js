@@ -102,7 +102,9 @@ window.__ModuleLoader__.load({
       noRemote: '没有远程结果',
       noTools: '没有 MCP 结果',
       remoteHint: '来自精选 GitHub 源；只拉取 SKILL.md',
+      discoverTitle: '发现远程技能',
       toolsHint: '来自 MCP 官方 registry；工具不是 skill',
+      toolsTitle: 'MCP / Tools 目录',
       updatesFound: '个更新',
       noUpdates: '暂无更新',
       source: '来源',
@@ -246,6 +248,63 @@ window.__ModuleLoader__.load({
       starsAria: '评分',
       listAria: '技能列表',
       loadingMore: '加载中…',
+      intelTitle: '智能组合',
+      intelHint: '把任务拆成技能组合：阶段、交接物、缺口与预计收益；只出计划，不执行。',
+      intelEntry: '拆解任务',
+      intelCollapse: '收起',
+      intelToggleAria: '展开或收起智能组合',
+      intelTaskLabel: '任务描述',
+      intelTaskPlaceholder: '例如：把会议录音整理成可交付的纪要 docx，再做一个 30 秒宣传片',
+      intelPlan: '快速拆解',
+      intelCompose: '完整组合',
+      intelDraft: '生成技能草稿',
+      intelCopy: '复制为 Agent 指令',
+      intelCopied: '已复制 Agent 指令',
+      intelTaskRequired: '先写一句任务描述',
+      intelFailed: '智能组合失败',
+      intelEmpty: '没有返回可展示的结果',
+      intelPlanReady: '组合方案已生成（计划，未执行）',
+      intelDraftReady: '草稿已生成（尚未写盘）',
+      intelGoal: '目标',
+      intelPattern: '组合模式',
+      intelConfidence: '置信度',
+      intelStages: '阶段',
+      intelStage: '阶段',
+      intelRole: '角色',
+      intelSkills: '技能',
+      intelWhy: '为什么',
+      intelInput: '输入',
+      intelOutput: '输出',
+      intelHandoff: '交接物',
+      intelFallback: '失败备选',
+      intelMissing: '缺失能力',
+      intelDraftNeeded: '需生成草稿',
+      intelSuggested: '候选技能',
+      intelConflicts: '冲突',
+      intelNoConflict: '无冲突',
+      intelEstimates: '预计收益',
+      intelAssumptions: '假设',
+      intelNoPlan: '还没有组合方案。写一句任务，点「快速拆解」或「完整组合」。',
+      intelDraftPreview: '技能草稿',
+      intelFrontmatter: 'Frontmatter',
+      intelDescription: '描述',
+      intelWhenToUse: '何时用',
+      intelLint: '校验',
+      intelLintOk: '校验通过',
+      intelLintIssues: '校验问题',
+      intelSafety: '安全扫描',
+      intelEvalCases: '评测用例',
+      intelConfirmCreate: '确认并创建',
+      intelDiscard: '丢弃草稿',
+      intelCreateHint: '写入 ~/.dsh/skills 前需要你确认；不会自动执行。',
+      intelCreated: '已创建技能：',
+      intelCopyNote: '这是计划，不是执行结果；确认后再让 Agent 执行。',
+      intelInstructions: 'Agent 指令',
+      intelContent: 'SKILL.md 内容',
+      intelStatusAria: '智能组合状态',
+      intelNoMissing: '没有发现能力缺口',
+      intelNoSkills: '没有匹配到技能',
+      intelNoItems: '无',
     }
 
     const dictEn = {
@@ -330,7 +389,9 @@ window.__ModuleLoader__.load({
       noRemote: 'No remote results',
       noTools: 'No MCP results',
       remoteHint: 'From curated GitHub sources; SKILL.md only',
+      discoverTitle: 'Discover remote skills',
       toolsHint: 'From the official MCP registry; tools are not skills',
+      toolsTitle: 'MCP / Tools directory',
       updatesFound: 'updates',
       noUpdates: 'Up to date',
       source: 'Source',
@@ -474,6 +535,63 @@ window.__ModuleLoader__.load({
       starsAria: 'Rating',
       listAria: 'Skill list',
       loadingMore: 'Loading…',
+      intelTitle: 'Smart compose',
+      intelHint: 'Turn a task into a skill plan: stages, handoffs, gaps and estimates. Plan only; nothing executes.',
+      intelEntry: 'Decompose a task',
+      intelCollapse: 'Collapse',
+      intelToggleAria: 'Expand or collapse smart compose',
+      intelTaskLabel: 'Task',
+      intelTaskPlaceholder: 'e.g. Turn a meeting recording into a docx summary, then a 30s promo video',
+      intelPlan: 'Decompose',
+      intelCompose: 'Compose',
+      intelDraft: 'Draft skill',
+      intelCopy: 'Copy as agent instructions',
+      intelCopied: 'Agent instructions copied',
+      intelTaskRequired: 'Enter a task first',
+      intelFailed: 'Smart compose failed',
+      intelEmpty: 'No result to display',
+      intelPlanReady: 'Plan ready (plan only, nothing executed)',
+      intelDraftReady: 'Draft ready (not written yet)',
+      intelGoal: 'Goal',
+      intelPattern: 'Pattern',
+      intelConfidence: 'Confidence',
+      intelStages: 'Stages',
+      intelStage: 'Stage',
+      intelRole: 'Role',
+      intelSkills: 'Skills',
+      intelWhy: 'Why',
+      intelInput: 'Input',
+      intelOutput: 'Output',
+      intelHandoff: 'Handoff',
+      intelFallback: 'Fallback',
+      intelMissing: 'Missing capabilities',
+      intelDraftNeeded: 'Draft needed',
+      intelSuggested: 'Suggested skills',
+      intelConflicts: 'Conflicts',
+      intelNoConflict: 'No conflicts',
+      intelEstimates: 'Estimates',
+      intelAssumptions: 'Assumptions',
+      intelNoPlan: 'No plan yet. Describe a task, then choose Decompose or Compose.',
+      intelDraftPreview: 'Skill draft',
+      intelFrontmatter: 'Frontmatter',
+      intelDescription: 'Description',
+      intelWhenToUse: 'When to use',
+      intelLint: 'Lint',
+      intelLintOk: 'Lint passed',
+      intelLintIssues: 'Lint issues',
+      intelSafety: 'Safety scan',
+      intelEvalCases: 'Eval cases',
+      intelConfirmCreate: 'Confirm and create',
+      intelDiscard: 'Discard draft',
+      intelCreateHint: 'Nothing is written to ~/.dsh/skills until you confirm; nothing executes automatically.',
+      intelCreated: 'Skill created: ',
+      intelCopyNote: 'This is a plan, not an execution result. Confirm before the agent runs it.',
+      intelInstructions: 'Agent instructions',
+      intelContent: 'SKILL.md content',
+      intelStatusAria: 'Smart compose status',
+      intelNoMissing: 'No capability gaps found',
+      intelNoSkills: 'No matching skills',
+      intelNoItems: 'None',
     }
 
     function useStore() {
@@ -712,6 +830,66 @@ window.__ModuleLoader__.load({
       } catch {
         // Clipboard is optional in non-secure contexts.
       }
+    }
+
+    function isAbortError(error) {
+      return Boolean(error && (error.name === 'AbortError' || error.code === 20))
+    }
+
+    function errorMessage(error) {
+      if (isAbortError(error)) return ''
+      return error instanceof Error ? error.message : String(error)
+    }
+
+    // External links are opened only for https URLs or same-origin relative
+    // paths. javascript:, data:, file: and protocol-relative URLs are dropped.
+    function safeExternalUrl(raw) {
+      const value = typeof raw === 'string' ? raw.trim() : ''
+      if (!value) return ''
+      if (value.startsWith('/') && !value.startsWith('//')) return value
+      try {
+        const parsed = new URL(value)
+        if (parsed.protocol !== 'https:') return ''
+        return parsed.href
+      } catch {
+        return ''
+      }
+    }
+
+    function textValue(value) {
+      if (value === null || value === undefined) return ''
+      if (typeof value === 'string') return value
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+      if (Array.isArray(value)) return value.map(textValue).filter(Boolean).join(' · ')
+      if (typeof value === 'object') {
+        try {
+          return Object.keys(value)
+            .slice(0, 8)
+            .map((key) => key + ': ' + textValue(value[key]))
+            .filter(Boolean)
+            .join(' · ')
+        } catch {
+          return ''
+        }
+      }
+      return String(value)
+    }
+
+    function intelSkillNames(list) {
+      if (!Array.isArray(list)) return []
+      const names = []
+      for (const item of list) {
+        if (typeof item === 'string') {
+          if (item) names.push(item)
+          continue
+        }
+        if (item && typeof item === 'object') {
+          const name = item.name || item.skill || item.capability || item.id
+          if (name) names.push(String(name))
+        }
+        if (names.length >= 8) break
+      }
+      return names
     }
 
     function trustBadge(t, trust) {
@@ -1085,12 +1263,17 @@ window.__ModuleLoader__.load({
         setBetterNotice(null)
         if (!sessionId) return undefined
         let stopped = false
+        let controller = null
         const check = async () => {
+          if (stopped) return
+          if (controller) controller.abort()
+          controller = new AbortController()
           try {
             const params = new URLSearchParams({ sessionId })
             params.set('lang', String(store.lang || '').toLowerCase().startsWith('en') ? 'en' : 'zh')
             const response = await fetch('/dsh-ronge-adaptive-skill-archive/catalog.json?' + params.toString(), {
               cache: 'no-store',
+              signal: controller.signal,
             })
             if (!response.ok) return
             const payload = await response.json().catch(() => ({}))
@@ -1125,6 +1308,7 @@ window.__ModuleLoader__.load({
         const timer = setInterval(check, 12000)
         return () => {
           stopped = true
+          if (controller) controller.abort()
           clearInterval(timer)
           if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
           if (betterNoticeTimer.current) clearTimeout(betterNoticeTimer.current)
@@ -1370,6 +1554,52 @@ window.__ModuleLoader__.load({
       const abortRef = React.useRef(null)
       const toastTimer = React.useRef(null)
       const previousFocus = React.useRef(null)
+      const drawerRef = React.useRef(null)
+      const inflightRequests = React.useRef(new Set())
+      const [intelOpen, setIntelOpen] = React.useState(false)
+      const [intelTask, setIntelTask] = React.useState('')
+      const [intelMode, setIntelMode] = React.useState(null)
+      const [intelBusy, setIntelBusy] = React.useState(null)
+      const [intelError, setIntelError] = React.useState(null)
+      const [intelNotice, setIntelNotice] = React.useState(null)
+      const [intelPlan, setIntelPlan] = React.useState(null)
+      const [intelDraft, setIntelDraft] = React.useState(null)
+      const [intelDraftFrom, setIntelDraftFrom] = React.useState(null)
+      const [intelCreatedPath, setIntelCreatedPath] = React.useState(null)
+
+      const abortableFetch = React.useCallback((input, init) => {
+        const controller = new AbortController()
+        inflightRequests.current.add(controller)
+        const options = Object.assign({}, init || {})
+        options.signal = controller.signal
+        return fetch(input, options).finally(() => {
+          inflightRequests.current.delete(controller)
+        })
+      }, [])
+
+      const abortAllRequests = React.useCallback(() => {
+        for (const controller of inflightRequests.current) {
+          try {
+            controller.abort()
+          } catch {
+            // A controller can only be aborted once.
+          }
+        }
+        inflightRequests.current.clear()
+      }, [])
+
+      React.useEffect(() => () => abortAllRequests(), [abortAllRequests])
+
+      React.useEffect(() => () => abortAllRequests(), [state.sessionId, abortAllRequests])
+
+      React.useEffect(() => {
+        setIntelPlan(null)
+        setIntelDraft(null)
+        setIntelDraftFrom(null)
+        setIntelCreatedPath(null)
+        setIntelError(null)
+        setIntelNotice(null)
+      }, [state.sessionId])
 
       const showToast = React.useCallback((text, kind) => {
         if (!text) return
@@ -1409,7 +1639,7 @@ window.__ModuleLoader__.load({
         } catch (err) {
           if (err && err.name === 'AbortError') return
           if (silent) return
-          setError(err instanceof Error ? err.message : String(err))
+          setError(errorMessage(err))
           setData(null)
         } finally {
           if (!silent) setLoading(false)
@@ -1549,7 +1779,7 @@ window.__ModuleLoader__.load({
         if (!skillName || recoBusy) return
         setRecoBusy({ name: skillName, verdict })
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/recommend-feedback', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/recommend-feedback', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ skillName, verdict, kind: kind || undefined }),
@@ -1593,7 +1823,7 @@ window.__ModuleLoader__.load({
         setModeBusy(true)
         setError(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/mode', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/mode', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ mode: target }),
@@ -1602,7 +1832,7 @@ window.__ModuleLoader__.load({
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           await load(state.sessionId, true)
         } catch (err) {
-          setError(err instanceof Error ? err.message : String(err))
+          setError(errorMessage(err))
         } finally {
           setModeBusy(false)
         }
@@ -1612,7 +1842,7 @@ window.__ModuleLoader__.load({
         if (!id || feedbackBusy) return
         setFeedbackBusy(true)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/feedback', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/feedback', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ id, rating }),
@@ -1621,7 +1851,7 @@ window.__ModuleLoader__.load({
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           await load(state.sessionId, true)
         } catch (err) {
-          setError(err instanceof Error ? err.message : String(err))
+          setError(errorMessage(err))
         } finally {
           setFeedbackBusy(false)
         }
@@ -1631,14 +1861,14 @@ window.__ModuleLoader__.load({
         setRemoteLoading(true)
         setRemoteError(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/discover?q=' + encodeURIComponent(q || ''), {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/discover?q=' + encodeURIComponent(q || ''), {
             cache: 'no-store',
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setRemoteResults(Array.isArray(payload.entries) ? payload.entries : [])
         } catch (err) {
-          setRemoteError(err instanceof Error ? err.message : String(err))
+          setRemoteError(errorMessage(err))
           setRemoteResults([])
         } finally {
           setRemoteLoading(false)
@@ -1649,14 +1879,14 @@ window.__ModuleLoader__.load({
         setToolsLoading(true)
         setToolsError(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/tools?q=' + encodeURIComponent(q || ''), {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/tools?q=' + encodeURIComponent(q || ''), {
             cache: 'no-store',
           })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setToolsResults(Array.isArray(payload.servers) ? payload.servers : [])
         } catch (err) {
-          setToolsError(err instanceof Error ? err.message : String(err))
+          setToolsError(errorMessage(err))
           setToolsResults([])
         } finally {
           setToolsLoading(false)
@@ -1678,7 +1908,7 @@ window.__ModuleLoader__.load({
           if (onlyNew) params.set('hideInstalled', '1')
           const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
           if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/library?' + params.toString(), { cache: 'no-store' })
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/library?' + params.toString(), { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setLibraryMeta({
@@ -1690,7 +1920,7 @@ window.__ModuleLoader__.load({
           setLibraryPage(page)
           setLibraryResults((current) => (append ? current.concat(payload.entries || []) : payload.entries || []))
         } catch (err) {
-          setLibraryError(err instanceof Error ? err.message : String(err))
+          setLibraryError(errorMessage(err))
           if (!append) setLibraryResults([])
         } finally {
           setLibraryLoading(false)
@@ -1700,7 +1930,7 @@ window.__ModuleLoader__.load({
       const openRemotePreview = async (entry) => {
         setRemotePreview({ entry, content: '', loading: true, error: null })
         try {
-          const response = await fetch(
+          const response = await abortableFetch(
             '/dsh-ronge-adaptive-skill-archive/discover/preview?url=' + encodeURIComponent(entry.url),
             { cache: 'no-store' },
           )
@@ -1720,7 +1950,7 @@ window.__ModuleLoader__.load({
             entry,
             content: '',
             loading: false,
-            error: err instanceof Error ? err.message : String(err),
+            error: errorMessage(err),
           })
         }
       }
@@ -1728,7 +1958,7 @@ window.__ModuleLoader__.load({
       const installRemote = async (entry, options = {}) => {
         setRemoteInstall({ name: entry.name, status: 'installing' })
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/discover/install', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/discover/install', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ url: entry.url, trust: entry.trust }),
@@ -1739,7 +1969,7 @@ window.__ModuleLoader__.load({
           showToast((options.auto ? t('autoInstalled') : t('installed')) + ' · ' + entry.name)
           await load(state.sessionId, true)
         } catch (err) {
-          const raw = err instanceof Error ? err.message : String(err)
+          const raw = errorMessage(err)
           const friendly = /fetch failed|ENOTFOUND|ECONN|TLS|network/i.test(raw) ? t('installNetworkHint') : raw
           setRemoteInstall({ name: entry.name, status: 'error', error: friendly })
           showToast(t('installFailed') + ' · ' + entry.name, 'error')
@@ -1748,12 +1978,12 @@ window.__ModuleLoader__.load({
 
       const checkUpdates = async (silent = false) => {
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/discover/updates', { cache: 'no-store' })
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/discover/updates', { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setUpdates({ updates: payload.updates || [], checked: payload.checked || 0 })
         } catch (err) {
-          if (!silent) setRemoteError(err instanceof Error ? err.message : String(err))
+          if (!silent) setRemoteError(errorMessage(err))
         }
       }
 
@@ -1774,7 +2004,7 @@ window.__ModuleLoader__.load({
             endpoint = '/dsh-ronge-adaptive-skill-archive/discover/rollback'
             doneKey = 'rollbackOk'
           }
-          const response = await fetch(endpoint, {
+          const response = await abortableFetch(endpoint, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body),
@@ -1790,7 +2020,7 @@ window.__ModuleLoader__.load({
           await checkUpdates(true)
           await load(state.sessionId, true)
         } catch (err) {
-          setUpdateError(t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)))
+          setUpdateError(t('actionFailed') + ': ' + (errorMessage(err)))
         } finally {
           setUpdateBusy(null)
         }
@@ -1801,7 +2031,7 @@ window.__ModuleLoader__.load({
         setXpBusy('export')
         setXpStatus(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/experience/export', { cache: 'no-store' })
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/experience/export', { cache: 'no-store' })
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           const data =
@@ -1824,7 +2054,7 @@ window.__ModuleLoader__.load({
           setXpStatus({ kind: 'ok', text: t('exportOk') })
           showToast(t('exportOk'))
         } catch (err) {
-          setXpStatus({ kind: 'error', text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)) })
+          setXpStatus({ kind: 'error', text: t('actionFailed') + ': ' + (errorMessage(err)) })
         } finally {
           setXpBusy(null)
         }
@@ -1843,7 +2073,7 @@ window.__ModuleLoader__.load({
         try {
           parsed = JSON.parse(text)
         } catch (err) {
-          setXpStatus({ kind: 'error', text: t('importInvalid') + ': ' + (err instanceof Error ? err.message : String(err)) })
+          setXpStatus({ kind: 'error', text: t('importInvalid') + ': ' + (errorMessage(err)) })
           return
         }
         const payload =
@@ -1853,7 +2083,7 @@ window.__ModuleLoader__.load({
         setXpBusy('import')
         setXpStatus(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/experience/import', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/experience/import', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ payload }),
@@ -1864,7 +2094,7 @@ window.__ModuleLoader__.load({
           showToast(t('importOk'))
           await load(state.sessionId, true)
         } catch (err) {
-          setXpStatus({ kind: 'error', text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)) })
+          setXpStatus({ kind: 'error', text: t('actionFailed') + ': ' + (errorMessage(err)) })
         } finally {
           setXpBusy(null)
         }
@@ -1887,7 +2117,7 @@ window.__ModuleLoader__.load({
         setEvolutionBusy(action)
         setEvolutionNotice(null)
         try {
-          const response = await fetch(endpoint, {
+          const response = await abortableFetch(endpoint, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({}),
@@ -1900,7 +2130,7 @@ window.__ModuleLoader__.load({
         } catch (err) {
           setEvolutionNotice({
             kind: 'error',
-            text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+            text: t('actionFailed') + ': ' + (errorMessage(err)),
           })
         } finally {
           setEvolutionBusy(null)
@@ -1914,7 +2144,7 @@ window.__ModuleLoader__.load({
         setQuotaBusy(true)
         setEvolutionNotice(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/evolution/config', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/evolution/config', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ explorationRate: next }),
@@ -1927,7 +2157,7 @@ window.__ModuleLoader__.load({
         } catch (err) {
           setEvolutionNotice({
             kind: 'error',
-            text: t('actionFailed') + ': ' + (err instanceof Error ? err.message : String(err)),
+            text: t('actionFailed') + ': ' + (errorMessage(err)),
           })
         } finally {
           setQuotaBusy(false)
@@ -1947,7 +2177,7 @@ window.__ModuleLoader__.load({
         setCreateError(null)
         setCreatedPath(null)
         try {
-          const response = await fetch('/dsh-ronge-adaptive-skill-archive/create', {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/create', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(form),
@@ -1958,7 +2188,7 @@ window.__ModuleLoader__.load({
           setForm({ name: '', description: '', whenToUse: '' })
           await load(state.sessionId)
         } catch (err) {
-          setCreateError(err instanceof Error ? err.message : String(err))
+          setCreateError(errorMessage(err))
         } finally {
           setCreateBusy(false)
         }
@@ -1970,6 +2200,161 @@ window.__ModuleLoader__.load({
       }
 
       const close = () => store.set({ open: false })
+
+      const intelTaskValue = () => String(intelTask || '').trim()
+
+      const intelInstructionText = (plan) => {
+        if (!plan || typeof plan !== 'object') return ''
+        const lines = ['[' + t('intelInstructions') + ']']
+        if (plan.goal) lines.push(t('intelGoal') + ': ' + String(plan.goal))
+        if (plan.pattern) lines.push(t('intelPattern') + ': ' + String(plan.pattern))
+        if (Number.isFinite(Number(plan.confidence))) {
+          lines.push(t('intelConfidence') + ': ' + Math.round(Number(plan.confidence) * 100) + '%')
+        }
+        const stages = Array.isArray(plan.stages) ? plan.stages.filter((stage) => stage && typeof stage === 'object') : []
+        if (stages.length) {
+          lines.push('', t('intelStages') + ':')
+          stages.forEach((stage, index) => {
+            const names = intelSkillNames(stage.skills)
+            lines.push(
+              String(index + 1) + '. ' + t('intelStage') + ' ' + (stage.role ? String(stage.role) : '') + ': ' + (names.join(', ') || t('intelNoSkills')),
+            )
+            if (stage.input) lines.push('   ' + t('intelInput') + ': ' + textValue(stage.input))
+            if (stage.output) lines.push('   ' + t('intelOutput') + ': ' + textValue(stage.output))
+            if (stage.handoff) lines.push('   ' + t('intelHandoff') + ': ' + textValue(stage.handoff))
+            if (stage.fallback) lines.push('   ' + t('intelFallback') + ': ' + textValue(stage.fallback))
+          })
+        }
+        const missing = Array.isArray(plan.missing) ? plan.missing.filter(Boolean) : []
+        if (missing.length) {
+          lines.push('', t('intelMissing') + ':')
+          for (const item of missing) {
+            const row = item && typeof item === 'object' ? item : { capability: item }
+            const suggestions = intelSkillNames(row.suggestedLibrarySkills)
+            lines.push(
+              '- ' +
+                (row.capability || row.name || textValue(item)) +
+                (suggestions.length ? ' (' + t('intelSuggested') + ': ' + suggestions.join(', ') + ')' : ''),
+            )
+          }
+        }
+        const conflicts = Array.isArray(plan.conflicts) ? plan.conflicts.filter(Boolean) : []
+        if (conflicts.length) {
+          lines.push('', t('intelConflicts') + ':')
+          for (const item of conflicts) lines.push('- ' + textValue(item))
+        }
+        const assumptions = Array.isArray(plan.assumptions) ? plan.assumptions.filter(Boolean) : []
+        if (assumptions.length) {
+          lines.push('', t('intelAssumptions') + ':')
+          for (const item of assumptions) lines.push('- ' + textValue(item))
+        }
+        lines.push('', '[' + t('intelCopyNote') + ']')
+        return lines.join('\n')
+      }
+
+      const runIntel = async (action) => {
+        const task = intelTaskValue()
+        if (!task) {
+          setIntelOpen(true)
+          setIntelError(t('intelTaskRequired'))
+          setIntelNotice(null)
+          setIntelMode(null)
+          return
+        }
+        if (intelBusy || (action !== 'plan' && action !== 'compose' && action !== 'draft')) return
+        setIntelBusy(action)
+        setIntelMode(action)
+        setIntelError(null)
+        setIntelNotice(null)
+        setIntelCreatedPath(null)
+        try {
+          const body = { task }
+          if (action === 'draft') {
+            if (intelPlan) body.plan = intelPlan
+            if (intelPlan && Array.isArray(intelPlan.missing)) body.missing = intelPlan.missing
+            else if (intelDraftFrom) body.missing = [intelDraftFrom]
+          } else {
+            if (currentMode && currentMode !== 'off') body.mode = currentMode
+            if (data && data.cwd) body.cwd = String(data.cwd)
+            if (action === 'compose') body.maxSkills = 4
+          }
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/intelligence/' + action, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          if (action === 'draft') {
+            const draft = payload && payload.draft && typeof payload.draft === 'object' ? payload.draft : null
+            if (!draft || !draft.name) {
+              setIntelError(t('intelEmpty'))
+            } else {
+              setIntelDraft(draft)
+              setIntelNotice({ kind: 'ok', text: t('intelDraftReady') })
+            }
+          } else {
+            const plan = payload && payload.plan && typeof payload.plan === 'object' ? payload.plan : null
+            if (!plan) {
+              setIntelError(t('intelEmpty'))
+            } else {
+              setIntelPlan(plan)
+              setIntelNotice({ kind: 'ok', text: t('intelPlanReady') })
+            }
+          }
+        } catch (err) {
+          if (!isAbortError(err)) setIntelError(t('intelFailed') + ': ' + errorMessage(err))
+        } finally {
+          setIntelBusy(null)
+        }
+      }
+
+      const copyIntelInstructions = () => {
+        if (!intelPlan) return
+        const text = intelInstructionText(intelPlan)
+        if (!text) return
+        writeClipboardText(text)
+        setIntelNotice({ kind: 'ok', text: t('intelCopied') })
+        showToast(t('intelCopied'))
+      }
+
+      const confirmIntelCreate = async () => {
+        if (!intelDraft || !intelDraft.name || intelBusy) return
+        setIntelBusy('create')
+        setIntelError(null)
+        setIntelCreatedPath(null)
+        try {
+          const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/create', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              name: String(intelDraft.name),
+              description: String(intelDraft.description || ''),
+              whenToUse: String(intelDraft.whenToUse || ''),
+            }),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
+          const createdPath = payload.path || null
+          setIntelCreatedPath(createdPath)
+          setIntelNotice({ kind: 'ok', text: t('intelCreated') + String(createdPath || intelDraft.name) })
+          showToast(t('intelCreated') + String(createdPath || intelDraft.name))
+          setIntelDraft(null)
+          await load(state.sessionId, true)
+        } catch (err) {
+          if (!isAbortError(err)) setIntelError(t('intelFailed') + ': ' + errorMessage(err))
+        } finally {
+          setIntelBusy(null)
+        }
+      }
+
+      const resetIntelDraft = () => {
+        setIntelDraft(null)
+        setIntelDraftFrom(null)
+        setIntelCreatedPath(null)
+        setIntelError(null)
+        setIntelNotice(null)
+      }
 
       const renderRemotePreview = () => {
         if (!remotePreview) return null
@@ -3200,10 +3585,15 @@ window.__ModuleLoader__.load({
                   ),
                   h('p', { className: 'sf-desc' }, server.description || ''),
                   h('div', { className: 'sf-remote-meta' }, server.name),
-                  server.repo
+                  safeExternalUrl(server.repo)
                     ? h(
                         'a',
-                        { className: 'sf-remote-link', href: server.repo, target: '_blank', rel: 'noreferrer' },
+                        {
+                          className: 'sf-remote-link',
+                          href: safeExternalUrl(server.repo),
+                          target: '_blank',
+                          rel: 'noopener noreferrer',
+                        },
                         t('repoLabel') + ': ' + server.repo,
                       )
                     : null,
@@ -3637,6 +4027,449 @@ window.__ModuleLoader__.load({
             )
           : null
 
+      const renderIntelSuggestions = (items) => {
+        const list = Array.isArray(items) ? items.filter(Boolean).slice(0, 6) : []
+        if (!list.length) return null
+        return h(
+          'div',
+          { className: 'sf-intel-suggest' },
+          h('span', { className: 'sf-intel-k' }, t('intelSuggested')),
+          list.map((item, index) => {
+            const entry = item && typeof item === 'object' ? item : { name: String(item || '') }
+            const name = String(entry.name || entry.skill || entry.id || '')
+            if (!name) return null
+            const href = safeExternalUrl(entry.rawUrl || entry.url || '')
+            return href
+              ? h(
+                  'a',
+                  {
+                    key: 'sug-' + index,
+                    className: 'sf-intel-link',
+                    href,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                  },
+                  name,
+                )
+              : h('span', { key: 'sug-' + index, className: 'sf-intel-chip' }, name)
+          }),
+        )
+      }
+
+      const renderIntelPlan = () => {
+        if (!intelPlan) return null
+        const plan = intelPlan
+        const stages = Array.isArray(plan.stages) ? plan.stages.filter((stage) => stage && typeof stage === 'object') : []
+        const missing = Array.isArray(plan.missing) ? plan.missing.filter(Boolean) : []
+        const conflicts = Array.isArray(plan.conflicts) ? plan.conflicts.filter(Boolean) : []
+        const assumptions = Array.isArray(plan.assumptions) ? plan.assumptions.filter(Boolean) : []
+        const estimates = plan.estimates && typeof plan.estimates === 'object' ? plan.estimates : null
+        return h(
+          'div',
+          { className: 'sf-intel-plan' },
+          h(
+            'div',
+            { className: 'sf-intel-summary' },
+            plan.goal
+              ? h(
+                  'div',
+                  { className: 'sf-intel-goal' },
+                  h('span', { className: 'sf-intel-k' }, t('intelGoal')),
+                  h('span', null, String(plan.goal)),
+                )
+              : null,
+            h(
+              'div',
+              { className: 'sf-intel-meta' },
+              plan.pattern
+                ? h('span', { className: 'sf-badge' }, t('intelPattern') + ': ' + String(plan.pattern))
+                : null,
+              Number.isFinite(Number(plan.confidence))
+                ? h(
+                    'span',
+                    { className: 'sf-badge' },
+                    t('intelConfidence') + ': ' + Math.round(Number(plan.confidence) * 100) + '%',
+                  )
+                : null,
+              stages.length ? h('span', { className: 'sf-badge' }, t('intelStages') + ' ' + stages.length) : null,
+            ),
+          ),
+          stages.length
+            ? h(
+                'ol',
+                { className: 'sf-intel-stages' },
+                stages.map((stage, index) =>
+                  h(
+                    'li',
+                    { className: 'sf-intel-stage', key: 'stage-' + index },
+                    h(
+                      'div',
+                      { className: 'sf-intel-stage-head' },
+                      h('span', { className: 'sf-intel-stage-no' }, String(index + 1)),
+                      stage.role
+                        ? h('span', { className: 'sf-intel-role', title: t('intelRole') }, String(stage.role))
+                        : null,
+                      h(
+                        'span',
+                        { className: 'sf-intel-stage-skills', title: t('intelSkills') },
+                        intelSkillNames(stage.skills).join(' × ') || t('intelNoSkills'),
+                      ),
+                    ),
+                    Array.isArray(stage.skills) &&
+                    stage.skills.some((item) => item && typeof item === 'object' && item.why)
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-block' },
+                          h('div', { className: 'sf-intel-k' }, t('intelWhy')),
+                          stage.skills
+                            .filter((item) => item && typeof item === 'object' && item.why)
+                            .slice(0, 4)
+                            .map((item, whyIndex) =>
+                              h(
+                                'div',
+                                { className: 'sf-intel-line', key: 'why-' + whyIndex },
+                                h('span', { className: 'sf-intel-k' }, String(item.name || '')),
+                                h('span', null, textValue(item.why)),
+                              ),
+                            ),
+                        )
+                      : null,
+                    stage.input
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-line' },
+                          h('span', { className: 'sf-intel-k' }, t('intelInput')),
+                          h('span', null, textValue(stage.input)),
+                        )
+                      : null,
+                    stage.output
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-line' },
+                          h('span', { className: 'sf-intel-k' }, t('intelOutput')),
+                          h('span', null, textValue(stage.output)),
+                        )
+                      : null,
+                    stage.handoff
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-line' },
+                          h('span', { className: 'sf-intel-k' }, t('intelHandoff')),
+                          h('span', null, textValue(stage.handoff)),
+                        )
+                      : null,
+                    stage.fallback
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-line' },
+                          h('span', { className: 'sf-intel-k' }, t('intelFallback')),
+                          h('span', null, textValue(stage.fallback)),
+                        )
+                      : null,
+                  ),
+                ),
+              )
+            : null,
+          missing.length
+            ? h(
+                'div',
+                { className: 'sf-intel-block' },
+                h('div', { className: 'sf-intel-k' }, t('intelMissing')),
+                missing.map((item, index) => {
+                  const row = item && typeof item === 'object' ? item : { capability: item }
+                  const label = String(row.capability || row.name || textValue(item))
+                  return h(
+                    'div',
+                    { className: 'sf-intel-missing', key: 'missing-' + index },
+                    h('span', { className: 'sf-intel-cap' }, label || t('intelNoItems')),
+                    row.draftNeeded !== false
+                      ? h('span', { className: 'sf-badge sf-badge-warn' }, t('intelDraftNeeded'))
+                      : null,
+                    row.domain ? h('span', { className: 'sf-intel-k' }, String(row.domain)) : null,
+                    renderIntelSuggestions(row.suggestedLibrarySkills),
+                  )
+                }),
+              )
+            : h('div', { className: 'sf-intel-k' }, t('intelNoMissing')),
+          conflicts.length
+            ? h(
+                'div',
+                { className: 'sf-intel-block' },
+                h('div', { className: 'sf-intel-k' }, t('intelConflicts')),
+                conflicts.map((item, index) =>
+                  h('div', { className: 'sf-intel-line', key: 'conf-' + index }, textValue(item)),
+                ),
+              )
+            : h('div', { className: 'sf-intel-k' }, t('intelNoConflict')),
+          estimates
+            ? h(
+                'div',
+                { className: 'sf-intel-block' },
+                h('div', { className: 'sf-intel-k' }, t('intelEstimates')),
+                Object.keys(estimates)
+                  .slice(0, 6)
+                  .map((key) =>
+                    h('span', { className: 'sf-intel-est', key: 'est-' + key }, key + ': ' + textValue(estimates[key])),
+                  ),
+              )
+            : null,
+          assumptions.length
+            ? h(
+                'div',
+                { className: 'sf-intel-block' },
+                h('div', { className: 'sf-intel-k' }, t('intelAssumptions')),
+                assumptions.map((item, index) =>
+                  h('div', { className: 'sf-intel-line', key: 'asm-' + index }, '- ' + textValue(item)),
+                ),
+              )
+            : null,
+          h(
+            'div',
+            { className: 'sf-intel-actions' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'sf-secondary sf-btn-sm',
+                onClick: copyIntelInstructions,
+                disabled: Boolean(intelBusy),
+              },
+              h(IconCopy, { size: 12 }),
+              h('span', null, t('intelCopy')),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'sf-secondary sf-btn-sm',
+                onClick: () => runIntel('draft'),
+                disabled: Boolean(intelBusy),
+              },
+              intelBusy === 'draft' ? t('creating') : t('intelDraft'),
+            ),
+          ),
+        )
+      }
+
+      const renderIntelDraft = () => {
+        if (!intelDraft) return null
+        const draft = intelDraft
+        const lint = draft.lint && typeof draft.lint === 'object' ? draft.lint : null
+        const issues = lint && Array.isArray(lint.issues) ? lint.issues.filter(Boolean) : []
+        const safety = draft.safety && typeof draft.safety === 'object' ? draft.safety : null
+        const evalCases = Array.isArray(draft.evalCases) ? draft.evalCases.filter(Boolean).slice(0, 6) : []
+        const content = typeof draft.content === 'string' ? draft.content : ''
+        return h(
+          'div',
+          { className: 'sf-intel-draft' },
+          h(SectionHead, {
+            icon: h(IconSparkle, { size: 14 }),
+            title: t('intelDraftPreview'),
+            hint: t('intelCreateHint'),
+          }),
+          h(
+            'div',
+            { className: 'sf-intel-frontmatter' },
+            h(
+              'div',
+              { className: 'sf-intel-line' },
+              h('span', { className: 'sf-intel-k' }, t('intelFrontmatter')),
+              h('code', { className: 'sf-name' }, String(draft.name || '')),
+            ),
+            draft.description
+              ? h(
+                  'div',
+                  { className: 'sf-intel-line' },
+                  h('span', { className: 'sf-intel-k' }, t('intelDescription')),
+                  h('span', null, String(draft.description)),
+                )
+              : null,
+            draft.whenToUse
+              ? h(
+                  'div',
+                  { className: 'sf-intel-line' },
+                  h('span', { className: 'sf-intel-k' }, t('intelWhenToUse')),
+                  h('span', null, String(draft.whenToUse)),
+                )
+              : null,
+          ),
+          badgeRow(
+            [
+              h('span', { className: 'sf-intel-k', key: 'intel-safety-label' }, t('intelSafety')),
+              securityBadge(t, safety),
+              licenseBadge(t, draft.license),
+            ],
+            'sf-meta-row',
+          ),
+          lint
+            ? h(
+                'div',
+                {
+                  className: lint.ok === false ? 'sf-intel-lint sf-intel-lint-warn' : 'sf-intel-lint sf-intel-lint-ok',
+                },
+                h('span', { className: 'sf-intel-k' }, t('intelLint')),
+                issues.length
+                  ? h(
+                      'span',
+                      null,
+                      t('intelLintIssues') + ': ' + issues.map((issue) => textValue(issue)).join('; '),
+                    )
+                  : h('span', null, lint.ok === false ? t('intelLintIssues') : t('intelLintOk')),
+              )
+            : null,
+          securityFindings(t, safety),
+          evalCases.length
+            ? h(
+                'div',
+                { className: 'sf-intel-block' },
+                h('div', { className: 'sf-intel-k' }, t('intelEvalCases')),
+                evalCases.map((item, index) =>
+                  h('div', { className: 'sf-intel-line', key: 'eval-' + index }, '- ' + textValue(item)),
+                ),
+              )
+            : null,
+          content
+            ? h(
+                'details',
+                { className: 'sf-intel-details' },
+                h('summary', null, t('intelContent')),
+                h('pre', { className: 'sf-intel-pre' }, content.slice(0, 6000)),
+              )
+            : null,
+          h(
+            'div',
+            { className: 'sf-intel-actions' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'sf-primary sf-btn-sm',
+                disabled: Boolean(intelBusy),
+                onClick: confirmIntelCreate,
+              },
+              intelBusy === 'create' ? t('creating') : t('intelConfirmCreate'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'sf-secondary sf-btn-sm',
+                disabled: Boolean(intelBusy),
+                onClick: resetIntelDraft,
+              },
+              t('intelDiscard'),
+            ),
+          ),
+          intelCreatedPath
+            ? h('div', { className: 'sf-install-ok' }, t('intelCreated') + String(intelCreatedPath))
+            : null,
+        )
+      }
+
+      const renderIntelligence = () => {
+        const busy = Boolean(intelBusy)
+        const statusText = intelError ? String(intelError) : intelNotice ? String(intelNotice.text || '') : ''
+        return h(
+          'section',
+          { className: 'sf-section sf-intel', 'aria-label': t('intelTitle'), 'aria-busy': busy ? 'true' : 'false' },
+          h(SectionHead, {
+            icon: h(IconSparkle, { size: 14 }),
+            title: t('intelTitle'),
+            hint: intelOpen ? t('intelHint') : '',
+            actions: h(
+              'button',
+              {
+                type: 'button',
+                className: intelOpen ? 'sf-chip sf-chip-active' : 'sf-chip',
+                'aria-expanded': intelOpen,
+                'aria-label': t('intelToggleAria'),
+                title: t('intelToggleAria'),
+                onClick: () => setIntelOpen((current) => !current),
+              },
+              intelOpen ? t('intelCollapse') : t('intelEntry'),
+            ),
+          }),
+          intelOpen
+            ? h(
+                'div',
+                { className: 'sf-intel-body' },
+                h('div', { className: 'sf-intel-label' }, t('intelTaskLabel')),
+                h('textarea', {
+                  id: 'sf-intel-task',
+                  className: 'sf-input sf-textarea sf-intel-task',
+                  value: intelTask,
+                  placeholder: t('intelTaskPlaceholder'),
+                  'aria-label': t('intelTaskLabel'),
+                  disabled: busy,
+                  onChange: (event) => setIntelTask(event.target.value),
+                }),
+                h(
+                  'div',
+                  { className: 'sf-intel-actions' },
+                  h(
+                    'button',
+                    { type: 'button', className: 'sf-primary sf-btn-sm', disabled: busy, onClick: () => runIntel('plan') },
+                    intelBusy === 'plan' ? t('loading') : t('intelPlan'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary sf-btn-sm',
+                      disabled: busy,
+                      onClick: () => runIntel('compose'),
+                    },
+                    intelBusy === 'compose' ? t('loading') : t('intelCompose'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary sf-btn-sm',
+                      disabled: busy,
+                      onClick: () => runIntel('draft'),
+                    },
+                    intelBusy === 'draft' ? t('creating') : t('intelDraft'),
+                  ),
+                ),
+                h(
+                  'div',
+                  {
+                    className: intelError ? 'sf-intel-status sf-error' : 'sf-intel-status',
+                    role: 'status',
+                    'aria-live': 'polite',
+                    'aria-atomic': 'true',
+                    'aria-label': t('intelStatusAria'),
+                  },
+                  statusText,
+                ),
+                busy ? h(SkeletonList, { rows: 2, kind: 'row' }) : null,
+                !busy && !intelPlan && !intelDraft && !intelError
+                  ? EmptyState({ icon: h(IconSparkle, { size: 18 }), title: t('intelNoPlan') })
+                  : null,
+                intelError && intelMode
+                  ? h(
+                      'div',
+                      { className: 'sf-intel-retry' },
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'sf-secondary sf-btn-sm',
+                          disabled: busy,
+                          onClick: () => runIntel(intelMode || 'compose'),
+                        },
+                        t('retry'),
+                      ),
+                    )
+                  : null,
+                renderIntelPlan(),
+                renderIntelDraft(),
+              )
+            : null,
+        )
+      }
+
       const renderCatalog = () =>
         h(
           'section',
@@ -3725,6 +4558,34 @@ window.__ModuleLoader__.load({
         if (buttons[next] && typeof buttons[next].focus === 'function') buttons[next].focus()
       }
 
+      const focusableSelector =
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      const onDrawerKeyDown = (event) => {
+        if (event.key !== 'Tab') return
+        const root = drawerRef.current
+        if (!root) return
+        const nodes = Array.prototype.slice
+          .call(root.querySelectorAll(focusableSelector))
+          .filter(
+            (node) =>
+              node.getAttribute('aria-hidden') !== 'true' &&
+              (node.offsetParent !== null || node === document.activeElement),
+          )
+        if (!nodes.length) return
+        const first = nodes[0]
+        const last = nodes[nodes.length - 1]
+        const activeInDrawer = root.contains(document.activeElement)
+        if (event.shiftKey) {
+          if (!activeInDrawer || document.activeElement === first) {
+            event.preventDefault()
+            last.focus()
+          }
+        } else if (!activeInDrawer || document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
+
       const busy = Boolean(loading && !data)
       const showError = Boolean(error && !data)
 
@@ -3743,6 +4604,8 @@ window.__ModuleLoader__.load({
               role: 'dialog',
               'aria-modal': 'true',
               'aria-label': t('title'),
+              ref: drawerRef,
+              onKeyDown: onDrawerKeyDown,
             },
             h(
               'header',
@@ -3927,6 +4790,7 @@ window.__ModuleLoader__.load({
                     renderRecommendations(),
                     renderBetter(),
                     renderDiscoveries(),
+                    renderIntelligence(),
                     renderCatalog(),
                     renderExperience(),
                     renderEvolution(),
@@ -4445,6 +5309,46 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-install-ok{margin-top:5px;color:var(--sf-success);font-size:10px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
 @media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
+.sf-intel{background-image:linear-gradient(155deg,color-mix(in srgb,var(--sf-accent) 7%,transparent),transparent 60%);border-color:color-mix(in srgb,var(--sf-accent) 16%,var(--sf-line))}
+.sf-intel-body{display:flex;flex-direction:column;gap:7px}
+.sf-intel-label{color:var(--sf-ink-2);font-size:10.5px;font-weight:600}
+.sf-intel-task{height:64px}
+.sf-intel-actions{display:flex;flex-wrap:wrap;gap:6px}
+.sf-intel-status{min-height:0;color:var(--sf-ink-3);font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.sf-intel-status:empty{display:none}
+.sf-intel-retry{display:flex;justify-content:flex-end}
+.sf-intel-plan{display:flex;flex-direction:column;gap:7px;margin-top:3px;padding-top:7px;border-top:1px dashed var(--sf-line)}
+.sf-intel-summary{display:flex;flex-direction:column;gap:5px}
+.sf-intel-goal{display:flex;gap:6px;font-size:11px;line-height:1.5;color:var(--sf-ink);overflow-wrap:anywhere}
+.sf-intel-k{flex:none;color:var(--sf-ink-3);font-size:9.5px;letter-spacing:.02em}
+.sf-intel-meta{display:flex;flex-wrap:wrap;gap:5px}
+.sf-intel-stages{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.sf-intel-stage{padding:7px 8px;border:1px solid var(--sf-line);border-radius:10px;background:color-mix(in srgb,var(--dsw-alias-label-primary) 3%,transparent);display:flex;flex-direction:column;gap:3px}
+.sf-intel-stage-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sf-intel-stage-no{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:6px;background:var(--sf-tint-2);color:var(--sf-ink-2);font-size:9.5px;font-weight:600}
+.sf-intel-role{color:var(--sf-accent);font-size:9.5px;font-weight:600}
+.sf-intel-stage-skills{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--sf-ink);overflow-wrap:anywhere}
+.sf-intel-line{display:flex;gap:6px;font-size:10px;line-height:1.5;color:var(--sf-ink-2);overflow-wrap:anywhere}
+.sf-intel-block{margin-top:2px;display:flex;flex-direction:column;gap:4px}
+.sf-intel-missing{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--sf-warn) 22%,transparent);border-radius:8px;background:color-mix(in srgb,var(--sf-warn) 7%,transparent)}
+.sf-intel-cap{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:600;color:var(--sf-ink)}
+.sf-intel-suggest{display:flex;flex-wrap:wrap;align-items:center;gap:4px;width:100%}
+.sf-intel-chip,.sf-intel-link{display:inline-flex;align-items:center;padding:1px 6px;border:1px solid var(--sf-line);border-radius:999px;background:var(--sf-tint-1);color:var(--sf-ink-2);font-size:9.5px;line-height:1.6;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sf-intel-link{color:var(--sf-accent);text-decoration:none}
+.sf-intel-link:hover{text-decoration:underline}
+.sf-intel-link:focus-visible{outline:2px solid var(--sf-accent);outline-offset:2px}
+.sf-intel-est{display:inline-flex;align-items:center;padding:1px 6px;border:1px solid var(--sf-line);border-radius:6px;background:var(--sf-tint-1);color:var(--sf-ink-2);font-size:9.5px;line-height:1.6;margin-right:4px}
+.sf-intel-draft{margin-top:6px;padding-top:8px;border-top:1px dashed var(--sf-line);display:flex;flex-direction:column;gap:6px}
+.sf-intel-frontmatter{display:flex;flex-direction:column;gap:3px}
+.sf-intel-lint{padding:6px 8px;border-radius:8px;font-size:10px;line-height:1.45;display:flex;flex-wrap:wrap;gap:5px}
+.sf-intel-lint-ok{border:1px solid color-mix(in srgb,var(--sf-success) 24%,transparent);background:color-mix(in srgb,var(--sf-success) 8%,transparent);color:var(--sf-ink-2)}
+.sf-intel-lint-warn{border:1px solid color-mix(in srgb,var(--sf-warn) 24%,transparent);background:color-mix(in srgb,var(--sf-warn) 8%,transparent);color:var(--sf-ink-2)}
+.sf-intel-details summary{cursor:pointer;color:var(--sf-ink-2);font-size:10px;line-height:1.5}
+.sf-intel-details summary:focus-visible{outline:2px solid var(--sf-accent);outline-offset:2px}
+.sf-intel-pre{max-height:200px;overflow:auto;margin:5px 0 0;padding:7px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9.5px;line-height:1.5;color:var(--sf-ink-2);white-space:pre-wrap;overflow-wrap:anywhere}
+.sf-badge-warn{color:var(--sf-warn);border-color:color-mix(in srgb,var(--sf-warn) 30%,transparent)}
+@media (prefers-reduced-motion:reduce){.sf-intel-link,.sf-intel-chip{transition:none}}
+
 
 `
 

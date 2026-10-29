@@ -1,0 +1,1921 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-29",
+  "librarySnapshot": {
+    "total": 6399,
+    "qualityUpdatedAt": "2026-10-29T06:39:56.346Z"
+  },
+  "note": "12 个跨行业领域包：playbook 是人写的任务模式/交付物/质量检查/常见坑；candidateSkills 是 library/skills-index.json 里真实存在的候选技能（未安装，供缺失时建议安装）；heldOutCaseIds 指向 test/fixtures/intelligence-cases.json 的 60 条用例（单一事实源，避免两处漂移）。",
+  "capabilityTaxonomy": [
+    {
+      "id": "analysis",
+      "labelZh": "分析",
+      "labelEn": "analysis",
+      "aliases": [
+        "analysis",
+        "analyze",
+        "analyse",
+        "分析",
+        "诊断",
+        "归因"
+      ]
+    },
+    {
+      "id": "generation",
+      "labelZh": "生成",
+      "labelEn": "generation",
+      "aliases": [
+        "generat",
+        "生成",
+        "generate",
+        "创作",
+        "draft"
+      ]
+    },
+    {
+      "id": "transformation",
+      "labelZh": "转换",
+      "labelEn": "transformation",
+      "aliases": [
+        "transform",
+        "conver",
+        "转换",
+        "改写",
+        "refactor",
+        "migrat"
+      ]
+    },
+    {
+      "id": "extraction",
+      "labelZh": "抽取",
+      "labelEn": "extraction",
+      "aliases": [
+        "extract",
+        "抽取",
+        "提取",
+        "parse",
+        "scrape"
+      ]
+    },
+    {
+      "id": "retrieval",
+      "labelZh": "检索",
+      "labelEn": "retrieval",
+      "aliases": [
+        "retriev",
+        "search",
+        "检索",
+        "查找",
+        "lookup"
+      ]
+    },
+    {
+      "id": "review",
+      "labelZh": "评审",
+      "labelEn": "review",
+      "aliases": [
+        "review",
+        "评审",
+        "审查",
+        "评论",
+        "critique"
+      ]
+    },
+    {
+      "id": "planning",
+      "labelZh": "规划",
+      "labelEn": "planning",
+      "aliases": [
+        "plan",
+        "规划",
+        "计划",
+        "排期",
+        "roadmap"
+      ]
+    },
+    {
+      "id": "rendering",
+      "labelZh": "渲染",
+      "labelEn": "rendering",
+      "aliases": [
+        "render",
+        "渲染",
+        "出图",
+        "导出",
+        "export"
+      ]
+    },
+    {
+      "id": "automation",
+      "labelZh": "自动化",
+      "labelEn": "automation",
+      "aliases": [
+        "automat",
+        "自动化",
+        "script",
+        "cron"
+      ]
+    },
+    {
+      "id": "validation",
+      "labelZh": "校验",
+      "labelEn": "validation",
+      "aliases": [
+        "valid",
+        "校验",
+        "验证",
+        "测试",
+        "audit",
+        "check"
+      ]
+    },
+    {
+      "id": "presentation",
+      "labelZh": "呈现",
+      "labelEn": "presentation",
+      "aliases": [
+        "present",
+        "slide",
+        "演示",
+        "汇报",
+        "deck",
+        "排版"
+      ]
+    },
+    {
+      "id": "research",
+      "labelZh": "研究",
+      "labelEn": "research",
+      "aliases": [
+        "research",
+        "研究",
+        "文献",
+        "survey",
+        "paper"
+      ]
+    },
+    {
+      "id": "coding",
+      "labelZh": "编码",
+      "labelEn": "coding",
+      "aliases": [
+        "code",
+        "coding",
+        "代码",
+        "implement",
+        "debug"
+      ]
+    },
+    {
+      "id": "design",
+      "labelZh": "设计",
+      "labelEn": "design",
+      "aliases": [
+        "design",
+        "设计",
+        "ui",
+        "ux",
+        "视觉"
+      ]
+    },
+    {
+      "id": "media",
+      "labelZh": "媒体",
+      "labelEn": "media",
+      "aliases": [
+        "media",
+        "video",
+        "audio",
+        "image",
+        "视频",
+        "音频",
+        "图片",
+        "素材"
+      ]
+    },
+    {
+      "id": "document",
+      "labelZh": "文档",
+      "labelEn": "document",
+      "aliases": [
+        "document",
+        "docx",
+        "pdf",
+        "文档",
+        "报告",
+        "合同"
+      ]
+    },
+    {
+      "id": "data",
+      "labelZh": "数据",
+      "labelEn": "data",
+      "aliases": [
+        "data",
+        "数据",
+        "sql",
+        "excel",
+        "表格",
+        "csv"
+      ]
+    },
+    {
+      "id": "security",
+      "labelZh": "安全",
+      "labelEn": "security",
+      "aliases": [
+        "security",
+        "安全",
+        "漏洞",
+        "权限",
+        "threat",
+        "合规"
+      ]
+    },
+    {
+      "id": "orchestration",
+      "labelZh": "编排",
+      "labelEn": "orchestration",
+      "aliases": [
+        "orchestr",
+        "编排",
+        "pipeline",
+        "workflow",
+        "交接"
+      ]
+    }
+  ],
+  "domainCount": 12,
+  "caseCount": 60,
+  "domains": [
+    {
+      "id": "video",
+      "labelZh": "视频/创意",
+      "labelEn": "Video / Creative",
+      "keywordsZh": [
+        "视频",
+        "宣传片",
+        "短片",
+        "剪辑",
+        "分镜",
+        "字幕",
+        "调色",
+        "动画",
+        "竖屏"
+      ],
+      "keywordsEn": [
+        "video",
+        "promo",
+        "reel",
+        "short",
+        "subtitle",
+        "storyboard",
+        "grade",
+        "animation"
+      ],
+      "capabilities": [
+        "generation",
+        "media",
+        "rendering",
+        "planning"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "30–60 秒卡点/宣传片：分镜 → 素材 → 剪辑 → 字幕 → 导出",
+          "长视频剪成多条 9:16 竖屏短片，配标题与封面",
+          "代码化视频（HyperFrames 一类）：HTML/数据 → 时间线 → 渲染",
+          "成片二创：调色、换配音、加字幕、改比例"
+        ],
+        "deliverables": [
+          "mp4 成片（时长/比例/码率明确）",
+          "分镜或 storyboard.md",
+          "字幕文件（srt/ass）",
+          "封面图与素材/授权清单"
+        ],
+        "qualityChecks": [
+          "时长与比例符合平台要求（9:16、16:9）",
+          "字幕无错字、单行 ≤15 字",
+          "音乐/字体/素材授权清晰",
+          "首帧与转场不黑屏、不爆音",
+          "导出后抽帧检查关键帧"
+        ],
+        "pitfalls": [
+          "直接生成整片不先出分镜",
+          "使用无版权音乐/字体",
+          "9:16 安全区被平台 UI 遮挡",
+          "首帧黑屏或音频爆音"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "open-video-harness",
+          "capabilities": [
+            "generation",
+            "media",
+            "rendering"
+          ],
+          "why": "video-as-code 工作台，适合把代码/数据渲染成视频"
+        },
+        {
+          "name": "shorts",
+          "capabilities": [
+            "transformation",
+            "media",
+            "generation"
+          ],
+          "why": "长视频→短视频切片，适合做批量二创"
+        },
+        {
+          "name": "videocaptioner",
+          "capabilities": [
+            "transformation",
+            "media",
+            "extraction"
+          ],
+          "why": "转写/翻译/烧制字幕，字幕任务首选"
+        },
+        {
+          "name": "kling-video",
+          "capabilities": [
+            "generation",
+            "media"
+          ],
+          "why": "AI 视频素材生成（MCP connector）"
+        },
+        {
+          "name": "narrator-ai-cli",
+          "capabilities": [
+            "generation",
+            "media",
+            "rendering"
+          ],
+          "why": "AI 解说/旁白视频流水线"
+        },
+        {
+          "name": "helios-skills",
+          "capabilities": [
+            "generation",
+            "media",
+            "rendering"
+          ],
+          "why": "程序化视频引擎与浏览器动画"
+        },
+        {
+          "name": "social-video-creative",
+          "capabilities": [
+            "generation",
+            "media",
+            "presentation"
+          ],
+          "why": "单条竖屏社媒视频创意与生成"
+        },
+        {
+          "name": "hance",
+          "capabilities": [
+            "transformation",
+            "media",
+            "rendering"
+          ],
+          "why": "电影感调色 / 色彩风格化"
+        }
+      ],
+      "heldOutCaseIds": [
+        "video-01",
+        "video-02",
+        "video-03",
+        "video-04",
+        "video-05"
+      ]
+    },
+    {
+      "id": "office",
+      "labelZh": "Office 文档",
+      "labelEn": "Office Documents",
+      "keywordsZh": [
+        "文档",
+        "表格",
+        "合同",
+        "报告",
+        "幻灯片",
+        "排版",
+        "导出",
+        "pdf",
+        "word",
+        "excel",
+        "ppt"
+      ],
+      "keywordsEn": [
+        "docx",
+        "xlsx",
+        "pptx",
+        "pdf",
+        "word",
+        "excel",
+        "spreadsheet",
+        "slides",
+        "contract"
+      ],
+      "capabilities": [
+        "document",
+        "transformation",
+        "extraction",
+        "presentation"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "docx 合同/报告改写、模板套用与导出 PDF",
+          "xlsx 数据清洗、公式、透视表与图表",
+          "PDF/扫描件信息抽取、表格还原与版式检查",
+          "PPT/PDF 排版、品牌模板与打印交付"
+        ],
+        "deliverables": [
+          "docx/xlsx/pptx/pdf 文件",
+          "修改说明或差异清单",
+          "数据校验结果",
+          "版式检查截图/报告"
+        ],
+        "qualityChecks": [
+          "样式与模板一致（标题/页眉页脚/编号）",
+          "数字与公式可复算",
+          "跨页表格不截断、无空白页",
+          "导出 PDF 字体嵌入",
+          "敏感字段脱敏"
+        ],
+        "pitfalls": [
+          "直接改格式导致样式崩坏",
+          "公式与数值不一致",
+          "扫描件 OCR 漏字/错行",
+          "PDF 导出后字体被替换"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "mineru-document-extractor",
+          "capabilities": [
+            "extraction",
+            "document",
+            "data"
+          ],
+          "why": "PDF/扫描件/Office 文档结构化抽取"
+        },
+        {
+          "name": "xlsx-eval",
+          "capabilities": [
+            "validation",
+            "data",
+            "review"
+          ],
+          "why": "逐单元格比对两个 xlsx，适合数据校验"
+        },
+        {
+          "name": "beamer-ppt",
+          "capabilities": [
+            "presentation",
+            "document",
+            "generation"
+          ],
+          "why": "python-pptx 生成学术/汇报 PPTX"
+        },
+        {
+          "name": "minimax-pdf",
+          "capabilities": [
+            "document",
+            "generation",
+            "rendering"
+          ],
+          "why": "PDF 生成、封面与表单填写"
+        },
+        {
+          "name": "google-sheets-agent",
+          "capabilities": [
+            "data",
+            "transformation",
+            "automation"
+          ],
+          "why": "Google Sheets 读写与追加"
+        },
+        {
+          "name": "implement-import-export",
+          "capabilities": [
+            "transformation",
+            "data",
+            "automation"
+          ],
+          "why": "CSV/Excel 导入导出工作流"
+        },
+        {
+          "name": "mdx-pdf-format",
+          "capabilities": [
+            "document",
+            "transformation",
+            "rendering"
+          ],
+          "why": "文档/书籍 PDF 编译与格式约束"
+        },
+        {
+          "name": "animated-diagram",
+          "capabilities": [
+            "rendering",
+            "design",
+            "presentation"
+          ],
+          "why": "动画 SVG 图表/流程图"
+        }
+      ],
+      "heldOutCaseIds": [
+        "office-01",
+        "office-02",
+        "office-03",
+        "office-04",
+        "office-05"
+      ]
+    },
+    {
+      "id": "coding",
+      "labelZh": "软件工程",
+      "labelEn": "Software Engineering",
+      "keywordsZh": [
+        "代码",
+        "重构",
+        "测试",
+        "调试",
+        "依赖",
+        "插件",
+        "审查",
+        "发布"
+      ],
+      "keywordsEn": [
+        "code",
+        "refactor",
+        "test",
+        "debug",
+        "dependency",
+        "plugin",
+        "review",
+        "ci"
+      ],
+      "capabilities": [
+        "coding",
+        "review",
+        "validation",
+        "transformation"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "PR/代码审查：按文件行内评论 + 风险分级",
+          "线上问题定位、复现与回归测试",
+          "依赖审计/供应链修复",
+          "插件/工具开发与端到端测试"
+        ],
+        "deliverables": [
+          "patch/diff",
+          "review comments（按文件）",
+          "测试用例与运行结果",
+          "根因说明"
+        ],
+        "qualityChecks": [
+          "测试覆盖失败路径与边界",
+          "不改变既有行为（回归通过）",
+          "错误处理与超时/重试",
+          "lint/类型检查通过",
+          "PR 描述含验证步骤"
+        ],
+        "pitfalls": [
+          "只修表象未复现根因",
+          "顺手重构扩大 diff",
+          "没有测试直接合并",
+          "忽略并发与权限边界"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "code-review-skill",
+          "capabilities": [
+            "review",
+            "coding",
+            "validation"
+          ],
+          "why": "多语言代码审查清单与风格建议"
+        },
+        {
+          "name": "systematic-debugging",
+          "capabilities": [
+            "coding",
+            "analysis",
+            "validation"
+          ],
+          "why": "结构化调试流程（先复现再修）"
+        },
+        {
+          "name": "implement-tdd",
+          "capabilities": [
+            "coding",
+            "validation",
+            "transformation"
+          ],
+          "why": "TDD 红绿循环实现功能/修复"
+        },
+        {
+          "name": "codebase-audit-pre-push",
+          "capabilities": [
+            "review",
+            "security",
+            "validation"
+          ],
+          "why": "推送前深度审计（死代码/安全/优化）"
+        },
+        {
+          "name": "dependency-repair",
+          "capabilities": [
+            "coding",
+            "analysis",
+            "transformation"
+          ],
+          "why": "依赖审计变红后的修复流程"
+        },
+        {
+          "name": "review-pr",
+          "capabilities": [
+            "review",
+            "coding",
+            "validation"
+          ],
+          "why": "GitHub PR 行内评论"
+        },
+        {
+          "name": "devops-python-engineer",
+          "capabilities": [
+            "coding",
+            "automation",
+            "orchestration"
+          ],
+          "why": "Python 服务/CI/CD/容器化交付"
+        },
+        {
+          "name": "py",
+          "capabilities": [
+            "coding",
+            "generation",
+            "analysis"
+          ],
+          "why": "Python 语法/并发/网络/ML 参考"
+        }
+      ],
+      "heldOutCaseIds": [
+        "coding-01",
+        "coding-02",
+        "coding-03",
+        "coding-04",
+        "coding-05"
+      ]
+    },
+    {
+      "id": "data",
+      "labelZh": "数据",
+      "labelEn": "Data",
+      "keywordsZh": [
+        "数据",
+        "SQL",
+        "报表",
+        "看板",
+        "指标",
+        "图表",
+        "清洗",
+        "可视化"
+      ],
+      "keywordsEn": [
+        "data",
+        "sql",
+        "dashboard",
+        "metric",
+        "chart",
+        "pipeline",
+        "etl",
+        "cohort"
+      ],
+      "capabilities": [
+        "data",
+        "analysis",
+        "presentation",
+        "retrieval"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "SQL/慢查询优化与索引方案",
+          "数据清洗、口径对齐与对账",
+          "KPI 看板/dashboard 搭建",
+          "图表与可视化叙事"
+        ],
+        "deliverables": [
+          "清洗后的数据文件",
+          "SQL/索引建议",
+          "dashboard 或图表",
+          "指标口径说明"
+        ],
+        "qualityChecks": [
+          "口径与时间窗口一致",
+          "数字可与源数据对账",
+          "图表不误导（坐标轴/双轴）",
+          "空值与异常值已处理",
+          "权限与脱敏"
+        ],
+        "pitfalls": [
+          "口径不一致导致数对不上",
+          "双轴/截断轴误导读者",
+          "忽略时区与重复行",
+          "取样偏差当结论"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "data-analyst",
+          "capabilities": [
+            "data",
+            "analysis",
+            "presentation"
+          ],
+          "why": "SQL/可视化/统计/报表综合数据分析"
+        },
+        {
+          "name": "flint-board-author",
+          "capabilities": [
+            "data",
+            "presentation",
+            "rendering"
+          ],
+          "why": "图表组合成看板（KPI + 趋势）"
+        },
+        {
+          "name": "create-dashboard",
+          "capabilities": [
+            "data",
+            "presentation",
+            "design"
+          ],
+          "why": "YAML/TSX 定义 dashboard"
+        },
+        {
+          "name": "antv-l7",
+          "capabilities": [
+            "data",
+            "rendering",
+            "design"
+          ],
+          "why": "地理可视化/交互地图"
+        },
+        {
+          "name": "dataviz-ai",
+          "capabilities": [
+            "data",
+            "generation",
+            "rendering"
+          ],
+          "why": "自然语言生成专业图表"
+        },
+        {
+          "name": "sql-optimizer",
+          "capabilities": [
+            "data",
+            "analysis",
+            "validation"
+          ],
+          "why": "读 EXPLAIN 出索引与改写方案"
+        },
+        {
+          "name": "sqlglot-python",
+          "capabilities": [
+            "data",
+            "transformation",
+            "coding"
+          ],
+          "why": "SQL 解析/改写/方言转换"
+        },
+        {
+          "name": "r-dplyr-wrangling",
+          "capabilities": [
+            "data",
+            "transformation",
+            "analysis"
+          ],
+          "why": "R/dplyr 数据整理与排错"
+        }
+      ],
+      "heldOutCaseIds": [
+        "data-01",
+        "data-02",
+        "data-03",
+        "data-04",
+        "data-05"
+      ]
+    },
+    {
+      "id": "research",
+      "labelZh": "研究",
+      "labelEn": "Research",
+      "keywordsZh": [
+        "文献",
+        "论文",
+        "综述",
+        "引用",
+        "评审",
+        "实验",
+        "学术"
+      ],
+      "keywordsEn": [
+        "paper",
+        "literature",
+        "survey",
+        "citation",
+        "review",
+        "academic",
+        "preprint"
+      ],
+      "capabilities": [
+        "research",
+        "retrieval",
+        "analysis",
+        "review"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "文献检索与综述（含引用表）",
+          "论文评审、rebuttal 与投稿前检查",
+          "论文 → conference poster / pitch 转化",
+          "细分领域知识地图与必读清单"
+        ],
+        "deliverables": [
+          "文献综述与引用表",
+          "review memo/rebuttal 要点",
+          "poster/pitch 稿",
+          "领域地图/术语表"
+        ],
+        "qualityChecks": [
+          "引用可追溯（DOI/URL/页码）",
+          "区分事实、声称与推测",
+          "方法与局限写清楚",
+          "来源可信度分层",
+          "不伪造文献"
+        ],
+        "pitfalls": [
+          "编造引用或页码",
+          "把摘要当结论",
+          "忽略反例与局限",
+          "中英术语前后不一致"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "paper2poster-poster",
+          "capabilities": [
+            "presentation",
+            "generation",
+            "research"
+          ],
+          "why": "论文→会议 poster 大纲与版面"
+        },
+        {
+          "name": "paper-search-pro",
+          "capabilities": [
+            "retrieval",
+            "research",
+            "extraction"
+          ],
+          "why": "多源学术检索（OpenAlex/S2/PubMed 等）"
+        },
+        {
+          "name": "academic-paper-review",
+          "capabilities": [
+            "review",
+            "research",
+            "analysis"
+          ],
+          "why": "论文评审/批判性阅读"
+        },
+        {
+          "name": "source-criticism-gate",
+          "capabilities": [
+            "validation",
+            "research",
+            "retrieval"
+          ],
+          "why": "来源可信度审计与分层"
+        },
+        {
+          "name": "pubmed-database",
+          "capabilities": [
+            "retrieval",
+            "research",
+            "extraction"
+          ],
+          "why": "PubMed 检索与摘要/全文"
+        },
+        {
+          "name": "rapid-domain-mastery",
+          "capabilities": [
+            "research",
+            "analysis",
+            "planning"
+          ],
+          "why": "多源语料构建领域地图"
+        },
+        {
+          "name": "agent-identifier",
+          "capabilities": [
+            "research",
+            "retrieval",
+            "orchestration"
+          ],
+          "why": "半自动研究助手（文献+代码）"
+        },
+        {
+          "name": "academic-humanizer",
+          "capabilities": [
+            "transformation",
+            "research",
+            "document"
+          ],
+          "why": "学术写作去 AI 味、提升清晰度"
+        }
+      ],
+      "heldOutCaseIds": [
+        "research-01",
+        "research-02",
+        "research-03",
+        "research-04",
+        "research-05"
+      ]
+    },
+    {
+      "id": "marketing",
+      "labelZh": "营销",
+      "labelEn": "Marketing",
+      "keywordsZh": [
+        "营销",
+        "投放",
+        "渠道",
+        "转化",
+        "SEO",
+        "文案",
+        "邮件",
+        "品牌"
+      ],
+      "keywordsEn": [
+        "marketing",
+        "campaign",
+        "ads",
+        "seo",
+        "conversion",
+        "copy",
+        "email",
+        "brand"
+      ],
+      "capabilities": [
+        "planning",
+        "generation",
+        "analysis",
+        "presentation"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "渠道投放方案与预算分配",
+          "SEO/落地页审计与优化优先级",
+          "邮件序列/EDM 与 A/B 版本",
+          "品牌语气提炼与社媒内容改写"
+        ],
+        "deliverables": [
+          "campaign 方案",
+          "landing page 文案",
+          "邮件序列/A/B 版本",
+          "审计清单与优先级"
+        ],
+        "qualityChecks": [
+          "目标-指标-预算闭环",
+          "广告法与隐私合规",
+          "受众与渠道匹配",
+          "A/B 只改单一变量",
+          "文案可落地执行"
+        ],
+        "pitfalls": [
+          "只堆创意没有指标",
+          "忽略转化漏斗与归因",
+          "夸大承诺/违规词",
+          "A/B 同时改多个变量"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "marketing-campaign-management",
+          "capabilities": [
+            "planning",
+            "generation",
+            "analysis"
+          ],
+          "why": "campaign 执行/策略框架与战术库"
+        },
+        {
+          "name": "content-marketer",
+          "capabilities": [
+            "generation",
+            "planning",
+            "research"
+          ],
+          "why": "内容策略与多渠道内容"
+        },
+        {
+          "name": "email-marketing",
+          "capabilities": [
+            "generation",
+            "planning",
+            "automation"
+          ],
+          "why": "EDM/邮件序列与送达率"
+        },
+        {
+          "name": "seo-web",
+          "capabilities": [
+            "transformation",
+            "generation",
+            "analysis"
+          ],
+          "why": "页面 SEO/meta/schema 落地"
+        },
+        {
+          "name": "seo-audit",
+          "capabilities": [
+            "analysis",
+            "review",
+            "validation"
+          ],
+          "why": "单页/站点 SEO 审计"
+        },
+        {
+          "name": "landing-page-generator",
+          "capabilities": [
+            "generation",
+            "design",
+            "planning"
+          ],
+          "why": "投放落地页生成/优化"
+        },
+        {
+          "name": "gemini-cli-copywriting",
+          "capabilities": [
+            "generation",
+            "design",
+            "presentation"
+          ],
+          "why": "广告标题/标语/产品文案"
+        },
+        {
+          "name": "social-voice",
+          "capabilities": [
+            "analysis",
+            "generation",
+            "transformation"
+          ],
+          "why": "从样本提炼品牌语气并仿写"
+        }
+      ],
+      "heldOutCaseIds": [
+        "marketing-01",
+        "marketing-02",
+        "marketing-03",
+        "marketing-04",
+        "marketing-05"
+      ]
+    },
+    {
+      "id": "design",
+      "labelZh": "设计",
+      "labelEn": "Design",
+      "keywordsZh": [
+        "设计",
+        "界面",
+        "视觉",
+        "品牌",
+        "配色",
+        "排版",
+        "交互",
+        "落地页"
+      ],
+      "keywordsEn": [
+        "design",
+        "ui",
+        "ux",
+        "brand",
+        "visual",
+        "layout",
+        "typography",
+        "landing"
+      ],
+      "capabilities": [
+        "design",
+        "review",
+        "generation",
+        "presentation"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "界面层级/对比度/间距评审",
+          "landing page 与品牌视觉设计",
+          "设计系统与 token/组件落地",
+          "品牌资产（logo/配色/字体）生成"
+        ],
+        "deliverables": [
+          "设计评审意见（可执行）",
+          "设计稿/规范",
+          "token/变量清单",
+          "落地页/组件代码"
+        ],
+        "qualityChecks": [
+          "对比度与可读性达 WCAG",
+          "响应式三档不溢出",
+          "暗色模式可用",
+          "状态完整（hover/disabled/loading）",
+          "prefers-reduced-motion"
+        ],
+        "pitfalls": [
+          "只追求好看忽略可用性",
+          "颜色只靠色相区分",
+          "移动端横向溢出",
+          "动画过度/无降级"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "frontend-design",
+          "capabilities": [
+            "design",
+            "coding",
+            "generation"
+          ],
+          "why": "有视觉主张的前端界面设计/实现"
+        },
+        {
+          "name": "designing-interfaces",
+          "capabilities": [
+            "design",
+            "review",
+            "validation"
+          ],
+          "why": "界面层级/字号/间距/对比度审计"
+        },
+        {
+          "name": "impeccable",
+          "capabilities": [
+            "design",
+            "review",
+            "presentation"
+          ],
+          "why": "设计打磨与批评（细化到可执行）"
+        },
+        {
+          "name": "waitlist-page",
+          "capabilities": [
+            "design",
+            "generation",
+            "document"
+          ],
+          "why": "极简 pre-launch 落地页"
+        },
+        {
+          "name": "userinterface-wiki",
+          "capabilities": [
+            "design",
+            "review",
+            "validation"
+          ],
+          "why": "Web UI/UX 最佳实践评审"
+        },
+        {
+          "name": "brandkit",
+          "capabilities": [
+            "design",
+            "generation",
+            "media"
+          ],
+          "why": "品牌规范板/logo 体系/视觉世界"
+        },
+        {
+          "name": "hig-visual-system",
+          "capabilities": [
+            "design",
+            "transformation",
+            "validation"
+          ],
+          "why": "层级/材质/图标一致性改造"
+        },
+        {
+          "name": "ui-ux-pro-max",
+          "capabilities": [
+            "design",
+            "planning",
+            "generation"
+          ],
+          "why": "风格/配色/字体/技术栈组合库"
+        }
+      ],
+      "heldOutCaseIds": [
+        "design-01",
+        "design-02",
+        "design-03",
+        "design-04",
+        "design-05"
+      ]
+    },
+    {
+      "id": "security",
+      "labelZh": "安全",
+      "labelEn": "Security",
+      "keywordsZh": [
+        "安全",
+        "审计",
+        "漏洞",
+        "权限",
+        "合规",
+        "供应链",
+        "密钥"
+      ],
+      "keywordsEn": [
+        "security",
+        "audit",
+        "vulnerability",
+        "permission",
+        "compliance",
+        "supply-chain",
+        "secrets"
+      ],
+      "capabilities": [
+        "security",
+        "validation",
+        "review",
+        "extraction"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "上线前安全审计（依赖/密钥/越权/注入）",
+          "依赖链与供应链风险排查",
+          "API 鉴权与越权验证",
+          "AI agent / MCP 配置安全扫描"
+        ],
+        "deliverables": [
+          "按严重度排序的审计报告",
+          "可复现 PoC/复现步骤",
+          "修复 patch 与优先级",
+          "合规整改清单"
+        ],
+        "qualityChecks": [
+          "区分风险等级与可利用性",
+          "报告不含真实密钥/用户数据",
+          "修复后有验证",
+          "误报有说明",
+          "在授权范围内测试"
+        ],
+        "pitfalls": [
+          "只跑工具不看上下文",
+          "把扫描结果当定论",
+          "修复引入兼容性问题",
+          "报告泄露敏感信息"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "security-compliance",
+          "capabilities": [
+            "security",
+            "validation",
+            "review"
+          ],
+          "why": "安全扫描与合规基础设施"
+        },
+        {
+          "name": "security-review",
+          "capabilities": [
+            "security",
+            "review",
+            "validation"
+          ],
+          "why": "后端/API 鉴权与注入审计"
+        },
+        {
+          "name": "codebase-cleanup-deps-audit",
+          "capabilities": [
+            "security",
+            "analysis",
+            "review"
+          ],
+          "why": "依赖漏洞/license/供应链分析"
+        },
+        {
+          "name": "deepsafe-scan",
+          "capabilities": [
+            "security",
+            "validation",
+            "extraction"
+          ],
+          "why": "AI agent/MCP/配置预检扫描"
+        },
+        {
+          "name": "config-hardener",
+          "capabilities": [
+            "security",
+            "validation",
+            "transformation"
+          ],
+          "why": "Agent 配置加固与权限收口"
+        },
+        {
+          "name": "ship-safe",
+          "capabilities": [
+            "security",
+            "review",
+            "validation"
+          ],
+          "why": "发布前安全与质量审计"
+        },
+        {
+          "name": "azure-compliance",
+          "capabilities": [
+            "security",
+            "validation",
+            "analysis"
+          ],
+          "why": "Azure 合规检查与 Key Vault 过期"
+        },
+        {
+          "name": "security-vulnerability",
+          "capabilities": [
+            "security",
+            "analysis",
+            "review"
+          ],
+          "why": "漏洞管理与风险评估流程"
+        }
+      ],
+      "heldOutCaseIds": [
+        "security-01",
+        "security-02",
+        "security-03",
+        "security-04",
+        "security-05"
+      ]
+    },
+    {
+      "id": "education",
+      "labelZh": "教育",
+      "labelEn": "Education",
+      "keywordsZh": [
+        "教学",
+        "课程",
+        "学习",
+        "练习",
+        "测验",
+        "讲解",
+        "复习",
+        "学生"
+      ],
+      "keywordsEn": [
+        "teach",
+        "lesson",
+        "course",
+        "learning",
+        "quiz",
+        "explain",
+        "study",
+        "flashcard"
+      ],
+      "capabilities": [
+        "planning",
+        "presentation",
+        "generation",
+        "analysis"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "课程/lesson 设计（目标-活动-评估）",
+          "资料 → 题库 / 复习卡 / 间隔复习",
+          "概念讲解与图解（分难度）",
+          "学习路径与渐进练习"
+        ],
+        "deliverables": [
+          "lesson plan",
+          "flashcards/题库",
+          "讲解稿/图解",
+          "学习路线图"
+        ],
+        "qualityChecks": [
+          "目标-活动-评估对齐",
+          "难度分层",
+          "练习附答案与解析",
+          "先测后教/间隔复习",
+          "术语前后一致"
+        ],
+        "pitfalls": [
+          "目标太泛无法评估",
+          "信息过载",
+          "只有讲解没有练习",
+          "直接给答案不解释"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "create-obsidian-flashcards",
+          "capabilities": [
+            "generation",
+            "transformation",
+            "planning"
+          ],
+          "why": "笔记→Anki 闪卡与复习"
+        },
+        {
+          "name": "teachany",
+          "capabilities": [
+            "generation",
+            "presentation",
+            "planning"
+          ],
+          "why": "K-12 互动课件/动画/AI 助教"
+        },
+        {
+          "name": "bmad-teach-me-testing",
+          "capabilities": [
+            "planning",
+            "presentation",
+            "coding"
+          ],
+          "why": "渐进式测试教学"
+        },
+        {
+          "name": "explain-code",
+          "capabilities": [
+            "analysis",
+            "presentation",
+            "coding"
+          ],
+          "why": "代码逐段讲解与教学"
+        },
+        {
+          "name": "cpa-sequence-designer",
+          "capabilities": [
+            "planning",
+            "design",
+            "presentation"
+          ],
+          "why": "CPA 数学学习序列设计"
+        },
+        {
+          "name": "reverse-outliner",
+          "capabilities": [
+            "extraction",
+            "analysis",
+            "planning"
+          ],
+          "why": "书籍逆向大纲/写作训练"
+        },
+        {
+          "name": "study-import",
+          "capabilities": [
+            "transformation",
+            "planning",
+            "automation"
+          ],
+          "why": "DSH 学习插件：资料→题目+间隔复习"
+        },
+        {
+          "name": "exercise-components",
+          "capabilities": [
+            "generation",
+            "design",
+            "presentation"
+          ],
+          "why": "交互练习题组件"
+        }
+      ],
+      "heldOutCaseIds": [
+        "education-01",
+        "education-02",
+        "education-03",
+        "education-04",
+        "education-05"
+      ]
+    },
+    {
+      "id": "business",
+      "labelZh": "商业",
+      "labelEn": "Business",
+      "keywordsZh": [
+        "商业",
+        "经营",
+        "销售",
+        "报价",
+        "财务",
+        "对账",
+        "客户",
+        "方案"
+      ],
+      "keywordsEn": [
+        "business",
+        "revenue",
+        "sales",
+        "pricing",
+        "finance",
+        "crm",
+        "proposal",
+        "contract"
+      ],
+      "capabilities": [
+        "analysis",
+        "planning",
+        "presentation",
+        "document"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "经营分析 / 季度复盘 deck",
+          "报价与毛利评审",
+          "CRM/回款看板与对账",
+          "SOW/合同/FRD 文档"
+        ],
+        "deliverables": [
+          "分析 deck",
+          "报价/毛利表",
+          "对账表",
+          "SOW/FRD 文档"
+        ],
+        "qualityChecks": [
+          "结论先行（金字塔结构）",
+          "数字可对账",
+          "风险与假设显式",
+          "法务/合规检查",
+          "行动项到人到日期"
+        ],
+        "pitfalls": [
+          "只有数据没有结论",
+          "口径不一致",
+          "忽略风险与假设",
+          "承诺不可交付的条款"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "crm-cli",
+          "capabilities": [
+            "data",
+            "automation",
+            "analysis"
+          ],
+          "why": "CLI CRM：客户/商机/管道"
+        },
+        {
+          "name": "ba-report",
+          "capabilities": [
+            "document",
+            "presentation",
+            "analysis"
+          ],
+          "why": "业务分析 FRD 报告"
+        },
+        {
+          "name": "accounting-workflow-coordinator",
+          "capabilities": [
+            "analysis",
+            "validation",
+            "orchestration"
+          ],
+          "why": "财务/对账/应收应付协调"
+        },
+        {
+          "name": "buy-or-bounce",
+          "capabilities": [
+            "analysis",
+            "review",
+            "presentation"
+          ],
+          "why": "买家视角评审落地页/方案"
+        },
+        {
+          "name": "audit-defensive-investor-screen",
+          "capabilities": [
+            "analysis",
+            "validation",
+            "research"
+          ],
+          "why": "防御型投资量化筛选"
+        },
+        {
+          "name": "billing-schedule-setup",
+          "capabilities": [
+            "data",
+            "automation",
+            "validation"
+          ],
+          "why": "Salesforce Billing 账期配置"
+        },
+        {
+          "name": "subcontractor-sow-builder",
+          "capabilities": [
+            "document",
+            "generation",
+            "review"
+          ],
+          "why": "SOW/PWS 草案（合规条款）"
+        },
+        {
+          "name": "financial-reporting-workflow-base",
+          "capabilities": [
+            "document",
+            "analysis",
+            "validation"
+          ],
+          "why": "财务报告工作流基础"
+        }
+      ],
+      "heldOutCaseIds": [
+        "business-01",
+        "business-02",
+        "business-03",
+        "business-04",
+        "business-05"
+      ]
+    },
+    {
+      "id": "productivity",
+      "labelZh": "效率",
+      "labelEn": "Productivity",
+      "keywordsZh": [
+        "效率",
+        "会议",
+        "邮件",
+        "自动化",
+        "任务",
+        "日程",
+        "纪要",
+        "流程"
+      ],
+      "keywordsEn": [
+        "productivity",
+        "meeting",
+        "email",
+        "automation",
+        "task",
+        "calendar",
+        "workflow",
+        "notes"
+      ],
+      "capabilities": [
+        "automation",
+        "orchestration",
+        "planning",
+        "retrieval"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "会议录音 → 纪要 + 行动项",
+          "邮件/日历自动化与分类规则",
+          "重复流程脚本化（定时/批量）",
+          "任务优先级与周计划"
+        ],
+        "deliverables": [
+          "会议纪要/行动项",
+          "自动化脚本或规则",
+          "优先级清单/周计划",
+          "技术方案/设计文档"
+        ],
+        "qualityChecks": [
+          "行动项有 owner/deadline",
+          "自动化有失败兜底与日志",
+          "计划留缓冲可回滚",
+          "敏感数据不落盘",
+          "文档可交接"
+        ],
+        "pitfalls": [
+          "纪要只有总结没有行动项",
+          "自动化静默失败没人知道",
+          "任务排满没有缓冲",
+          "规则太宽误伤重要邮件"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "meeting-insights-analyzer",
+          "capabilities": [
+            "extraction",
+            "analysis",
+            "document"
+          ],
+          "why": "会议转录→决策/行动项/摘要"
+        },
+        {
+          "name": "outlook",
+          "capabilities": [
+            "retrieval",
+            "automation",
+            "orchestration"
+          ],
+          "why": "Outlook 邮件/日历/任务 MCP"
+        },
+        {
+          "name": "automation-specialist",
+          "capabilities": [
+            "automation",
+            "orchestration",
+            "planning"
+          ],
+          "why": "自动化/bot/集成/定时任务"
+        },
+        {
+          "name": "yatta",
+          "capabilities": [
+            "planning",
+            "orchestration",
+            "analysis"
+          ],
+          "why": "任务与容量管理"
+        },
+        {
+          "name": "taskfile",
+          "capabilities": [
+            "automation",
+            "coding",
+            "planning"
+          ],
+          "why": "Taskfile 任务编排"
+        },
+        {
+          "name": "gmail-multi-account",
+          "capabilities": [
+            "retrieval",
+            "automation",
+            "orchestration"
+          ],
+          "why": "多账号 Gmail 分诊规则"
+        },
+        {
+          "name": "research-task",
+          "capabilities": [
+            "planning",
+            "research",
+            "analysis"
+          ],
+          "why": "组合式研究工作流"
+        },
+        {
+          "name": "openspec-new-change",
+          "capabilities": [
+            "planning",
+            "document",
+            "orchestration"
+          ],
+          "why": "变更提案/技术方案工作流"
+        }
+      ],
+      "heldOutCaseIds": [
+        "productivity-01",
+        "productivity-02",
+        "productivity-03",
+        "productivity-04",
+        "productivity-05"
+      ]
+    },
+    {
+      "id": "ai",
+      "labelZh": "AI",
+      "labelEn": "AI / LLM",
+      "keywordsZh": [
+        "模型",
+        "提示词",
+        "评测",
+        "RAG",
+        "Agent",
+        "选型",
+        "推理",
+        "微调"
+      ],
+      "keywordsEn": [
+        "llm",
+        "prompt",
+        "eval",
+        "rag",
+        "agent",
+        "model",
+        "inference",
+        "fine-tune"
+      ],
+      "capabilities": [
+        "validation",
+        "analysis",
+        "retrieval",
+        "planning",
+        "orchestration"
+      ],
+      "playbook": {
+        "taskPatterns": [
+          "LLM/RAG 评测集、自动打分与回归门禁",
+          "GenAI 平台/模型选型矩阵",
+          "RAG 召回/重排/chunk 优化",
+          "Agent 工具调用计划与失败回退"
+        ],
+        "deliverables": [
+          "评测集/评测报告",
+          "选型矩阵与问题清单",
+          "RAG patch 与指标",
+          "可执行 plan/工具清单"
+        ],
+        "qualityChecks": [
+          "金标集与评分口径可复现",
+          "区分 estimate 与 measured",
+          "失败样例分析",
+          "成本/延迟一并报告",
+          "不夸大提升幅度"
+        ],
+        "pitfalls": [
+          "训练集当评测集",
+          "只看单一指标",
+          "样本太小就下结论",
+          "忽略成本/延迟"
+        ]
+      },
+      "candidateSkills": [
+        {
+          "name": "llm-evaluation",
+          "capabilities": [
+            "validation",
+            "analysis",
+            "data"
+          ],
+          "why": "可复现 LLM/RAG/prompt 评测与回归门禁"
+        },
+        {
+          "name": "waza-cli",
+          "capabilities": [
+            "validation",
+            "review",
+            "analysis"
+          ],
+          "why": "skill 就绪度检查 CLI"
+        },
+        {
+          "name": "subagent-eval",
+          "capabilities": [
+            "validation",
+            "analysis",
+            "orchestration"
+          ],
+          "why": "sub-agent 盲评与模型选择"
+        },
+        {
+          "name": "genai-platform-eval",
+          "capabilities": [
+            "research",
+            "analysis",
+            "validation"
+          ],
+          "why": "GenAI 平台评估与选型"
+        },
+        {
+          "name": "planning-visual-tasks",
+          "capabilities": [
+            "planning",
+            "orchestration",
+            "generation"
+          ],
+          "why": "自然语言→结构化 Plan"
+        },
+        {
+          "name": "agentic-rag",
+          "capabilities": [
+            "retrieval",
+            "analysis",
+            "orchestration"
+          ],
+          "why": "迭代检索-推理 RAG 循环"
+        },
+        {
+          "name": "hf-cli",
+          "capabilities": [
+            "retrieval",
+            "data",
+            "automation"
+          ],
+          "why": "HuggingFace 模型/数据集/推理"
+        },
+        {
+          "name": "trainforge",
+          "capabilities": [
+            "validation",
+            "data",
+            "automation"
+          ],
+          "why": "对话回归场景与 agent 评测"
+        }
+      ],
+      "heldOutCaseIds": [
+        "ai-01",
+        "ai-02",
+        "ai-03",
+        "ai-04",
+        "ai-05"
+      ]
+    }
+  ]
+}

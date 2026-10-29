@@ -62,6 +62,7 @@ function makeReq({ method = 'GET', url = '/', body } = {}) {
   const req = new EventEmitter()
   req.method = method
   req.url = url
+  req.headers = { 'content-type': 'application/json' }
   if (body !== undefined) {
     setImmediate(() => {
       req.emit('data', Buffer.from(JSON.stringify(body)))

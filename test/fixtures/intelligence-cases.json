@@ -1,0 +1,1220 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-29",
+  "domainCount": 12,
+  "caseCount": 60,
+  "note": "60 条 held-out 用例（12 领域 × 5）：真实任务风格，中英混合、带噪声与多意图；expectedCapabilities 使用 domain-packs.json capabilityTaxonomy 的规范 id；expectedSkillHints 为真实技能名（可能为空，空表示没有合适候选、应由 compose 报 missing/draftNeeded）。",
+  "cases": [
+    {
+      "id": "video-01",
+      "domain": "video",
+      "task": "周五要发新品预热，做一条 30 秒卡点宣传片：先出分镜和节奏，BGM 要有鼓点，成片顺便把字幕烧上去。预算不多，别搞太复杂。",
+      "deliverables": [
+        "30 秒 mp4",
+        "storyboard.md",
+        "烧字幕"
+      ],
+      "primaryIntent": "制作卡点宣传片",
+      "expectedCapabilities": [
+        "planning",
+        "generation",
+        "media"
+      ],
+      "expectedSkillHints": [
+        "beat-promo-director",
+        "videocaptioner"
+      ],
+      "note": "卡点/分镜/音乐触发已安装的 beat-promo-director；字幕部分可落到 library 的 videocaptioner。"
+    },
+    {
+      "id": "video-02",
+      "domain": "video",
+      "task": "用 hyperframes-cli 把项目检查一遍再渲染 1080p 预览，转场别太花；另外找一首轻一点的背景音乐，别用有版权的。",
+      "deliverables": [
+        "1080p 预览 mp4",
+        "检查日志"
+      ],
+      "primaryIntent": "HyperFrames 项目检查与渲染",
+      "expectedCapabilities": [
+        "rendering",
+        "validation",
+        "media"
+      ],
+      "expectedSkillHints": [
+        "hyperframes-cli",
+        "media-use"
+      ],
+      "note": "点名 CLI + 渲染/检查/音乐，两个命中都在已安装集内。"
+    },
+    {
+      "id": "video-03",
+      "domain": "video",
+      "task": "把这段 8 分钟录屏剪成 3 条 60 秒竖屏短视频，要卡点、加中英字幕，封面也一起出。今天下班前要。",
+      "deliverables": [
+        "3×60 秒 9:16 mp4",
+        "字幕文件",
+        "封面图"
+      ],
+      "primaryIntent": "长转短竖屏切片",
+      "expectedCapabilities": [
+        "transformation",
+        "media",
+        "generation"
+      ],
+      "expectedSkillHints": [
+        "shorts",
+        "videocaptioner"
+      ],
+      "note": "长转短 + 字幕，已安装集没有切片能力，应走 missing 建议 shorts/videocaptioner。"
+    },
+    {
+      "id": "video-04",
+      "domain": "video",
+      "task": "给这组产品图做电影感调色，再套一个预告片模板输出 20 秒 mp4，音乐要授权干净的，客户法务会查。",
+      "deliverables": [
+        "调色后图片",
+        "20 秒 mp4",
+        "素材授权说明"
+      ],
+      "primaryIntent": "调色与预告片渲染",
+      "expectedCapabilities": [
+        "transformation",
+        "rendering",
+        "media"
+      ],
+      "expectedSkillHints": [
+        "hance",
+        "helios-skills"
+      ],
+      "note": "调色/渲染/音乐，已安装集只能部分覆盖渲染，调色需 library 能力。"
+    },
+    {
+      "id": "video-05",
+      "domain": "video",
+      "task": "客户临时改脚本，明天要一条 15 秒竖屏 Reel：开头 3 秒抓眼、品牌色和 logo 要准，字幕英文。先给个 storyboard。",
+      "deliverables": [
+        "15 秒 Reel mp4",
+        "storyboard"
+      ],
+      "primaryIntent": "竖屏 Reel 创意与生成",
+      "expectedCapabilities": [
+        "generation",
+        "media",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "social-video-creative",
+        "beat-promo-director"
+      ],
+      "note": "创意生成可走 library，竖屏节奏/版式可复用已安装的 beat-promo-director。"
+    },
+    {
+      "id": "office-01",
+      "domain": "office",
+      "task": "把这份 30 页 docx 合同里的甲方乙方和付款条款改掉，再导出 PDF 给法务，格式别乱，页眉页脚保持原样。",
+      "deliverables": [
+        "修订 docx",
+        "导出 PDF",
+        "修改说明"
+      ],
+      "primaryIntent": "合同改写与导出",
+      "expectedCapabilities": [
+        "document",
+        "transformation",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "office-docx",
+        "minimax-pdf"
+      ],
+      "note": "docx 编辑是已安装 office-docx 的正职；PDF 生成可落到 library 的 minimax-pdf。"
+    },
+    {
+      "id": "office-02",
+      "domain": "office",
+      "task": "excel 里有 12 个 sheet，帮我把每月销售汇总成一张透视表，再画个趋势图放汇报里，数字要对得上财务。",
+      "deliverables": [
+        "xlsx（透视表）",
+        "趋势图"
+      ],
+      "primaryIntent": "Excel 汇总与图表",
+      "expectedCapabilities": [
+        "data",
+        "analysis",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "office-xlsx",
+        "flint-board-author"
+      ],
+      "note": "透视/汇总命中已安装 office-xlsx；图表可走 library。"
+    },
+    {
+      "id": "office-03",
+      "domain": "office",
+      "task": "把这份 80 页 PDF 扫描件里的表格和条款抽出来，整理成可编辑的 xlsx，数字要能对账，别漏掉附件页。",
+      "deliverables": [
+        "xlsx",
+        "抽取核对表"
+      ],
+      "primaryIntent": "扫描件结构化抽取",
+      "expectedCapabilities": [
+        "extraction",
+        "data",
+        "transformation"
+      ],
+      "expectedSkillHints": [
+        "mineru-document-extractor",
+        "office-xlsx"
+      ],
+      "note": "扫描件抽取是已安装集的空缺（无 extraction 能力），应报 missing 并建议 mineru。"
+    },
+    {
+      "id": "office-04",
+      "domain": "office",
+      "task": "老板要一份 10 页融资路演 PPT，用我们的品牌模板，图表数据我发你 excel，周四前要能打印。",
+      "deliverables": [
+        "pptx",
+        "打印版 PDF"
+      ],
+      "primaryIntent": "路演 PPT 制作",
+      "expectedCapabilities": [
+        "presentation",
+        "document",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "beamer-ppt",
+        "office-xlsx"
+      ],
+      "note": "已安装集没有 pptx 生成能力，应 missing；数据可复用 office-xlsx。"
+    },
+    {
+      "id": "office-05",
+      "domain": "office",
+      "task": "这份 docx 报告转成 PDF 后逐页检查版式：表格断行、页眉页脚、空白页都要顺，给我问题清单我自己改。",
+      "deliverables": [
+        "PDF",
+        "版式问题清单"
+      ],
+      "primaryIntent": "PDF 版式检查",
+      "expectedCapabilities": [
+        "rendering",
+        "validation",
+        "document"
+      ],
+      "expectedSkillHints": [
+        "office-render",
+        "office-docx"
+      ],
+      "note": "渲染成图检查版式正是已安装 office-render。"
+    },
+    {
+      "id": "coding-01",
+      "domain": "coding",
+      "task": "帮我把这个 PR 过一遍：重点看注入风险和并发 bug，按文件给行内评论，顺手补 3 个边界测试。别只跑 CI。",
+      "deliverables": [
+        "行内 review comments",
+        "边界测试",
+        "风险摘要"
+      ],
+      "primaryIntent": "PR 审查与补测试",
+      "expectedCapabilities": [
+        "review",
+        "validation",
+        "coding"
+      ],
+      "expectedSkillHints": [
+        "review-pr",
+        "code-review-skill"
+      ],
+      "note": "review-pr/code-review-skill 是 library 候选；已安装集没有 review 能力。"
+    },
+    {
+      "id": "coding-02",
+      "domain": "coding",
+      "task": "线上偶发 500，日志只看到 timeout，帮我定位是不是连接池泄漏；修完加回归测试，别改公共 API。",
+      "deliverables": [
+        "根因说明",
+        "patch",
+        "回归测试"
+      ],
+      "primaryIntent": "线上问题定位与修复",
+      "expectedCapabilities": [
+        "analysis",
+        "coding",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "systematic-debugging",
+        "implement-tdd"
+      ],
+      "note": "已安装集能覆盖 coding/validation 部分；复现与调试可走 library。"
+    },
+    {
+      "id": "coding-03",
+      "domain": "coding",
+      "task": "仓库依赖审计挂了，主分支红了两天，帮我找出哪个包升级导致，能修就修，不能修就回滚并说明影响面。",
+      "deliverables": [
+        "依赖报告",
+        "修复或回滚 patch"
+      ],
+      "primaryIntent": "依赖审计修复",
+      "expectedCapabilities": [
+        "analysis",
+        "transformation",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "dependency-repair",
+        "codebase-cleanup-deps-audit"
+      ],
+      "note": "依赖修复是 library 候选；已安装集只能覆盖通用分析。"
+    },
+    {
+      "id": "coding-04",
+      "domain": "coding",
+      "task": "给这个 Cordis 插件加一个工具：参数校验、错误处理、再加一个端到端测试，别破坏现有 slot，也不要用新依赖。",
+      "deliverables": [
+        "插件 patch",
+        "端到端测试"
+      ],
+      "primaryIntent": "插件工具开发",
+      "expectedCapabilities": [
+        "coding",
+        "orchestration",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "cordis-plugin-development",
+        "implement-tdd"
+      ],
+      "note": "插件开发是已安装 cordis-plugin-development 的正职，属于少数可全链路覆盖的用例。"
+    },
+    {
+      "id": "coding-05",
+      "domain": "coding",
+      "task": "重构这 800 行的 handler：拆成 usecase，补单测，行为不能变；最后把 diff 和验证步骤写进 PR 描述。",
+      "deliverables": [
+        "重构 patch",
+        "单测",
+        "PR 描述"
+      ],
+      "primaryIntent": "重构与回归",
+      "expectedCapabilities": [
+        "transformation",
+        "coding",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "implement-tdd",
+        "review-pr"
+      ],
+      "note": "重构/测试能力在已安装集的 transformation/coding/validation 有部分覆盖。"
+    },
+    {
+      "id": "data-01",
+      "domain": "data",
+      "task": "这份 CSV 有 40 万行，帮我清洗去重、按周汇总，再做一个能交互的 dashboard 给运营，口径要写清楚。",
+      "deliverables": [
+        "清洗后 csv",
+        "dashboard",
+        "口径说明"
+      ],
+      "primaryIntent": "数据清洗与看板",
+      "expectedCapabilities": [
+        "transformation",
+        "data",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "data-analyst",
+        "create-dashboard"
+      ],
+      "note": "已安装 office-xlsx 只能覆盖数据/转换，看板能力在 library。"
+    },
+    {
+      "id": "data-02",
+      "domain": "data",
+      "task": "慢查询跑 8 秒，帮我读 EXPLAIN 出索引方案，改完再压测对比；开发库随便动，生产别碰。",
+      "deliverables": [
+        "索引方案",
+        "SQL patch",
+        "压测对比"
+      ],
+      "primaryIntent": "SQL 慢查询优化",
+      "expectedCapabilities": [
+        "analysis",
+        "data",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "sql-optimizer",
+        "sqlglot-python"
+      ],
+      "note": "SQL 优化是 library 能力，已安装集无数据库专用技能。"
+    },
+    {
+      "id": "data-03",
+      "domain": "data",
+      "task": "把 excel 里三年的订单数据做 cohort 分析和留存曲线，图表要能直接贴进周报，别给我花哨的 3D。",
+      "deliverables": [
+        "cohort 图表",
+        "分析说明"
+      ],
+      "primaryIntent": "cohort 分析与图表",
+      "expectedCapabilities": [
+        "data",
+        "analysis",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "office-xlsx",
+        "data-analyst"
+      ],
+      "note": "已安装 office-xlsx 可做汇总/透视，cohort 与可视化叙事需 library。"
+    },
+    {
+      "id": "data-04",
+      "domain": "data",
+      "task": "给老板做一张 Q3 KPI 看板：4 个指标卡 + 趋势图 + 同比，数据从 Postgres 取，每天自动刷新。",
+      "deliverables": [
+        "KPI dashboard",
+        "刷新配置"
+      ],
+      "primaryIntent": "KPI 看板搭建",
+      "expectedCapabilities": [
+        "data",
+        "presentation",
+        "retrieval"
+      ],
+      "expectedSkillHints": [
+        "flint-board-author",
+        "create-dashboard"
+      ],
+      "note": "看板与数据管线都在 library，已安装集没有对应能力。"
+    },
+    {
+      "id": "data-05",
+      "domain": "data",
+      "task": "把这张地理销售表做成中国地图热力图，能按省份下钻，颜色别超过 5 档，手机也要能看。",
+      "deliverables": [
+        "交互地图",
+        "数据说明"
+      ],
+      "primaryIntent": "地理可视化",
+      "expectedCapabilities": [
+        "data",
+        "rendering",
+        "design"
+      ],
+      "expectedSkillHints": [
+        "antv-l7",
+        "dataviz-ai"
+      ],
+      "note": "地理可视化是 library 能力（AntV L7 等），已安装集无对应。"
+    },
+    {
+      "id": "research-01",
+      "domain": "research",
+      "task": "帮我找 2024 年以来关于 AI code review 的 15 篇论文，做文献综述，标注每篇的方法和局限，引用要能点开。",
+      "deliverables": [
+        "文献综述",
+        "bib/引用表"
+      ],
+      "primaryIntent": "文献检索与综述",
+      "expectedCapabilities": [
+        "retrieval",
+        "research",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "paper-search-pro",
+        "academic-paper-review"
+      ],
+      "note": "研究类任务在已安装集完全缺失，应报 missing 并建议 library 检索/评审技能。"
+    },
+    {
+      "id": "research-02",
+      "domain": "research",
+      "task": "这篇预印本投顶会前帮我把关：贡献点是否成立、实验够不够、相关工作怎么补，再给 5 条 rebuttal 要点。",
+      "deliverables": [
+        "评审 memo",
+        "rebuttal 要点"
+      ],
+      "primaryIntent": "论文评审",
+      "expectedCapabilities": [
+        "review",
+        "research",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "academic-paper-review",
+        "source-criticism-gate"
+      ],
+      "note": "评审能力不在已安装集；library 有学术评审与来源可信度技能。"
+    },
+    {
+      "id": "research-03",
+      "domain": "research",
+      "task": "把这篇论文做成会议 poster，再顺手把摘要改写成英文 pitch，图要能直接打印 A0，字体别用默认的。",
+      "deliverables": [
+        "poster.pdf",
+        "英文 pitch"
+      ],
+      "primaryIntent": "论文转 poster 与 pitch",
+      "expectedCapabilities": [
+        "presentation",
+        "generation",
+        "research"
+      ],
+      "expectedSkillHints": [
+        "paper2poster-poster",
+        "academic-humanizer"
+      ],
+      "note": "poster 生成/学术润色均为 library 能力，已安装集无 presentation 生成。"
+    },
+    {
+      "id": "research-04",
+      "domain": "research",
+      "task": "帮我建一个细分领域的知识地图：关键争论、必读论文、术语表，后面还能继续迭代，别一次性写完。",
+      "deliverables": [
+        "领域地图",
+        "术语表"
+      ],
+      "primaryIntent": "领域知识地图",
+      "expectedCapabilities": [
+        "research",
+        "analysis",
+        "planning"
+      ],
+      "expectedSkillHints": [
+        "rapid-domain-mastery",
+        "research-task"
+      ],
+      "note": "需要研究+规划组合，已安装集只有 planning 部分可复用。"
+    },
+    {
+      "id": "research-05",
+      "domain": "research",
+      "task": "核对这份综述里的 30 条引用：来源可信度、是否有断章取义，输出可追溯的核查表，找不到原文的标红。",
+      "deliverables": [
+        "引用核查表",
+        "证据表"
+      ],
+      "primaryIntent": "引用与来源核查",
+      "expectedCapabilities": [
+        "validation",
+        "retrieval",
+        "research"
+      ],
+      "expectedSkillHints": [
+        "source-criticism-gate",
+        "pubmed-database"
+      ],
+      "note": "来源核查是 library 的 research/validation 能力，已安装集没有 research 能力。"
+    },
+    {
+      "id": "marketing-01",
+      "domain": "marketing",
+      "task": "给新品做 Q4 投放方案：预算 30 万，分 3 个渠道，要 landing page 文案 + 3 版广告标题，指标口径先定好。",
+      "deliverables": [
+        "campaign 方案",
+        "landing 文案",
+        "3 版标题"
+      ],
+      "primaryIntent": "投放方案与文案",
+      "expectedCapabilities": [
+        "planning",
+        "generation",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "marketing-campaign-management",
+        "landing-page-generator"
+      ],
+      "note": "营销域在已安装集缺失，应走 missing；library 有 campaign/落地页技能。"
+    },
+    {
+      "id": "marketing-02",
+      "domain": "marketing",
+      "task": "独立站自然流量掉了 40%，帮我做一次 SEO 审计，列出前 10 个要改的页面和原因，别给我泛泛而谈的建议。",
+      "deliverables": [
+        "SEO 审计报告",
+        "修复优先级"
+      ],
+      "primaryIntent": "SEO 审计",
+      "expectedCapabilities": [
+        "analysis",
+        "review",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "seo-audit",
+        "seo-web"
+      ],
+      "note": "SEO 审计是 library 能力；已安装集无 SEO。"
+    },
+    {
+      "id": "marketing-03",
+      "domain": "marketing",
+      "task": "写 5 封冷启动邮件序列，面向制造业老板，语气别太推销，要 A/B 两组 subject，发之前给我预览。",
+      "deliverables": [
+        "邮件序列",
+        "A/B subject"
+      ],
+      "primaryIntent": "EDM 序列撰写",
+      "expectedCapabilities": [
+        "generation",
+        "planning",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "email-marketing",
+        "gemini-cli-copywriting"
+      ],
+      "note": "邮件营销/文案生成在 library，已安装集无对应能力。"
+    },
+    {
+      "id": "marketing-04",
+      "domain": "marketing",
+      "task": "从品牌公众号历史文章里提炼我们的语气，再按这个语气写 3 条 LinkedIn 帖子，别写成 AI 味儿。",
+      "deliverables": [
+        "语气指南",
+        "3 条 LinkedIn 帖子"
+      ],
+      "primaryIntent": "品牌语气提炼与仿写",
+      "expectedCapabilities": [
+        "analysis",
+        "generation",
+        "transformation"
+      ],
+      "expectedSkillHints": [
+        "social-voice",
+        "content-marketer"
+      ],
+      "note": "语气提炼是 library 的 social-voice；已安装集没有品牌语气能力。"
+    },
+    {
+      "id": "marketing-05",
+      "domain": "marketing",
+      "task": "落地页转化率只有 1.2%，帮我找 5 个买家会犹豫的点，重写 hero 和 CTA，再给改版优先级。",
+      "deliverables": [
+        "转化诊断",
+        "hero/CTA 文案",
+        "优先级"
+      ],
+      "primaryIntent": "落地页转化优化",
+      "expectedCapabilities": [
+        "analysis",
+        "generation",
+        "planning"
+      ],
+      "expectedSkillHints": [
+        "buy-or-bounce",
+        "landing-page-generator"
+      ],
+      "note": "买家视角评审 + 落地页生成都在 library；已安装集无营销能力。"
+    },
+    {
+      "id": "design-01",
+      "domain": "design",
+      "task": "把我们的设置页重做：信息层级乱、对比度不够，给我一版符合暗色模式的方案和 token 变量，别只换颜色。",
+      "deliverables": [
+        "改版方案",
+        "design tokens"
+      ],
+      "primaryIntent": "设置页改版",
+      "expectedCapabilities": [
+        "design",
+        "review",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "designing-interfaces",
+        "hig-visual-system"
+      ],
+      "note": "设计评审/token 是 library 能力，已安装集无 design。"
+    },
+    {
+      "id": "design-02",
+      "domain": "design",
+      "task": "做一个极简 pre-launch 落地页：邮箱收集 + 品牌 logo，移动端别溢出，顺便给我埋点建议。",
+      "deliverables": [
+        "落地页",
+        "埋点建议"
+      ],
+      "primaryIntent": "极简落地页设计",
+      "expectedCapabilities": [
+        "design",
+        "generation",
+        "document"
+      ],
+      "expectedSkillHints": [
+        "waitlist-page",
+        "frontend-design"
+      ],
+      "note": "落地页模板/前端设计在 library；已安装集无 design。"
+    },
+    {
+      "id": "design-03",
+      "domain": "design",
+      "task": "给这个 App 做一套品牌视觉：logo 方向 3 个、配色、字体，再出一页品牌规范，老板喜欢克制一点的。",
+      "deliverables": [
+        "brand kit",
+        "品牌规范页"
+      ],
+      "primaryIntent": "品牌视觉系统",
+      "expectedCapabilities": [
+        "design",
+        "generation",
+        "media"
+      ],
+      "expectedSkillHints": [
+        "brandkit",
+        "ui-ux-pro-max"
+      ],
+      "note": "品牌资产生成是 library 能力；已安装集无 design/media 生成。"
+    },
+    {
+      "id": "design-04",
+      "domain": "design",
+      "task": "评审这版 dashboard UI：层级、字号、间距、颜色对比，列 8 条可执行修改，别只说「不够现代」。",
+      "deliverables": [
+        "设计评审意见"
+      ],
+      "primaryIntent": "界面设计评审",
+      "expectedCapabilities": [
+        "review",
+        "design",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "impeccable",
+        "userinterface-wiki"
+      ],
+      "note": "设计评审是 library 能力；已安装集只有通用 validation。"
+    },
+    {
+      "id": "design-05",
+      "domain": "design",
+      "task": "用我们现有组件库实现这个 hero 区，响应式三档，动画要克制，带 prefers-reduced-motion，别加新依赖。",
+      "deliverables": [
+        "组件代码",
+        "响应式说明"
+      ],
+      "primaryIntent": "组件实现",
+      "expectedCapabilities": [
+        "design",
+        "coding",
+        "generation"
+      ],
+      "expectedSkillHints": [
+        "frontend-design",
+        "ui-ux-pro-max"
+      ],
+      "note": "前端设计/实现是 library 能力；已安装集 coding 部分可复用但无设计规范。"
+    },
+    {
+      "id": "security-01",
+      "domain": "security",
+      "task": "上线前做一次安全审计：依赖漏洞、硬编码密钥、权限越权、注入，按严重度出报告，别泄露真实密钥。",
+      "deliverables": [
+        "安全审计报告",
+        "修复优先级"
+      ],
+      "primaryIntent": "上线前安全审计",
+      "expectedCapabilities": [
+        "security",
+        "validation",
+        "review"
+      ],
+      "expectedSkillHints": [
+        "security-compliance",
+        "ship-safe"
+      ],
+      "note": "安全域在已安装集缺失，应 missing；library 有安全审计技能。"
+    },
+    {
+      "id": "security-02",
+      "domain": "security",
+      "task": "查一下这个仓库的依赖链有没有供应链风险（恶意包、license 冲突），给出替换建议和验证方式。",
+      "deliverables": [
+        "依赖安全报告",
+        "替换建议"
+      ],
+      "primaryIntent": "供应链风险排查",
+      "expectedCapabilities": [
+        "security",
+        "analysis",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "codebase-cleanup-deps-audit",
+        "ship-safe"
+      ],
+      "note": "供应链审计是 library 能力；已安装集无 security。"
+    },
+    {
+      "id": "security-03",
+      "domain": "security",
+      "task": "帮我审后端 API 的鉴权：IDOR、JWT 校验、速率限制，哪些能直接绕过？给我 PoC 和修复 patch。",
+      "deliverables": [
+        "威胁清单",
+        "PoC",
+        "修复 patch"
+      ],
+      "primaryIntent": "API 鉴权审计",
+      "expectedCapabilities": [
+        "security",
+        "review",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "security-review",
+        "security-vulnerability"
+      ],
+      "note": "API 安全审计是 library 能力；已安装集无 security。"
+    },
+    {
+      "id": "security-04",
+      "domain": "security",
+      "task": "把 agent 的 MCP/skill 配置做一次安全扫描，看看有没有提示注入和外传通道，报告里别贴 token。",
+      "deliverables": [
+        "配置扫描报告"
+      ],
+      "primaryIntent": "Agent 配置安全扫描",
+      "expectedCapabilities": [
+        "security",
+        "extraction",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "deepsafe-scan",
+        "security-compliance"
+      ],
+      "note": "Agent 配置扫描是 library 能力；已安装集无 security/extraction。"
+    },
+    {
+      "id": "security-05",
+      "domain": "security",
+      "task": "云上账号要做合规检查：Key Vault 过期、公网暴露、策略缺口，输出整改清单和责任人。",
+      "deliverables": [
+        "合规报告",
+        "整改清单"
+      ],
+      "primaryIntent": "云合规检查",
+      "expectedCapabilities": [
+        "security",
+        "validation",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "azure-compliance",
+        "security-compliance"
+      ],
+      "note": "云合规是 library 能力；已安装集无 security。"
+    },
+    {
+      "id": "education-01",
+      "domain": "education",
+      "task": "把这份 60 页的产品手册变成 20 张复习卡片，带间隔复习计划，导出到 Anki，卡片正面别超过两行。",
+      "deliverables": [
+        "20 张复习卡",
+        "复习计划"
+      ],
+      "primaryIntent": "资料转复习卡",
+      "expectedCapabilities": [
+        "transformation",
+        "generation",
+        "planning"
+      ],
+      "expectedSkillHints": [
+        "create-obsidian-flashcards",
+        "study-import"
+      ],
+      "note": "教育域在已安装集缺失，应 missing；library 有闪卡/学习插件技能。"
+    },
+    {
+      "id": "education-02",
+      "domain": "education",
+      "task": "给初一学生做一节 45 分钟的分数乘法互动课，要有例子、练习和课后测验，最好配一张图解释通分。",
+      "deliverables": [
+        "lesson plan",
+        "slides",
+        "quiz"
+      ],
+      "primaryIntent": "互动课设计",
+      "expectedCapabilities": [
+        "planning",
+        "presentation",
+        "generation"
+      ],
+      "expectedSkillHints": [
+        "teachany",
+        "cpa-sequence-designer"
+      ],
+      "note": "课程设计是 library 能力；已安装集无 education。"
+    },
+    {
+      "id": "education-03",
+      "domain": "education",
+      "task": "我想两周内学会写单元测试，帮我排一个渐进式学习路线，每天 30 分钟，有练手项目，别一上来讲理论。",
+      "deliverables": [
+        "学习路线",
+        "练习项目"
+      ],
+      "primaryIntent": "学习路径设计",
+      "expectedCapabilities": [
+        "planning",
+        "presentation",
+        "coding"
+      ],
+      "expectedSkillHints": [
+        "bmad-teach-me-testing",
+        "exercise-components"
+      ],
+      "note": "测试教学在 library；已安装集 coding 技能不负责教学路径。"
+    },
+    {
+      "id": "education-04",
+      "domain": "education",
+      "task": "把这段新手看不懂的代码讲清楚：逐段解释意图、边界条件和常见误区，配一张流程图，别只翻译代码。",
+      "deliverables": [
+        "讲解稿",
+        "流程图"
+      ],
+      "primaryIntent": "代码讲解",
+      "expectedCapabilities": [
+        "analysis",
+        "presentation",
+        "generation"
+      ],
+      "expectedSkillHints": [
+        "explain-code",
+        "animated-diagram"
+      ],
+      "note": "代码讲解+图解是 library 能力；已安装集无 education/presentation 生成。"
+    },
+    {
+      "id": "education-05",
+      "domain": "education",
+      "task": "从这三本写作书里逆向出章节结构，做成一套写作训练大纲，标注每章练什么、怎么验收。",
+      "deliverables": [
+        "逆向大纲",
+        "训练计划"
+      ],
+      "primaryIntent": "逆向大纲与训练设计",
+      "expectedCapabilities": [
+        "extraction",
+        "analysis",
+        "planning"
+      ],
+      "expectedSkillHints": [
+        "reverse-outliner",
+        "rapid-domain-mastery"
+      ],
+      "note": "逆向大纲是 library 能力；已安装集无 extraction。"
+    },
+    {
+      "id": "business-01",
+      "domain": "business",
+      "task": "季度经营分析会材料：把财务数据做成 8 页 deck，先讲结论再讲原因，附风险清单和行动项，周五要。",
+      "deliverables": [
+        "8 页 deck",
+        "风险清单",
+        "行动项"
+      ],
+      "primaryIntent": "经营分析 deck",
+      "expectedCapabilities": [
+        "analysis",
+        "presentation",
+        "document"
+      ],
+      "expectedSkillHints": [
+        "ba-report",
+        "financial-reporting-workflow-base"
+      ],
+      "note": "商业分析/经营报告在 library；已安装集只有 office 文档能力部分可用。"
+    },
+    {
+      "id": "business-02",
+      "domain": "business",
+      "task": "帮我搭一个销售 pipeline 看板：线索、阶段、预计回款，能从 CRM 里同步，每周一早上更新。",
+      "deliverables": [
+        "pipeline 看板",
+        "同步配置"
+      ],
+      "primaryIntent": "销售管道看板",
+      "expectedCapabilities": [
+        "data",
+        "automation",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "crm-cli",
+        "billing-schedule-setup"
+      ],
+      "note": "CRM/自动化是 library 能力；已安装集无 CRM。"
+    },
+    {
+      "id": "business-03",
+      "domain": "business",
+      "task": "审一下这份 SaaS 报价方案：毛利、折扣底线、竞品对比，指出哪几页会被采购挑刺，别改数字。",
+      "deliverables": [
+        "报价评审",
+        "风险页清单"
+      ],
+      "primaryIntent": "报价方案评审",
+      "expectedCapabilities": [
+        "analysis",
+        "review",
+        "presentation"
+      ],
+      "expectedSkillHints": [
+        "buy-or-bounce",
+        "ba-report"
+      ],
+      "note": "评审在 library；已安装集无 business/analysis 组合能力。"
+    },
+    {
+      "id": "business-04",
+      "domain": "business",
+      "task": "把财务给的流水整理成月度对账表，标出异常和缺失发票，输出给会计复核，别自己改数。",
+      "deliverables": [
+        "对账 xlsx",
+        "异常清单"
+      ],
+      "primaryIntent": "月度对账",
+      "expectedCapabilities": [
+        "analysis",
+        "validation",
+        "data"
+      ],
+      "expectedSkillHints": [
+        "accounting-workflow-coordinator",
+        "office-xlsx"
+      ],
+      "note": "对账能力在 library；已安装 office-xlsx 可做表格部分。"
+    },
+    {
+      "id": "business-05",
+      "domain": "business",
+      "task": "给政府项目写一份 SOW：范围、交付物、验收标准、里程碑，法务要能直接过，别写虚的。",
+      "deliverables": [
+        "SOW docx"
+      ],
+      "primaryIntent": "SOW 文档撰写",
+      "expectedCapabilities": [
+        "document",
+        "generation",
+        "review"
+      ],
+      "expectedSkillHints": [
+        "subcontractor-sow-builder",
+        "office-docx"
+      ],
+      "note": "SOW 模板是 library 能力；已安装 office-docx 可承接文档编辑。"
+    },
+    {
+      "id": "productivity-01",
+      "domain": "productivity",
+      "task": "把这周的会议录音整理成纪要：决策、行动项、负责人和 deadline，输出 markdown，散会 2 小时内要。",
+      "deliverables": [
+        "会议纪要",
+        "行动项表"
+      ],
+      "primaryIntent": "会议纪要整理",
+      "expectedCapabilities": [
+        "extraction",
+        "analysis",
+        "document"
+      ],
+      "expectedSkillHints": [
+        "meeting-insights-analyzer",
+        "office-docx"
+      ],
+      "note": "会议转录解析在 library；已安装集无 extraction。"
+    },
+    {
+      "id": "productivity-02",
+      "domain": "productivity",
+      "task": "我的 Gmail 有 3 个账号，帮我设规则：重要客户置顶、发票归档、营销邮件每周一清，别误删。",
+      "deliverables": [
+        "分诊规则",
+        "周清理流程"
+      ],
+      "primaryIntent": "邮箱分类自动化",
+      "expectedCapabilities": [
+        "retrieval",
+        "automation",
+        "orchestration"
+      ],
+      "expectedSkillHints": [
+        "gmail-multi-account",
+        "outlook"
+      ],
+      "note": "邮箱自动化在 library；已安装集无邮件能力。"
+    },
+    {
+      "id": "productivity-03",
+      "domain": "productivity",
+      "task": "把重复的周报流程自动化：拉 Jira/Linear + 日历，生成草稿，周一早上 8 点提醒我确认，失败要能看见。",
+      "deliverables": [
+        "自动化脚本",
+        "提醒配置"
+      ],
+      "primaryIntent": "周报流程自动化",
+      "expectedCapabilities": [
+        "automation",
+        "orchestration",
+        "planning"
+      ],
+      "expectedSkillHints": [
+        "automation-specialist",
+        "outlook"
+      ],
+      "note": "流程编排在 library；已安装集 orchestration 只有部分。"
+    },
+    {
+      "id": "productivity-04",
+      "domain": "productivity",
+      "task": "我手上 23 个任务，帮我按影响/成本排优先级，排出本周可执行计划，别排满，留 20% 缓冲。",
+      "deliverables": [
+        "优先级清单",
+        "周计划"
+      ],
+      "primaryIntent": "任务优先级规划",
+      "expectedCapabilities": [
+        "planning",
+        "analysis",
+        "orchestration"
+      ],
+      "expectedSkillHints": [
+        "yatta",
+        "taskfile"
+      ],
+      "note": "任务管理在 library；已安装集 planning 部分可复用。"
+    },
+    {
+      "id": "productivity-05",
+      "domain": "productivity",
+      "task": "写一份新功能的技术方案：背景、目标、方案对比、风险、迁移步骤，评审要用，别写成流水账。",
+      "deliverables": [
+        "技术方案文档"
+      ],
+      "primaryIntent": "技术方案撰写",
+      "expectedCapabilities": [
+        "planning",
+        "document",
+        "orchestration"
+      ],
+      "expectedSkillHints": [
+        "openspec-new-change",
+        "research-task"
+      ],
+      "note": "变更提案在 library；已安装集文档能力可部分覆盖。"
+    },
+    {
+      "id": "ai-01",
+      "domain": "ai",
+      "task": "帮我搭一套 LLM 回归评测：50 条金标、自动打分、CI 门禁，改 prompt 后能看涨跌，别用训练集当评测。",
+      "deliverables": [
+        "评测集",
+        "评测脚本",
+        "回归报告"
+      ],
+      "primaryIntent": "LLM 回归评测",
+      "expectedCapabilities": [
+        "validation",
+        "analysis",
+        "data"
+      ],
+      "expectedSkillHints": [
+        "llm-evaluation",
+        "subagent-eval"
+      ],
+      "note": "AI 评测在 library；已安装集没有 AI 评测技能。"
+    },
+    {
+      "id": "ai-02",
+      "domain": "ai",
+      "task": "比较 3 家 GenAI 平台的 RAG 能力，列选型矩阵和采购问题清单给 CTO，成本也要算进去。",
+      "deliverables": [
+        "选型矩阵",
+        "问题清单"
+      ],
+      "primaryIntent": "GenAI 平台选型",
+      "expectedCapabilities": [
+        "research",
+        "analysis",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "genai-platform-eval",
+        "llm-evaluation"
+      ],
+      "note": "选型研究在 library；已安装集无 research 能力。"
+    },
+    {
+      "id": "ai-03",
+      "domain": "ai",
+      "task": "把 RAG 的召回率从 62% 提到 80%：混合检索、重排、chunk 策略都试试，要能复现，失败样例给我看。",
+      "deliverables": [
+        "RAG patch",
+        "评测报告"
+      ],
+      "primaryIntent": "RAG 召回优化",
+      "expectedCapabilities": [
+        "retrieval",
+        "analysis",
+        "validation"
+      ],
+      "expectedSkillHints": [
+        "agentic-rag",
+        "llm-evaluation"
+      ],
+      "note": "RAG 优化在 library；已安装集无 retrieval/embedding 能力。"
+    },
+    {
+      "id": "ai-04",
+      "domain": "ai",
+      "task": "给这个 agent 设计工具调用计划：拆任务、选 skill、失败回退，输出可执行 plan，别只画框图。",
+      "deliverables": [
+        "可执行 plan",
+        "工具清单"
+      ],
+      "primaryIntent": "Agent 工具计划",
+      "expectedCapabilities": [
+        "planning",
+        "orchestration",
+        "generation"
+      ],
+      "expectedSkillHints": [
+        "planning-visual-tasks",
+        "agent-identifier"
+      ],
+      "note": "规划/编排是已安装 agent-experience 的部分能力；具体 plan 生成在 library。"
+    },
+    {
+      "id": "ai-05",
+      "domain": "ai",
+      "task": "从 HuggingFace 拉 3 个模型做本地推理对比：延迟、显存、质量，出选型建议，量化版本也要比。",
+      "deliverables": [
+        "benchmark 报告",
+        "选型建议"
+      ],
+      "primaryIntent": "本地模型对比",
+      "expectedCapabilities": [
+        "retrieval",
+        "data",
+        "analysis"
+      ],
+      "expectedSkillHints": [
+        "hf-cli",
+        "llm-evaluation"
+      ],
+      "note": "模型下载/基准在 library；已安装集无 retrieval 能力。"
+    }
+  ]
+}

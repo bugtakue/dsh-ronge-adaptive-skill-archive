@@ -38,14 +38,19 @@ jobs:
         run: |
           node scripts/build-market-index.mjs
           git diff --exit-code -- docs/plugin-market.json || (echo 'docs/plugin-market.json is stale; rerun npm run build:market-index' && exit 1)
+      - name: verify DSH compatibility and smoke benchmark
+        if: steps.version.outputs.skip == 'false'
+        run: |
+          npm run check:dsh
+          node scripts/benchmark.mjs --smoke
       # 迁移到 Trusted Publishing (OIDC) 后，可把下面的 NODE_AUTH_TOKEN 清空并删除 secret；
       # 步骤见 docs/trusted-publishing.md。
       - name: publish to npm (skipped when NPM_TOKEN is not configured)
         if: steps.version.outputs.skip == 'false'
         run: |
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN secret is not configured; skipping npm publish."
-            exit 0
+            echo "NPM_TOKEN is required for a release tag; refusing fail-open skip."
+            exit 1
           fi
           npm publish --provenance --access public
         env:
@@ -54,18 +59,19 @@ jobs:
         if: steps.version.outputs.skip == 'false'
         run: |
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN secret is not configured; skipping old-package deprecation."
-            exit 0
+            echo "NPM_TOKEN is required for release metadata; refusing fail-open skip."
+            exit 1
           fi
-          npm deprecate "ronge-adaptive-skill-archive@*" "Renamed to dsh-ronge-adaptive-skill-archive. Use: plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0" || true
+          VERSION=$(node -e "process.stdout.write(require('./package.json').version)")
+          npm deprecate "ronge-adaptive-skill-archive@*" "Renamed to dsh-ronge-adaptive-skill-archive. Use: plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@$VERSION" || true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: ensure latest dist-tag points at this version
         if: steps.version.outputs.skip == 'false'
         run: |
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN secret is not configured; skipping dist-tag update."
-            exit 0
+            echo "NPM_TOKEN is required for latest dist-tag; refusing fail-open skip."
+            exit 1
           fi
           VERSION=$(node -e "process.stdout.write(require('./package.json').version)")
           npm dist-tag add "dsh-ronge-adaptive-skill-archive@$VERSION" latest

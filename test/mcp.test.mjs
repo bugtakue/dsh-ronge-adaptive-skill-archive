@@ -102,6 +102,10 @@ test('mcp server speaks the MCP stdio protocol and exposes the tools', async () 
     for (const name of ['recommend_skills', 'search_skills', 'discover_skills', 'scan_skill_text', 'install_skill', 'record_outcome', 'experience_summary']) {
       assert.ok(names.includes(name), name + ' is exposed')
     }
+    const installTool = tools.result.tools.find((tool) => tool.name === 'install_skill')
+    assert.equal('force' in (installTool.inputSchema.properties || {}), false, 'no model-facing force')
+    const scanTool = tools.result.tools.find((tool) => tool.name === 'scan_skill_text')
+    assert.equal('url' in (scanTool.inputSchema.properties || {}), false, 'no URL fetch in scan tool')
 
     const prompts = await client.request('prompts/list')
     const promptNames = prompts.result.prompts.map((prompt) => prompt.name)
@@ -162,6 +166,10 @@ test('mcp server speaks the MCP stdio protocol and exposes the tools', async () 
     const scanResult = JSON.parse(scan.result.content[0].text)
     assert.equal(scanResult.level, 'high')
     assert.ok(scanResult.findings.length > 0)
+
+    // scan_skill_text is text-only; it must not become an SSRF fetch primitive.
+    const scanUrl = await client.call('scan_skill_text', { url: 'https://example.com/SKILL.md' })
+    assert.equal(scanUrl.result.isError, true)
 
     const outcome = await client.call('record_outcome', { skill: 'office-xlsx', verdict: 'good', note: 'worked' })
     const recorded = JSON.parse(outcome.result.content[0].text)

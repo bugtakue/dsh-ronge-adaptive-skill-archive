@@ -52,7 +52,7 @@
         "zh": "荣哥技能卷轴收藏馆（可沉浸式体验版本）"
       },
       "description": {
-        "en": "荣哥技能卷轴收藏馆 / Ronge's Adaptive Skill Cockpit: a context-aware, self-evolving skill cockpit for DeepSeek Harness — recommendations with reasons, 10% exploration quota, category/skill affinity learning, live usage, plan/immersive modes, experience memory, pre-install safety scan, update diff/rollback and a 6,399-skill public index.",
+        "en": "DSH-native skill intelligence cockpit: task decomposition, cross-domain multi-skill composition, skill authoring, local recommendations and safety scans for DeepSeek Harness.",
         "zh": "6,399 条公开技能索引、上下文推荐、计划/沉浸模式、安装前安全扫描、更新 diff/回滚、经验记忆与反馈闭环。"
       },
       "author": "bugtakue",
@@ -78,8 +78,8 @@
       },
       "versions": [
         {
-          "version": "3.0.1",
-          "publishTimestamp": 1793281428,
+          "version": "5.0.0",
+          "publishTimestamp": 1793283312,
           "source": {
             "type": "npm"
           }

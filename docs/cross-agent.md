@@ -100,7 +100,7 @@ Claude Code 里可以直接输入 `/mcp__ronge__recommend` 触发；Codex/Cursor
 - 全本地：无遥测、无账号、不上传上下文；`cross-agent.json` 在你机器上。
 - `discover_skills` / `search_skills` 的向量在本机内存中即时计算，不联网、不下载模型。
 - `scan_skill_text`/`install_skill` 是**启发式扫描，不是安全保证**；安装前仍建议人工看源码。
-- `install_skill` 只接受 `https://raw.githubusercontent.com/**/SKILL.md` 且 ≤256 KiB；写入前备份旧文件；高风险内容需显式 `force: true`。
+- `install_skill` 只接受 `https://raw.githubusercontent.com/**/SKILL.md` 且 ≤256 KiB；写入前备份旧文件；MCP 没有 force 参数，高风险一律拒绝；确需强制时改 SKILL.md，或仅在 Host 面板用 `DSH_RONGE_ALLOW_FORCE=1` + reason 门禁。
 - 与 DSH 插件的数据目录**分开**（`~/.ronge-adaptive-skill-cockpit/` vs `~/.dsh/dsh-ronge-adaptive-skill-archive/`）；两边可同时用，各自学习。
 
 ## 6. 边界
@@ -108,4 +108,4 @@ Claude Code 里可以直接输入 `/mcp__ronge__recommend` 触发；Codex/Cursor
 - MCP 版没有 DSH 的「正在使用 / 完成提示音 / 会话自动上下文」——上下文需要由智能体显式传给 `recommend_skills`。
 - 推荐质量依赖已安装 skill 的描述质量；建议 SKILL.md 写清 `description` / `whenToUse`。
 - `discover_skills` / `search_skills` 是本地哈希向量 + 中英概念词表，不是神经 embedding；语义泛化有限，且依赖包内 `library/skills-index.json`。
-- npm 包当前版本 v2.2.0；MCP server 为 stdio transport，协议版本 `2024-11-05`。
+- npm 包当前版本 v5.0.0（发布后生效；发布前 registry latest 仍为 3.0.1）；MCP server 为 stdio transport，协议版本 `2024-11-05`。

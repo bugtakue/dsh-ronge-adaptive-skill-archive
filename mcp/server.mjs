@@ -18,9 +18,13 @@ import {
   recommendSkills,
   resolveCategoryWeights,
   resolveEvolutionWeights,
+  fetchRemoteSkill,
   scanSkillText,
   tokenize,
+  uniqueSkillName,
 } from '../index.js'
+import { atomicWriteFile, atomicWriteJson } from '../lib/fsx.js'
+import { createHash } from 'node:crypto'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
@@ -108,8 +112,8 @@ function saveState() {
   const state = loadState()
   state.updatedAt = new Date().toISOString()
   try {
-    fs.mkdirSync(HOME, { recursive: true })
-    fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2))
+    fs.mkdirSync(HOME, { recursive: true, mode: 0o700 })
+    atomicWriteJson(DATA_FILE, state)
   } catch (error) {
     log('cannot save state: ' + error.message)
   }
@@ -554,56 +558,101 @@ function checkTargetDir(targetDir, agent) {
   }
   if (!targetDir) throw new Error('targetDir is required when agent is "generic"')
   const resolved = path.resolve(String(targetDir))
-  const home = os.homedir()
-  const cwd = process.cwd()
-  if (!resolved.startsWith(home + path.sep) && !resolved.startsWith(cwd + path.sep)) {
+  const home = fs.existsSync(os.homedir()) ? fs.realpathSync(os.homedir()) : os.homedir()
+  const cwd = fs.existsSync(process.cwd()) ? fs.realpathSync(process.cwd()) : process.cwd()
+  const inside = (parent, target) => target === parent || target.startsWith(parent + path.sep)
+  const parentReal = fs.existsSync(resolved) ? fs.realpathSync(resolved) : fs.realpathSync(path.dirname(resolved))
+  if (!inside(home, parentReal) && !inside(cwd, parentReal)) {
     throw new Error('targetDir must be inside the home directory or the current working directory')
   }
+  if (fs.existsSync(resolved) && !fs.lstatSync(resolved).isDirectory()) throw new Error('targetDir must be a directory')
   return resolved
 }
 
-async function installSkill({ url, agent = 'claude-code', targetDir, force = false }) {
+function renameFrontmatter(text, name) {
+  const match = String(text).match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  if (!match) return String(text)
+  const body = match[1].replace(/^name\s*:.*$/m, 'name: ' + name)
+  return String(text).replace(match[0], '---\n' + body + '\n---')
+}
+
+function remoteRepo(raw) {
+  try {
+    const parts = new URL(raw).pathname.split('/').filter(Boolean)
+    return parts.length >= 2 ? parts[0] + '/' + parts[1] : null
+  } catch {
+    return null
+  }
+}
+
+async function installSkill({ url, agent = 'claude-code', targetDir }) {
   const source = String(url || '').trim()
   if (!/^https:\/\/raw\.githubusercontent\.com\/[^\s]+\/SKILL\.md$/.test(source)) {
     throw new Error('url must be a raw.githubusercontent.com/**/SKILL.md URL')
   }
-  const response = await fetch(source)
-  if (!response.ok) throw new Error('download failed: HTTP ' + response.status)
-  const text = await response.text()
+  let fetched
+  try {
+    fetched = await fetchRemoteSkill(source)
+  } catch (error) {
+    throw new Error('download failed: ' + String(error && error.message ? error.message : error))
+  }
+  const text = fetched.text
   if (Buffer.byteLength(text) > MAX_SKILL_BYTES) throw new Error('SKILL.md exceeds 256 KiB')
   const scan = scanSkillText(text)
-  if (scan.level === 'high' && !force) {
-    return {
-      ok: false,
-      blocked: true,
-      reason: 'high-risk content found; pass force=true only after manual review',
-      level: scan.level,
-      findings: scan.findings,
-    }
+  if (scan.level === 'high') {
+    throw new Error(
+      'high-risk content found; installation blocked. Review the SKILL.md manually and edit it before installing. Findings: ' +
+        scan.findings.map((finding) => finding.rule).join(', '),
+    )
   }
   const front = parseFrontmatter(text)
-  const name = String(front.name || path.basename(path.dirname(new URL(source).pathname))).trim()
-  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(name)) throw new Error('invalid skill name')
+  const rawName = String(front.name || path.basename(path.dirname(new URL(source).pathname))).trim()
+  if (!/^[a-zA-Z0-9._-]{1,80}$/.test(rawName)) throw new Error('invalid skill name')
   const base = checkTargetDir(targetDir, agent)
-  const dir = path.join(base, name)
+  let name = rawName
+  let content = text
+  let renamedFrom = null
+  let dir = path.join(base, name)
+  fs.mkdirSync(base, { recursive: true, mode: 0o700 })
+  let counter = 0
+  while (true) {
+    dir = path.join(base, name)
+    try {
+      fs.mkdirSync(dir, { mode: 0o755 })
+      break
+    } catch (error) {
+      if (!error || error.code !== 'EEXIST') throw error
+      if (!renamedFrom) renamedFrom = rawName
+      name = uniqueSkillName(rawName, remoteRepo(source), source + (counter ? '#' + counter : ''))
+      content = renameFrontmatter(text, name)
+      counter += 1
+      if (counter > 50) throw new Error('could not allocate a unique skill directory')
+    }
+  }
   const file = path.join(dir, 'SKILL.md')
   fs.mkdirSync(dir, { recursive: true })
-  let backup = null
-  if (fs.existsSync(file)) {
-    backup = file + '.bak-' + new Date().toISOString().replace(/[:.]/g, '-')
-    fs.copyFileSync(file, backup)
+  atomicWriteFile(file, content, { mode: 0o644 })
+  const sourceMeta = {
+    url: source,
+    repo: remoteRepo(source),
+    originalName: rawName,
+    renamedFrom,
+    sha256: createHash('sha256').update(content).digest('hex'),
+    installedAt: new Date().toISOString(),
+    risk: scan.level,
   }
-  fs.writeFileSync(file, text)
+  atomicWriteJson(path.join(dir, '.skill-source.json'), sourceMeta)
   return {
     ok: true,
     agent,
     name,
+    originalName: rawName,
+    renamedFrom,
     path: file,
-    bytes: Buffer.byteLength(text),
-    backup,
+    bytes: Buffer.byteLength(content),
     level: scan.level,
     findings: scan.findings,
-    forced: scan.level === 'high' && Boolean(force),
+    source: sourceMeta,
     scan,
   }
 }
@@ -788,22 +837,20 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        text: { type: 'string', description: 'Full SKILL.md content to scan.' },
-        url: { type: 'string', description: 'Alternatively, a raw.githubusercontent.com/**/SKILL.md URL to download and scan.' },
+        text: { type: 'string', description: 'Full SKILL.md content to scan (max 256 KiB). Text only; this tool never downloads URLs.' },
       },
     },
   },
   {
     name: 'install_skill',
     description:
-      'Download a raw.githubusercontent.com/**/SKILL.md, run the safety scan, then install it into an agent skill folder (with a backup of the previous file). High-risk content is blocked unless force=true is passed after manual review.',
+      'Download a validated raw.githubusercontent.com/**/SKILL.md, run the safety scan, then install it into the selected agent skill folder. High-risk content is always blocked. Existing names are never overwritten: a unique name and frontmatter rename are used, and the source is recorded for later update/rollback.',
     inputSchema: {
       type: 'object',
       properties: {
         url: { type: 'string', description: 'raw.githubusercontent.com/**/SKILL.md URL.' },
         agent: { type: 'string', enum: ['claude-code', 'codex', 'dsh', 'agents', 'generic'], description: 'Target agent skill folder. Default claude-code.' },
         targetDir: { type: 'string', description: 'Required only for agent "generic"; must be under the home directory or cwd.' },
-        force: { type: 'boolean', description: 'Install even when the scan level is high. Only after manual review.' },
       },
       required: ['url'],
     },
@@ -840,13 +887,9 @@ async function callTool(name, args) {
     case 'discover_skills':
       return { context: String(input.context || '').slice(0, 500), results: discoverLibrarySkills(input.context, input.limit) }
     case 'scan_skill_text': {
-      let text = String(input.text || '')
-      if (!text && input.url) {
-        const response = await fetch(String(input.url))
-        if (!response.ok) throw new Error('download failed: HTTP ' + response.status)
-        text = await response.text()
-      }
-      if (!text) throw new Error('provide text or url')
+      const text = String(input.text || '')
+      if (!text) throw new Error('provide text')
+      if (Buffer.byteLength(text) > MAX_SKILL_BYTES) throw new Error('text exceeds 256 KiB')
       const scan = scanSkillText(text)
       return { level: scan.level, score: scan.score, findings: scan.findings }
     }
@@ -1083,6 +1126,10 @@ export function startMcpServer() {
     }
   })
   process.stdin.on('end', () => process.exit(0))
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  startMcpServer()
 }
 
 export const __testing = {

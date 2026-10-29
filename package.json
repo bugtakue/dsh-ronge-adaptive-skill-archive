@@ -1,7 +1,7 @@
 {
   "name": "dsh-ronge-adaptive-skill-archive",
-  "version": "3.0.1",
-  "description": "荣哥技能卷轴收藏馆 / Ronge's Adaptive Skill Cockpit: a context-aware, self-evolving skill cockpit for DeepSeek Harness — recommendations with reasons, 10% exploration quota, category/skill affinity learning, live usage, plan/immersive modes, experience memory, pre-install safety scan, update diff/rollback and a 6,399-skill public index.",
+  "version": "5.0.0",
+  "description": "DSH-native skill intelligence cockpit: task decomposition, cross-domain multi-skill composition, skill authoring, local recommendations and safety scans for DeepSeek Harness.",
   "type": "module",
   "repository": {
     "type": "git",
@@ -23,7 +23,10 @@
     "adaptive",
     "self-evolving",
     "skills-manager",
-    "exploration"
+    "exploration",
+    "skill-orchestration",
+    "skill-authoring",
+    "skill-intelligence"
   ],
   "exports": {
     ".": "./index.js",
@@ -39,14 +42,26 @@
     "icon.svg",
     "scripts/*.mjs",
     "sources/*.json",
-    "library/*.json",
     "test/fixtures/*.json",
     "mcp/*.mjs",
     "docs/cross-agent.md",
     "docs/eval.md",
     "library/repo-metadata.json",
     "test/fixtures/discover-cases.json",
-    "docs/dsh-compatibility.md"
+    "docs/dsh-compatibility.md",
+    "lib/**/*.js",
+    "docs/benchmark.md",
+    "docs/claims.md",
+    "docs/attribution.md",
+    "docs/intelligence-architecture.md",
+    "SECURITY.md",
+    "THREAT_MODEL.md",
+    "PRIVACY.md",
+    "library/domain-packs.json",
+    "library/capability-index.json",
+    "library/skills-index.json",
+    "library/NOTICE.md",
+    "library/README.md"
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
@@ -56,7 +71,9 @@
     "start": "node scripts/cli.mjs",
     "eval:real": "node scripts/eval-real.mjs",
     "eval:discover": "node scripts/eval-discover.mjs",
-    "check:dsh": "node scripts/dsh-compat-check.mjs"
+    "check:dsh": "node scripts/dsh-compat-check.mjs",
+    "build:capability": "node scripts/build-capability-index.mjs",
+    "eval:benchmark": "node scripts/benchmark.mjs"
   },
   "dsh": {
     "bundle": {
@@ -72,6 +89,11 @@
   },
   "license": "MIT",
   "bin": {
-    "dsh-ronge-adaptive-skill-archive": "./scripts/cli.mjs"
+    "dsh-ronge-adaptive-skill-archive": "./scripts/cli.mjs",
+    "dsh-ronge-skill-mcp": "./mcp/server.mjs"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
   }
 }

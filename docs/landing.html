@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Adaptive Skill Cockpit — 荣哥技能卷轴收藏馆 | DeepSeek Harness 技能驾驶舱</title>
-<meta name="description" content="Adaptive Skill Cockpit：知道此刻该用哪个 Skill 的 DeepSeek Harness 插件。上下文推荐 + 正在使用 + Plan/Immersive + 经验记忆 + 自进化。6,399 条公开 SKILL.md 索引，全本地、无遥测、MIT。">
+<title>Adaptive Skill Cockpit — 荣哥技能卷轴收藏馆 | DeepSeek Harness 原生技能驾驶舱 v5</title>
+<meta name="description" content="Adaptive Skill Cockpit v5：拆解任务、给技能组队、按缺口造 SKILL.md 草稿、效率可复核的 DeepSeek Harness 原生技能驾驶舱。12 领域、6,399 条公开索引、全本地、无遥测、MIT。">
 <meta name="color-scheme" content="light dark">
 <script>
   (function () {
@@ -27,6 +27,7 @@
     --accent-strong: #7c5b1f;
     --accent-soft: rgba(154, 116, 48, .12);
     --ok: #2f7a5b;
+    --warn: #a05a1f;
     --shadow: 0 18px 50px rgba(28, 32, 36, .13);
     --shadow-sm: 0 4px 16px rgba(28, 32, 36, .08);
     --radius: 16px;
@@ -45,6 +46,7 @@
     --accent-strong: #e6c987;
     --accent-soft: rgba(213, 180, 108, .13);
     --ok: #7bd0a8;
+    --warn: #e0a468;
     --shadow: 0 18px 50px rgba(0, 0, 0, .5);
     --shadow-sm: 0 4px 16px rgba(0, 0, 0, .35);
   }
@@ -64,8 +66,8 @@
   }
   a { color: var(--accent-strong); text-decoration: none; }
   a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--mono); }
   .wrap { width: min(var(--wrap), calc(100% - 40px)); margin-inline: auto; }
-  .mono { font-family: var(--mono); }
   .nav {
     position: sticky; top: 0; z-index: 20;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -80,7 +82,7 @@
     background: linear-gradient(145deg, #21313d, #0e1a24); color: #d5b46c; font-size: 15px;
     box-shadow: inset 0 0 0 1px rgba(213, 180, 108, .45);
   }
-  .nav-links { display: flex; gap: 18px; margin-left: auto; align-items: center; font-size: 14px; }
+  .nav-links { display: flex; gap: 16px; margin-left: auto; align-items: center; font-size: 14px; }
   .nav-links a { color: var(--muted); }
   .nav-links a:hover { color: var(--text); text-decoration: none; }
   .theme-btn {
@@ -88,21 +90,23 @@
     width: 36px; height: 36px; border-radius: 10px; cursor: pointer; font-size: 16px; line-height: 1;
   }
   .theme-btn:hover { border-color: var(--accent); }
-  .hero { padding: 68px 0 30px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 52px; align-items: center; }
+  .hero { padding: 66px 0 30px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 52px; align-items: center; }
   .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px; margin: 0 0 18px;
+    display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 18px;
     padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px;
     background: var(--surface); color: var(--muted); font-size: 13px;
   }
   .eyebrow b { color: var(--accent-strong); font-weight: 650; }
-  h1 { margin: 0 0 20px; font-size: clamp(2.15rem, 4.6vw, 3.5rem); line-height: 1.16; letter-spacing: -.02em; }
+  h1 { margin: 0 0 18px; font-size: clamp(2rem, 4.4vw, 3.3rem); line-height: 1.18; letter-spacing: -.02em; }
   h1 .grad {
     background: linear-gradient(100deg, var(--accent-strong), var(--accent) 55%, var(--ok));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .lead { margin: 0 0 26px; color: var(--muted); font-size: clamp(1rem, 1.4vw, 1.12rem); max-width: 34em; }
+  .lead { margin: 0 0 12px; color: var(--muted); font-size: clamp(1rem, 1.4vw, 1.1rem); max-width: 36em; }
   .lead b { color: var(--text); font-weight: 650; }
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+  .en { display: block; color: var(--muted); font-size: .82em; line-height: 1.55; letter-spacing: .01em; }
+  .lead .en { margin-top: 8px; font-size: .88em; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 18px; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 11px 20px; border-radius: 12px; font-weight: 650; font-size: 15px;
@@ -122,32 +126,49 @@
   }
   .shot figure { margin: 0; }
   .shot img {
-    display: block; width: 100%; max-width: 348px; height: auto; margin-inline: auto;
+    display: block; width: 100%; max-width: 340px; height: auto; margin-inline: auto;
     border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow);
     background: var(--surface);
   }
   .shot figcaption { margin-top: 12px; text-align: center; color: var(--muted); font-size: 12.5px; }
-  .section { padding: 64px 0; }
-  .section h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); margin: 0 0 12px; letter-spacing: -.01em; }
-  .section .sub { margin: 0 0 34px; color: var(--muted); max-width: 48em; }
+  .section { padding: 62px 0; }
+  .section h2 { font-size: clamp(1.45rem, 2.6vw, 1.95rem); margin: 0 0 10px; letter-spacing: -.01em; }
+  .section .sub { margin: 0 0 30px; color: var(--muted); max-width: 52em; }
+  .banner {
+    margin-top: 26px; padding: 14px 18px; border: 1px dashed var(--border); border-radius: 12px;
+    background: var(--surface-2); color: var(--muted); font-size: 13.5px;
+  }
+  .banner b { color: var(--warn); }
+  .pipeline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 8px 0 30px; }
+  .pipe-step {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 14px 12px; box-shadow: var(--shadow-sm); position: relative;
+  }
+  .pipe-step .k { font-family: var(--mono); font-size: 11px; color: var(--accent-strong); letter-spacing: .08em; }
+  .pipe-step h3 { margin: 4px 0 4px; font-size: .98rem; }
+  .pipe-step p { margin: 0; color: var(--muted); font-size: 12.8px; }
+  .pipe-step::after {
+    content: "→"; position: absolute; right: -11px; top: 50%; transform: translateY(-50%);
+    color: var(--accent); font-weight: 700;
+  }
+  .pipe-step:last-child::after { content: ""; }
   .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-  .grid-9 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 22px 22px 20px; box-shadow: var(--shadow-sm);
   }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
-  .card h3 { margin: 0 0 8px; font-size: 1.03rem; display: flex; align-items: center; gap: 9px; }
+  .card h3 { margin: 0 0 8px; font-size: 1.02rem; display: flex; align-items: center; gap: 9px; }
   .card p { margin: 0; color: var(--muted); font-size: 14.2px; }
   .card .idx {
     flex: none; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
     background: var(--accent-soft); color: var(--accent-strong); font-size: 12px; font-weight: 700;
     font-family: var(--mono);
   }
-  .card.wide { grid-column: span 3; }
   .rule { border: 0; border-top: 1px solid var(--border); margin: 0; }
   .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); }
-  table { border-collapse: collapse; width: 100%; min-width: 780px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
   caption { caption-side: bottom; padding: 12px 16px; color: var(--muted); font-size: 12.5px; text-align: left; }
   th, td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
   th { font-size: 12.5px; letter-spacing: .03em; color: var(--muted); background: var(--surface-2); font-weight: 650; }
@@ -155,20 +176,42 @@
   td:first-child { font-weight: 650; white-space: nowrap; }
   .yes { color: var(--ok); font-weight: 700; }
   .no { color: var(--muted); }
-  .mech { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: step; }
-  .mech .card { position: relative; }
-  .mech .card::before {
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: step; }
+  .steps .card { position: relative; padding-top: 30px; }
+  .steps .card::before {
     counter-increment: step; content: counter(step);
     position: absolute; top: -12px; left: 20px; width: 26px; height: 26px; border-radius: 50%;
     background: var(--accent); color: #151009; font-weight: 800; font-size: 13px;
     display: grid; place-items: center; font-family: var(--mono);
   }
-  .flow {
-    margin-top: 18px; padding: 18px 20px; border-radius: var(--radius); border: 1px dashed var(--border);
-    background: var(--surface-2); color: var(--muted); font-size: 13.5px;
+  .steps .prompt {
+    margin: 12px 0 10px; padding: 10px 12px; border-radius: 10px; background: #101a22; color: #d9e6ef;
+    font-family: var(--mono); font-size: 12.2px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
   }
-  .flow code { color: var(--accent-strong); }
-  .install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .steps ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.4px; }
+  .steps li { margin: 3px 0; }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px; box-shadow: var(--shadow-sm);
+  }
+  .chart-card h3 { margin: 0 0 4px; font-size: 1.02rem; }
+  .chart-card .hint { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+  .chart { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: end; height: 190px; padding: 0 4px 26px; border-bottom: 1px solid var(--border); }
+  .bar { position: relative; border-radius: 8px 8px 0 0; background: var(--surface-2); border: 1px dashed var(--border); height: calc(var(--h, 60) * 1%); min-height: 26px; display: flex; align-items: flex-end; justify-content: center; }
+  .bar span {
+    position: absolute; bottom: -24px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 11.5px;
+  }
+  .bar em { position: absolute; top: 6px; left: 0; right: 0; text-align: center; color: var(--warn); font-size: 11px; font-style: normal; }
+  .chart-note { margin: 30px 0 0; color: var(--muted); font-size: 13px; }
+  .chart-note b { color: var(--warn); }
+  .domains { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .domain {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    box-shadow: var(--shadow-sm); font-size: 13.6px;
+  }
+  .domain b { display: block; font-size: 14.2px; margin-bottom: 2px; }
+  .domain .en { font-size: 11.5px; }
+  .domain span { color: var(--muted); font-size: 12.5px; }
   .code-card {
     background: #101a22; color: #e8eef2; border: 1px solid #22323e; border-radius: var(--radius);
     padding: 18px 18px 16px; position: relative; overflow: hidden;
@@ -181,11 +224,12 @@
     background: #16222c; border-radius: 8px; padding: 5px 9px; font-size: 12px; cursor: pointer; font-family: var(--font);
   }
   .code-card .copy:hover { border-color: #d5b46c; color: #d5b46c; }
+  .install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .note { color: var(--muted); font-size: 13px; margin-top: 14px; }
   .privacy { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .privacy .grid-3 { margin-top: 26px; }
+  .privacy .grid-3 { margin-top: 24px; }
   .tag { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 12px; font-weight: 650; }
-  footer { padding: 52px 0 46px; }
+  footer { padding: 50px 0 44px; }
   .foot-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 30px; align-items: flex-start; }
   .foot-links { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; }
   .foot-links a { color: var(--muted); }
@@ -194,24 +238,26 @@
     background: var(--text); color: var(--bg); font-weight: 700;
   }
   .star:hover { text-decoration: none; transform: translateY(-1px); }
-  .fine { color: var(--muted); font-size: 12.5px; margin-top: 22px; max-width: 60em; }
-  .skip { position: absolute; left: -999px; }
-  @media (max-width: 960px) {
+  .fine { color: var(--muted); font-size: 12.5px; margin-top: 20px; max-width: 62em; }
+  @media (max-width: 980px) {
     .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 44px; }
     .shot { order: -1; }
     .shot img { max-width: 300px; }
-    .grid-3, .grid-9, .mech { grid-template-columns: 1fr 1fr; }
-    .card.wide { grid-column: span 2; }
+    .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pipe-step::after { content: ""; }
+    .grid-3, .steps { grid-template-columns: 1fr 1fr; }
+    .grid-4, .domains { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .install-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 660px) {
     .wrap { width: calc(100% - 28px); }
     .nav-links { display: none; }
-    .grid-3, .grid-9, .mech { grid-template-columns: 1fr; }
-    .card.wide { grid-column: span 1; }
-    .section { padding: 48px 0; }
-    .hero { padding-top: 34px; }
+    .grid-3, .steps, .grid-4, .domains { grid-template-columns: 1fr; }
+    .pipeline { grid-template-columns: 1fr; }
+    .section { padding: 46px 0; }
+    .hero { padding-top: 32px; }
     .stats { font-size: 12.5px; }
+    .chart { height: 160px; }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -226,9 +272,9 @@
     <a class="brand" href="#top"><span class="brand-mark">卷</span> Adaptive Skill Cockpit</a>
     <nav class="nav-links" aria-label="页面导航">
       <a href="#why">为什么</a>
-      <a href="#features">功能</a>
+      <a href="#demo">3 分钟 demo</a>
+      <a href="#domains">12 领域</a>
       <a href="#compare">对比</a>
-      <a href="#how">机制</a>
       <a href="#install">安装</a>
       <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive">GitHub ↗</a>
     </nav>
@@ -239,27 +285,28 @@
 <main id="top">
   <section class="hero wrap">
     <div>
-      <p class="eyebrow">DeepSeek Harness 插件 · <b>v2.1.0</b> · MIT · 单宿主深做</p>
-      <h1>知道此刻该用<br><span class="grad">哪个 Skill</span>的驾驶舱</h1>
+      <p class="eyebrow">DeepSeek Harness 原生插件 · <b>v5.0.0</b> · MIT · 本地优先</p>
+      <h1>拆任务 · 组队 · 造技能<br><span class="grad">效率可证</span>的驾驶舱</h1>
       <p class="lead">
-        <b>荣哥技能卷轴收藏馆</b>（Ronge's Adaptive Skill Cockpit）不是最大的技能库，
-        而是把「该用哪个、为什么、用得好不好」做成会话旁边的一眼可见：
-        上下文推荐、正在使用、Plan/Immersive、经验记忆与自进化。全本地、可解释、会记住效果。
+        <b>荣哥技能卷轴收藏馆</b>不只是告诉你此刻该用哪个 skill：
+        它把一句话拆成交付物和子任务，给任务组一队技能，缺什么就现场造 SKILL.md 草稿，
+        再用可复跑的 benchmark 而不是感觉来谈效率。
+        <span class="en">A DSH-native cockpit that decomposes a task, composes a skill team, drafts the missing SKILL.md, and keeps efficiency auditable — locally, with no telemetry.</span>
       </p>
       <div class="cta">
-        <a class="btn primary" href="#install">3 行安装 →</a>
+        <a class="btn primary" href="#demo">看 3 分钟 demo →</a>
         <a class="btn ghost" href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive">在 GitHub 查看</a>
       </div>
       <div class="stats">
-        <span><i class="dot"></i>6,399 条公开 SKILL.md 索引</span>
-        <span><i class="dot"></i>14 个分类</span>
+        <span><i class="dot"></i>12 个领域任务包</span>
+        <span><i class="dot"></i>6,399 条公开 SKILL.md 元数据</span>
         <span><i class="dot"></i>0 遥测 / 全本地</span>
       </div>
     </div>
     <div class="shot">
       <figure>
-        <img src="./panel.png" width="405" height="1000" alt="面板截图：右侧技能抽屉，卷轴馆 tab 展示 6,399 个技能、分类筛选与安装按钮">
-        <figcaption>会话右侧的「技能」抽屉：卷轴馆 6,399 条索引，预览后安装</figcaption>
+        <img src="./panel.png" width="405" height="1000" alt="面板截图：右侧技能抽屉，展示推荐、组队计划、经验与自进化">
+        <figcaption>会话右侧的「技能」抽屉：推荐 / 计划 / 经验 / 安全 / 更新</figcaption>
       </figure>
     </div>
   </section>
@@ -267,161 +314,203 @@
   <hr class="rule">
 
   <section class="section wrap" id="why">
-    <h2>大多数工具给你「货架」，它给你「驾驶舱」</h2>
-    <p class="sub">货架回答「有哪些 skill、怎么装」；驾驶舱回答三个更贴近当下任务的问题。它不替代 Agent 自己的 skill catalog，只把选择变清楚。</p>
+    <h2>货架解决「有什么」，驾驶舱解决「怎么用」</h2>
+    <p class="sub">
+      技能多了之后，真正的难题是拆解、组队和补齐缺口。v5 把这条链路做成五个动作，全部本地、可解释。
+      <span class="en">Catalogs answer “what exists”. A cockpit answers “what does this task need, who does what, and what is missing”.</span>
+    </p>
+    <div class="pipeline" aria-label="v5 工作流">
+      <div class="pipe-step"><span class="k">PICK</span><h3>选</h3><p>上下文推荐 Top 4 + 理由<span class="en">recommend</span></p></div>
+      <div class="pipe-step"><span class="k">PLAN</span><h3>拆</h3><p>交付物 / 约束 / 子任务 / 缺口<span class="en">decompose</span></p></div>
+      <div class="pipe-step"><span class="k">COMPOSE</span><h3>组</h3><p>2–5 技能、顺序 / 并行 / 审核门<span class="en">compose</span></p></div>
+      <div class="pipe-step"><span class="k">DRAFT</span><h3>造</h3><p>SKILL.md + eval cases + 扫描<span class="en">draft</span></p></div>
+      <div class="pipe-step"><span class="k">MEASURE</span><h3>量</h3><p>estimate + 可复跑 benchmark<span class="en">benchmark</span></p></div>
+    </div>
     <div class="grid-3">
       <article class="card">
-        <h3><span class="idx">01</span>现在该用哪个？</h3>
-        <p>读取会话最近 8 条用户消息 + 项目根最多 80 个文件名，对技能文本做本地打分，给出 Top 4 和匹配理由。打开面板时每 10 秒静默刷新。</p>
+        <h3><span class="idx">01</span>拆得开</h3>
+        <p>识别交付物、约束、领域、主 / 次意图、子任务与假设；把「录音 → 纪要 + 宣传片」拆成两业务线。规则引擎，结果带置信度和 assumptions，不是黑箱。</p>
       </article>
       <article class="card">
-        <h3><span class="idx">02</span>我现在在用哪些？</h3>
-        <p>直接读会话里真实的 <code>skill</code> 工具调用，显示当前 turn 正在使用的技能；空闲时显示最近使用。不是分析推测。</p>
+        <h3><span class="idx">02</span>组得拢</h3>
+        <p>2–5 个技能按阶段组队，标出交接物、冲突、回退与缺口；没有合适技能时明确说「缺」，不硬凑。</p>
       </article>
       <article class="card">
-        <h3><span class="idx">03</span>哪些真的有效？</h3>
-        <p>任务完成自动写经验，👍/👎 反馈归因到推荐理由，权重以 10% 步长学习，并保留 10% 探索配额避免越推越窄。</p>
+        <h3><span class="idx">03</span>造得出</h3>
+        <p>按缺口生成 SKILL.md 草稿：frontmatter、步骤、I/O、质量检查、eval cases、lint、安全扫描。<b>不写盘、不执行</b>，确认后你自己保存。</p>
       </article>
+    </div>
+    <div class="banner">
+      <b>边界先说清：</b>推荐 / 检索是本地启发式，不是神经模型；decompose / compose 是规则引擎，不是 LLM；效率默认是 estimate。每条声明的证据与未实测项在
+      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/claims.md">docs/claims.md</a>。
     </div>
   </section>
 
-  <section class="section wrap" id="features">
-    <h2>一个 bundle，九个能力</h2>
-    <p class="sub">Host 只用 Node 内置模块，Client 是无构建的 plain JS；HTTP 只监听 loopback，不新增端口。</p>
-    <div class="grid-9">
+  <section class="section wrap" id="demo">
+    <h2>3 分钟 demo：plan → compose → draft</h2>
+    <p class="sub">
+      真实任务：「把这段会议录音整理成可交付的会议纪要 docx，再做一个 30 秒宣传片。」跨 Office + 视频，多意图，带缺口。
+      <span class="en">A real multi-intent task: meeting recording → deliverable minutes.docx + a 30-second teaser.</span>
+    </p>
+    <div class="steps">
       <article class="card">
-        <h3><span class="idx">AI</span>上下文推荐</h3>
-        <p>会话内容 + 项目文件名 → Top 4；理由分名称、关键词、类别、经验、手感、探索六类，结构化展示。</p>
+        <h3>plan：拆任务</h3>
+        <div class="prompt">用 skill_archive_plan 拆解这个任务，先不要执行：…</div>
+        <ul>
+          <li>主意图 Office / 次意图视频</li>
+          <li>交付物：minutes.docx、teaser.mp4</li>
+          <li>约束：30 秒、9:16、时间戳引用</li>
+          <li>缺口：会议纪要模板 → draftNeeded</li>
+          <li>不执行、不装技能、不写盘</li>
+        </ul>
       </article>
       <article class="card">
-        <h3><span class="idx">ON</span>正在使用</h3>
-        <p>从真实 <code>skill</code> 调用读取当前 turn 的技能；子智能体与 fork 的完成提示音自动静音。</p>
+        <h3>compose：组队</h3>
+        <div class="prompt">用 skill_archive_compose 给任务组队：2–5 个技能，标出顺序、交接、缺口和冲突。</div>
+        <ul>
+          <li><code>office-docx</code> → 纪要文稿</li>
+          <li><code>office-render</code> → 版式校验</li>
+          <li><code>beat-promo-director</code> → 30 秒分镜</li>
+          <li><code>media-use</code> → 素材与配乐</li>
+          <li>sequential + review-gate；缺口进 draft</li>
+        </ul>
       </article>
       <article class="card">
-        <h3><span class="idx">M</span>计划 / 沉浸模式</h3>
-        <p>计划模式先给方案并问你确认；沉浸模式不问，自动组合 1–3 个 skill 执行，结束后说明用了什么、为什么。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">EXP</span>经验记忆 + 反馈</h3>
-        <p><code>experience.md/json</code> 记录任务、skills、结果、耗时；跨会话成功率、平均耗时、连续失败，支持导出 / 导入。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">EVO</span>自进化 + 探索</h3>
-        <p>反馈归因到理由类型，权重有小步长和上下界；默认 10% 概率给冷门技能验证机会。全部本地、可回滚。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">SAFE</span>安装前安全扫描</h3>
-        <p>shell 执行、<code>curl | bash</code>、动态解码、提示注入、凭据路径、过宽 allowed-tools；给风险等级、命中行、信任与许可证。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">UPD</span>更新 diff / 回滚</h3>
-        <p><code>skills-lock.json</code> 记来源与哈希；检查更新返回内容 diff，支持全部更新、覆盖前自动备份、一键回滚。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">LIB</span>6,399 卷轴馆</h3>
-        <p>GitHub 公开 <code>SKILL.md</code> 快照：14 类、1–5 评级、搜索与预览后安装。口径透明：不是全网所有 skill。</p>
-      </article>
-      <article class="card">
-        <h3><span class="idx">MCP</span>工具目录 + 小功能</h3>
-        <p>浏览 MCP 官方 registry（只发现，不自动安装）；中英双语简介、完成提示音、一键新建 Skill。</p>
+        <h3>draft：造技能</h3>
+        <div class="prompt">用 skill_archive_draft_skill 补「会议纪要模板」，只给草稿、不要落盘。</div>
+        <ul>
+          <li>SKILL.md 草稿 + whenToUse</li>
+          <li>3–5 条 eval cases</li>
+          <li>lint + 安全扫描结果</li>
+          <li><b>不写盘、不执行</b></li>
+          <li>你确认后自己保存到 ~/.dsh/skills/</li>
+        </ul>
       </article>
     </div>
+    <p class="note">示意输出，字段以 v5.0.0 实际版本为准。三个工具都是只读 / 只出草稿，没有 install / force / 执行能力。</p>
+  </section>
+
+  <section class="section wrap" id="efficiency">
+    <h2>效率怎么谈：estimate 与 benchmark 分开</h2>
+    <p class="sub">
+      我们不在 README 里写「效率提升 X%」。估算（estimate）用于规划，实测（benchmark）必须有脚本、有基线、有原始数据。
+      <span class="en">Estimates are for planning; measured numbers require a reproducible benchmark. We do not publish percentages before the benchmark exists.</span>
+    </p>
+    <div class="chart-card">
+      <h3>效率评测占位图</h3>
+      <p class="hint">数据来源：<code>docs/benchmark.md</code>（60 条 held-out，2026-10-29；脚本 <code>node scripts/benchmark.mjs</code>）。</p>
+      <div class="chart" role="img" aria-label="benchmark 结果：planCoverage 0.617、compositionValidity 1.00、capabilityCoverage 0.850、gapDetection 1.00">
+        <div class="bar" style="--h: 62"><em>0.617</em><span>plan 覆盖率</span></div>
+        <div class="bar" style="--h: 100"><em>1.00</em><span>组合合法率</span></div>
+        <div class="bar" style="--h: 84"><em>0.850</em><span>能力覆盖率</span></div>
+        <div class="bar" style="--h: 100"><em>1.00</em><span>缺口处理率*</span></div>
+      </div>
+      <p class="chart-note"><b>不是成功率。*缺口处理率是宽松定义（只要报告 missing/需安装即算诚实处理），不是「识别出正确缺口」。</b> installLoad 0.725：计划中约 72.5% 技能需先安装；hintRecall 0.367 仍是短板；contextTokens mean 176.9 / p95 230；延迟为单机快照，不对外作 SLA。方法与基线以 <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/benchmark.md">docs/benchmark.md</a> 为准。</p>
+    </div>
+  </section>
+
+  <section class="section wrap" id="domains">
+    <h2>12 个领域，每个都有任务 playbook</h2>
+    <p class="sub">领域包用真实技能名与 held-out 用例构建；覆盖率结果进 benchmark，不在这里手写数字。<span class="en">12 domain packs, each with a playbook, real skill candidates, and held-out cases.</span></p>
+    <div class="domains">
+      <div class="domain"><b>视频 / 创意</b><span class="en">video &amp; creative</span><span>分镜、动效、mp4</span></div>
+      <div class="domain"><b>Office</b><span class="en">documents</span><span>docx / pptx / xlsx / pdf</span></div>
+      <div class="domain"><b>软件工程</b><span class="en">software</span><span>代码、测试、PR、修复</span></div>
+      <div class="domain"><b>数据</b><span class="en">data</span><span>表格、分析、图表</span></div>
+      <div class="domain"><b>研究</b><span class="en">research</span><span>综述、来源清单</span></div>
+      <div class="domain"><b>营销</b><span class="en">marketing</span><span>文案、投放、竞品</span></div>
+      <div class="domain"><b>设计</b><span class="en">design</span><span>UI、海报、品牌</span></div>
+      <div class="domain"><b>安全</b><span class="en">security</span><span>审计、风险清单</span></div>
+      <div class="domain"><b>教育</b><span class="en">education</span><span>课程、讲解、题解</span></div>
+      <div class="domain"><b>商业</b><span class="en">business</span><span>计划、财务模型</span></div>
+      <div class="domain"><b>效率</b><span class="en">productivity</span><span>流程、自动化、模板</span></div>
+      <div class="domain"><b>AI</b><span class="en">AI</span><span>prompt、agent、RAG</span></div>
+    </div>
+    <p class="note">领域映射来自技能元数据的能力画像（<code>library/capability-index.json</code>），不是人类专家认证；跨领域任务先看 assumptions 再执行。</p>
   </section>
 
   <section class="section wrap" id="compare">
-    <h2>和同类项目比：我们只比重叠的那一维</h2>
-    <p class="sub">它们在自己擅长的方向上更强——skills.sh 的生态规模、Claude Code 的宿主整合、各 DSH 插件的目录管理。这里只比较「选 skill、记住效果」这一层。</p>
+    <h2>和技能市场 / 管理器比：只补驾驶舱这一层</h2>
+    <p class="sub">
+      它们在生态规模、跨宿主、企业治理上更强。我们只比较与本插件重叠的维度，口径来自公开文档（2026-10）。
+      <span class="en">We only compare the layer we share, based on public docs from Oct 2026; competitors are stronger in ecosystem scale and multi-host support.</span>
+    </p>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th scope="col">维度</th>
-            <th scope="col">本插件</th>
+            <th scope="col">本插件（v5）</th>
             <th scope="col">skills.sh 生态</th>
             <th scope="col">Claude Code plugins</th>
-            <th scope="col">DSH 内技能管理插件</th>
+            <th scope="col">DSH 技能管理插件</th>
           </tr>
         </thead>
         <tbody>
           <tr><td>主形态</td><td>DSH 右侧抽屉，单宿主深做</td><td>跨 agent 市场 + CLI</td><td>官方插件市场 + skills</td><td>目录 / 搜索 / 启停 / 安装</td></tr>
-          <tr><td>推荐 + 理由</td><td><span class="yes">上下文 Top 4 + 六类理由</span></td><td class="no">按安装量排行</td><td class="no">按 description 自动加载</td><td class="no">以列表、搜索为主</td></tr>
-          <tr><td>正在使用</td><td><span class="yes">真实工具调用，实时</span></td><td class="no">—</td><td class="no">历史频次 / Last used</td><td class="no">部分有使用记录</td></tr>
-          <tr><td>Plan / Immersive</td><td><span class="yes">skill 编排级双模式</span></td><td class="no">—</td><td class="no">Plan 属权限模式</td><td class="no">—</td></tr>
-          <tr><td>经验 → 自进化</td><td><span class="yes">经验 + 反馈归因 + 权重学习 + 探索</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">少数有使用记录</td></tr>
-          <tr><td>安装前安全</td><td><span class="yes">本地启发式扫描 + 信任 / 许可证</span></td><td>合作方审计</td><td>市场分层 + 来源校验</td><td>部分有 trust score</td></tr>
-          <tr><td>更新 / 回滚</td><td><span class="yes">diff + 备份 + 一键回滚</span></td><td>lockfile + update</td><td>市场内更新</td><td>部分有更新检查</td></tr>
+          <tr><td>推荐 + 理由</td><td><span class="yes">上下文 Top 4 + 结构化理由</span></td><td class="no">按安装量排行</td><td class="no">按 description 自动加载</td><td class="no">以列表、搜索为主</td></tr>
+          <tr><td>正在使用</td><td><span class="yes">真实工具调用，实时</span></td><td class="no">—</td><td class="no">历史频次</td><td class="no">部分有使用记录</td></tr>
+          <tr><td>任务拆解 + 组队</td><td><span class="yes">v5：阶段 / 交接 / 冲突 / 缺口</span></td><td class="no">无用户可见能力</td><td class="no">有通用 plan 模式；无 skill 组队</td><td class="no">无</td></tr>
+          <tr><td>按缺口造技能</td><td><span class="yes">v5：草稿 + eval + 扫描，不落盘</span></td><td class="no">作者自己写</td><td class="no">作者侧 skill-creator</td><td class="no">无</td></tr>
+          <tr><td>效率可证</td><td><span class="yes">estimate + 可复跑 benchmark</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">无</td></tr>
+          <tr><td>经验 → 自进化</td><td><span class="yes">反馈归因 + 权重学习 + 10% 探索</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">少数有使用记录</td></tr>
+          <tr><td>安装前安全</td><td><span class="yes">本地启发式扫描 + 高风险拒绝</span></td><td>合作方审计</td><td>市场分层 + 来源校验</td><td>部分有 trust score</td></tr>
           <tr><td>数据 / 遥测</td><td><span class="yes">全本地，无遥测</span></td><td>安装遥测默认开启（可关）</td><td>使用数据不回传作者</td><td>本地</td></tr>
         </tbody>
-        <caption>口径：竞品信息来自其公开文档 / README（2026-10 整理），可能随版本变化；表格只比较与本插件重叠的维度。「同时具备推荐 + 正在使用 + 双模式 + 经验反馈」的判断来自我们对 28 个相关项目的公开资料梳理，属自报口径，欢迎指正。</caption>
+        <caption>口径：竞品信息来自其公开文档 / README（2026-10 整理），可能随版本变化；表格只比较与本插件重叠的维度。v5 新能力的实现状态见 docs/claims.md；「同时具备」类判断属自报口径，欢迎指正。</caption>
       </table>
     </div>
   </section>
 
-  <section class="section wrap" id="how">
-    <h2>越用越好用：反馈 → 归因 → 学习</h2>
-    <p class="sub">推荐权重不是写死的常数。每次采用 / 好评 / 差评都会记到「产生这条推荐的 top 理由类型」上，然后小步微调；探索配额保证系统仍然愿意试新东西。</p>
-    <div class="mech">
-      <article class="card">
-        <h3>记录信号</h3>
-        <p>复制 <code>/skill</code> 记为采用，👍 / 👎 记为质量反馈；经验条目的反馈也会归因到该技能上次推荐的理由类型。</p>
-      </article>
-      <article class="card">
-        <h3>归因学习</h3>
-        <p>每累计 10 条反馈评估一次：某类理由命中率 ≥ 70% 时权重 ×1.1，≤ 40% 时 ×0.9（样本 ≥ 8、步长 10%、有上下界）。</p>
-      </article>
-      <article class="card">
-        <h3>探索与护栏</h3>
-        <p>默认 10% 的推荐位留给平时很少被推荐的技能；长期没人采用会自动调低，采用率高会自动调高（0–30%）。全程本地、无模型调用，历史可回滚 / 重置。</p>
-      </article>
-    </div>
-    <p class="flow">
-      反馈 <span class="mono">adopt / good / bad</span> ──归因──► 权重微调 ──► 排序变化 ──► 经验记忆与 <span class="mono">10%</span> 探索持续采样 ──► 回到反馈
-    </p>
-  </section>
-
   <section class="section wrap" id="install">
-    <h2>3 行开始</h2>
-    <p class="sub">在任意 DeepSeek Harness 会话里让 Agent 执行；安装是 profile 级的，所有会话生效。需要 <code>danger-full-access</code> 或审批。</p>
+    <h2>安装（v5.0.0 发布后）</h2>
+    <p class="sub">在任意 DeepSeek Harness 会话里让 Agent 执行；profile 级安装，需要 danger-full-access 或审批。发布前请用本地目录方式。<span class="en">Install in any DSH session; before v5.0.0 is tagged, use the local-path method.</span></p>
     <div class="install-grid">
       <div class="code-card">
-        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v2.1.0">复制</button>
-        <div class="label">推荐 · GitHub tag（现在可用）</div>
-        <pre>plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v2.1.0</pre>
+        <button class="copy" type="button" data-copy="npx dsh-ronge-adaptive-skill-archive">复制</button>
+        <div class="label">推荐第一步 · npx 体检助手（不装东西）</div>
+        <pre>npx dsh-ronge-adaptive-skill-archive
+# 体检：npx dsh-ronge-adaptive-skill-archive doctor</pre>
       </div>
       <div class="code-card">
-        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@2.1.0">复制</button>
-        <div class="label">npm（发布后可用）</div>
-        <pre>plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@2.1.0</pre>
+        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.0">复制</button>
+        <div class="label">npm · v5.0.0 发布后可用</div>
+        <pre>plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.0</pre>
+      </div>
+      <div class="code-card">
+        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.0.0">复制</button>
+        <div class="label">GitHub tag · 可审源码</div>
+        <pre>plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.0.0</pre>
       </div>
       <div class="code-card">
         <button class="copy" type="button" data-copy="plugin_manager install_bundle target=&quot;/absolute/path/to/dsh-ronge-adaptive-skill-archive&quot;">复制</button>
-        <div class="label">本地目录（开发 / 离线审源码）</div>
+        <div class="label">本地目录 · 发布前 / 开发</div>
         <pre>plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"</pre>
       </div>
-      <div class="card">
-        <h3>安装后</h3>
-        <p>① 打开任意会话 → 右上角「技能」→ 右侧抽屉。<br>② 顶部切换「计划模式 / 沉浸模式」。<br>③ 底部「新建技能」写入 <code>~/.dsh/skills/</code>，下一会话可见。</p>
-        <p class="note">从 v1.x 升级：先移除旧 bundle，再装 v2.1.0；旧数据目录会自动复制并保留。</p>
-      </div>
+    </div>
+    <div class="grid-3" style="margin-top:18px;">
+      <article class="card"><h3>安装后</h3><p>刷新页面 → 右上角「技能」→ 右侧抽屉；顶部切换计划 / 沉浸模式。DSH 重启后加载新的 Host 模块。</p></article>
+      <article class="card"><h3>升级</h3><p>v3.x 直接覆盖安装 v5.0.0，数据与经验沿用；v1/v2 旧包名先移除旧 bundle，旧数据目录会自动合并。</p></article>
+      <article class="card"><h3>兼容性</h3><p>已测 DSH Desktop 0.2.1-rc.3；v5.0.0 的 plan/compose/draft 工具与端点按 docs/claims.md 复跑（115/115 测试、60 条 benchmark、20/20 Host E2E、27/27 UI E2E）。</p></article>
     </div>
   </section>
 
   <section class="section privacy">
     <div class="wrap">
-      <h2>边界写清楚，比承诺更可信</h2>
-      <p class="sub">这是一个本地优先的个人工具，不是托管服务。</p>
+      <h2>安全说明：把边界写在前面</h2>
+      <p class="sub">这是一个本地优先的个人工具，不是托管服务，也不是安全产品。<span class="en">Local-first by design, not a hosted service and not a security product.</span></p>
       <div class="grid-3">
         <article class="card">
-          <h3><span class="tag">本地</span> 零网络推荐</h3>
-          <p>推荐、安全扫描、自进化全部在本机完成，不调外部模型、不上传、无遥测。只读会话最近内容和项目文件名。</p>
+          <h3><span class="tag">本地</span>零遥测</h3>
+          <p>推荐、拆解、组队、草稿、扫描、自进化全部在本机完成；不调用外部模型、不上传、无遥测。只读当前会话最近内容与项目文件名。</p>
         </article>
         <article class="card">
-          <h3><span class="tag">诚实</span> 扫描是提示，不是保证</h3>
-          <p>安装前安全检查是启发式静态扫描，无法覆盖全部攻击面；安装前仍应自己预览全文。信任等级与许可证只是辅助信号。</p>
+          <h3><span class="tag">诚实</span>扫描不是保证</h3>
+          <p>安装前安全扫描是启发式：能发现 shell 执行、管道下载、动态解码、提示注入、凭据路径、过宽 allowed-tools 等模式，但覆盖不了全部攻击面。不宣称「无漏洞」。</p>
         </article>
         <article class="card">
-          <h3><span class="tag">克制</span> 不越权</h3>
-          <p>只从 raw.githubusercontent.com 拉 SKILL.md（≤ 256 KiB），不自动拉脚本、不覆盖已有 skill；MCP 目录只发现不安装；名称白名单拒绝路径穿越。</p>
+          <h3><span class="tag">克制</span>不越权</h3>
+          <p>只从 raw.githubusercontent.com 拉 SKILL.md（≤ 256 KiB），不自动拉脚本、不覆盖已有技能；高风险默认拒绝；draft 不写盘、不执行；DSH 工具没有 install / force。</p>
         </article>
       </div>
     </div>
@@ -430,22 +519,23 @@
   <footer class="wrap">
     <div class="foot-grid">
       <div>
-        <p style="margin:0 0 6px;font-weight:700;font-size:1.05rem;">荣哥技能卷轴收藏馆 · Adaptive Skill Cockpit</p>
-        <p style="margin:0;color:var(--muted);font-size:14px;">DeepSeek Harness 插件 · MIT · 单宿主深度优先</p>
+        <p style="margin:0 0 6px;font-weight:700;font-size:1.05rem;">荣哥技能卷轴收藏馆 · Adaptive Skill Cockpit v5</p>
+        <p style="margin:0;color:var(--muted);font-size:14px;">DeepSeek Harness 原生插件 · MIT · 本地优先 · 12 领域</p>
       </div>
       <a class="star" href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive">★ 在 GitHub 点个 Star</a>
     </div>
-    <div class="foot-links" style="margin-top:26px;">
+    <div class="foot-links" style="margin-top:24px;">
       <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive">仓库</a>
       <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive#readme">README</a>
-      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/CHANGELOG.md">CHANGELOG</a>
-      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/issues">Issues</a>
+      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/claims.md">声明与证据</a>
+      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/attribution.md">数据归属</a>
+      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/eval.md">评测口径</a>
+      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/docs/benchmark.md">效率 benchmark</a>
       <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/LICENSE">MIT License</a>
-      <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/blob/main/CONTRIBUTING.md">贡献指南</a>
     </div>
     <p class="fine">
-      页面是单文件静态页（内联 CSS / 无外部依赖）。截图来自 v2.1.0 版本；功能与数字以仓库 README、CHANGELOG 为准。
-      这不是通用技能市场，也不做多宿主、企业治理或云端同步。
+      单文件静态页（内联 CSS / 无外部依赖），浅色 / 深色 / 响应式。效率图为占位，等 docs/benchmark.md 生成真实数据后替换；功能与数字以仓库 README、CHANGELOG、docs/claims.md 为准。
+      不刷星、不承诺榜单；这不是通用技能市场，也不做多宿主、企业治理或云端同步。
     </p>
   </footer>
 </main>

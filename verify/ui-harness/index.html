@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>skill-studio UI harness</title>
+<style>body{margin:0;padding:12px;background:#111;color:#eee;font-family:system-ui,sans-serif}#root{position:relative;min-height:600px}</style>
+</head>
+<body>
+<div id="root"></div>
+<pre id="results" data-results="[]"></pre>
+<script>
+  function __uiError(message) {
+    const payload = { results: [{ name: 'boot', ok: false, error: String(message) }], calls: [], clipboard: null }
+    const el = document.getElementById('results')
+    el.setAttribute('data-results', JSON.stringify(payload))
+    el.textContent = JSON.stringify(payload)
+  }
+  window.addEventListener('error', function (event) { __uiError(event.message || 'window error') })
+  window.addEventListener('unhandledrejection', function (event) { __uiError((event.reason && event.reason.message) || event.reason || 'unhandled rejection') })
+</script>
+<script src="./vendor/react.development.js"></script>
+<script src="./vendor/react-dom.development.js"></script>
+<script>window.__ModuleLoader__ = { load(def) { window.__SKILL_DEF = def } }</script>
+<script src="./client.js"></script>
+<script src="./test.js"></script>
+</body>
+</html>

@@ -3,164 +3,233 @@
 </p>
 
 <h1 align="center">荣哥技能卷轴收藏馆</h1>
-<h3 align="center">Ronge's Adaptive Skill Cockpit（沉浸式体验版）</h3>
+<h3 align="center">Ronge's Adaptive Skill Cockpit · v5</h3>
 
-<p align="center"><b>不是「最大的技能库」，而是「最懂你此刻该用哪个技能的驾驶舱」——本地、可解释、会记住效果。</b></p>
+<p align="center"><b>把「该用哪个技能」升级成「拆任务 → 组队 → 造技能 → 验效率」的 DSH 原生技能驾驶舱。</b></p>
 
 <p align="center">
   <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml"><img src="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/version-3.0.0-blue.svg" alt="version 3.0.0">
-  <a href="https://www.npmjs.com/package/dsh-ronge-adaptive-skill-archive"><img src="https://img.shields.io/npm/v/dsh-ronge-adaptive-skill-archive?label=npm" alt="npm"></a>
+  <img src="https://img.shields.io/badge/version-5.0.0-blue.svg" alt="version 5.0.0">
+  <img src="https://img.shields.io/badge/12-domains-8a6d2f.svg" alt="12 domains">
   <img src="https://img.shields.io/badge/DeepSeek%20Harness-plugin-1f6feb.svg" alt="DeepSeek Harness plugin">
 </p>
 
 <p align="center">
-  <a href="https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/">🌐 在线落地页 / Landing page</a>
+  <a href="https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/">在线落地页 / Landing page</a>
+  ·
+  <a href="docs/claims.md">声明与证据</a>
+  ·
+  <a href="docs/eval.md">评测口径</a>
+  ·
+  <a href="docs/benchmark.md">效率 benchmark</a>
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bugtakue/dsh-ronge-adaptive-skill-archive/main/docs/panel.png" width="360" alt="技能面板：卷轴馆 tab，6,399 条 GitHub 公开 SKILL.md 索引">
+  <img src="https://raw.githubusercontent.com/bugtakue/dsh-ronge-adaptive-skill-archive/main/docs/panel.png" width="360" alt="技能面板：推荐、组队计划、经验与自进化">
   <br>
-  <sub>会话右侧的「技能」抽屉：6,399 条公开 SKILL.md 索引、上下文推荐、正在使用、经验与自进化都在这里。</sub>
+  <sub>会话右侧的「技能」抽屉：推荐 / 组队计划 / 经验 / 安全与更新，都在一个面板里。</sub>
 </p>
 
-## 30 秒开始
+> **v5.0.0 发布说明**：本 README 是 v5.0.0 对外稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-29 快照）。
+
+## 为什么需要 v5
+
+市面上大多数 skill 工具停在「货架」：列出技能、搜索、安装、更新。技能多了之后，真正的问题变成：
+
+1. **这个任务该拆成几步？** 一句话里可能同时有 Office 交付物和视频交付物。
+2. **哪几个技能该组队、按什么顺序、谁交给谁？** 单点推荐解决不了多技能协作。
+3. **找不到合适技能时怎么办？** 缺的是「纪要模板」这类具体能力，不是再装一个泛用技能。
+4. **做完到底省了什么？** 需要可复跑的估算与 benchmark，而不是感觉变快了。
+
+v5 的驾驶舱把这条链路补全：
+
+```
+选（推荐）→ 拆（decompose）→ 组（compose）→ 造（draft）→ 量（efficiency estimate）
+      ↑                                                        │
+      └────────────── 经验 / 反馈 / 自进化 持续回流 ◄───────────┘
+```
+
+---
+
+## 30 秒安装
 
 ```bash
 # 1) 先跑 npx 助手：检查环境 + 打印这台机器该用的安装命令（不装任何东西）
 npx dsh-ronge-adaptive-skill-archive
 #    想先体检：npx dsh-ronge-adaptive-skill-archive doctor
 
-# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0
+# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.0.0 发布后可用）
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.0
 
 # 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
 
-> `npx` 不是 npm 的替代品（它本身也从 npm registry 取包），而是「装之前先看一眼」的安装助手：不修改 profile、不联网做任何写入，只打印命令和检查 Node / profile / 数据目录 / 已装版本。**没有 npm 也能装**：用 GitHub tag 或本地目录路径，见[安装](#安装)。
+> `npx` 是安装助手，不是替代 npm：它从 npm registry 取包，但**不修改 profile**，只检查 Node / profile / 数据目录 / 已装版本并打印安装命令。没有 npm 也能装：GitHub tag 或本地目录，见[安装](#安装)。
 
 ---
 
-## 为什么是「驾驶舱」而不是「货架」
+## 3 分钟 demo：plan → compose → draft
 
-大多数 skill 工具回答的是「有哪些 skill、怎么装」。这个插件回答三个更贴近当下任务的问题：
+一个**跨领域、多意图**的真实任务：*「把这段会议录音整理成可交付的会议纪要 docx，再做一个 30 秒宣传片。」*
+预期拆成 Office + 视频两条线，并在缺少「纪要模板」技能时现场造一个草稿。
 
-1. **现在这个项目、这句话，适合用哪个 skill？** —— 结合会话最近内容 + 项目文件名，给出 Top 4 和匹配理由。
-2. **我现在到底在用哪些 skill？** —— 从真实的 `skill` 工具调用里读，不靠猜。
-3. **哪些做法真的有效？** —— 任务完成后写入经验，你的 👍/👎 会反过来教推荐器。
+### 0:00–0:40 打开驾驶舱
 
-它不替代 Agent 自己的 skill catalog，只是把「该用哪个」变成一眼可见，并让系统随使用变准。
+安装后打开任意会话，点右上角「技能」，切换到**计划模式**（先给方案、问过你再执行）。面板里能看到当前推荐、推荐理由和「正在使用」。
 
-### 和同类项目比
+### 0:40–1:40 Step 1 · plan：拆任务
 
-> 口径：竞品信息来自其公开文档/README（2026-10 整理），可能随版本变化；本行只比较与本插件重叠的维度。它们在生态规模、跨宿主、企业治理上远超本插件——那是它们的主场，不是我们的。**这是单宿主（DeepSeek Harness）的深度插件，不是通用技能市场。**
+在会话里让 Agent 调用 DSH 原生工具 `skill_archive_plan`：
 
-| 维度 | 本插件 | skills.sh 生态 | Claude Code plugins | DSH 内技能管理插件 |
+```text
+用 skill_archive_plan 拆解这个任务，先不要执行：
+「把这段会议录音整理成可交付的会议纪要 docx，再做一个 30 秒宣传片。」
+```
+
+示意输出（字段以实际版本为准）：
+
+```text
+目标：会议录音 → 纪要 docx + 30 秒宣传片
+主意图：Office（会议纪要） / 次意图：视频（宣传片）
+交付物：minutes.docx, teaser.mp4
+约束：宣传片 30 秒、竖屏 9:16、纪要引用原话需带时间戳
+子任务：转写 → 纪要 → 校验 → 分镜 → 素材 → 渲染 → 交付
+缺口：没有「会议纪要模板」能力 → 需要 draftSkill
+假设：录音已在本机；宣传片素材从会议录屏截取
+置信度：中等偏低（含 2 条假设，需你确认）
+```
+
+这一步只拆解，**不执行、不装技能、不写文件**。
+
+### 1:40–2:30 Step 2 · compose：组队
+
+```text
+用 skill_archive_compose 给上面的任务组队：2–5 个技能，标出顺序、交接、缺口和冲突。
+```
+
+示意输出（节选）：
+
+| 阶段 | 角色 | 技能 | 为什么 | 交给下一步 |
+|---|---|---|---|---|
+| 1 | 生产 | `office-docx` | 生成可交付的 .docx 纪要 | 文稿文件 |
+| 2 | 校验 | `office-render` | 渲染检查版式 / 分页 | 校验结论 |
+| 3 | 生产 | `beat-promo-director` | 30 秒卡点分镜 | 分镜表 |
+| 4 | 生产 | `media-use` | 素材、配乐、剪辑合规 | 素材包 |
+| — | 缺口 | `meeting-minutes-template` | 没有现成技能 → `draftNeeded: true` | 进入 Step 3 |
+
+默认 **sequential**；检测到校验意图时升级 **review-gate**（Office 交付物先过校验，再做视频）；两条线可以并行时给出并行段。`compose` 同时返回 assumptions / conflicts / fallback，并标注「这是计划，不是执行结果」。
+
+### 2:30–3:00 Step 3 · draft：造技能
+
+```text
+用 skill_archive_draft_skill 补上「会议纪要模板」这个缺口：
+只给我 SKILL.md 草稿、eval cases、lint 和安全扫描结果，不要写盘，不要执行。
+```
+
+示意输出：
+
+- `SKILL.md` 草稿：frontmatter（name / description / whenToUse）+ 步骤 + I/O + 质量检查 + 失败处理 + 示例；
+- `evalCases`：3–5 条「什么任务该触发它」的用例；
+- `lint`：kebab 名称、描述长度、结构完整性；
+- `safety`：本地启发式扫描（shell / 网络 / 凭据 / 过度授权）；
+- **不写盘、不执行**：你确认后自己保存到 `~/.dsh/skills/<name>/SKILL.md`，或在面板点「新建技能」。
+
+> 整个 demo 只产生**计划和草稿**，不会自动装技能、不会自动跑脚本。想让 Agent 真正执行，回到计划模式确认，或切沉浸模式（不问直接执行，风险自负）。
+
+---
+
+## 和技能市场 / 技能管理器比：我们只补「驾驶舱」这一层
+
+> 口径：竞品信息来自其公开文档 / README（2026-10 整理），可能随版本变化；表格只比较与本插件重叠的维度。它们在生态规模、跨宿主、企业治理上远超本插件——那是它们的主场。**这是单宿主（DeepSeek Harness）的深度插件，不是通用技能市场。**
+
+| 维度 | 本插件（v5） | skills.sh 生态 | Claude Code plugins | DSH 内技能管理插件 |
 |---|---|---|---|---|
 | 主形态 | DSH 右侧抽屉，单宿主深做 | 跨 agent 市场 + CLI | 官方插件市场 + skills | 目录 / 搜索 / 启停 / 安装 |
-| 推荐 + 理由 | 会话上下文 → Top 4，附名称/关键词/类别/经验/手感理由 | 按安装量排行，无用户可见理由 | 模型按 `description` 自动加载，无用户可见排序 | 以列表、搜索为主 |
-| 正在使用 | 真实 `skill` 工具调用，实时显示 | — | `/skill-doctor` 历史频次、Last used | 部分有使用记录 |
-| Plan / Immersive | **skill 编排级**双模式：先问 = 计划，不问 = 沉浸 | — | Plan 属权限模式，不针对 skill 选择 | — |
-| 经验 → 自进化 | 经验记忆 + 👍/👎 归因 + 本地权重学习 + 探索配额 | 安装量统计 | skill-creator 面向作者做评估 | 少数有使用记录，无权重学习 |
-| 安装前安全 | 本地启发式扫描 + 信任分级 + 许可证 | 合作方审计（Vercel 公布） | 市场分层 + 来源校验 + sha256 | 部分有 trust score |
-| 更新 / 回滚 | 内容 diff + 更新前备份 + 一键回滚 | lockfile + update | 市场内更新 | 部分有更新检查，回滚少见 |
-| 数据 / 遥测 | **全本地，无遥测** | 安装遥测默认开启（可关） | 使用数据不回传作者 | 本地 |
-| 规模口径 | 6,399 条 GitHub 公开 `SKILL.md` 可复核快照（2026-10-28） | 官方博客称 69,000+；站点另有 1.5M 级数字，口径未注明 | 官方 marketplace 精选，未公布总量 | 各家不同 |
+| 推荐 + 理由 | 会话上下文 → Top 4，附结构化理由 | 按安装量排行，无用户可见理由 | 按 `description` 自动加载 | 以列表、搜索为主 |
+| 正在使用 | 真实 `skill` 工具调用，实时 | — | `/skill-doctor` 历史频次 | 部分有使用记录 |
+| Plan / Immersive | skill 编排级双模式 | — | Plan 属权限模式 | — |
+| **任务拆解 + 技能组队** | **v5：decompose → compose（阶段 / 交接 / 冲突 / 缺口）** | 无用户可见能力 | 有通用 plan 模式；无 skill 组队 | 无 |
+| **按缺口造技能** | **v5：draft（SKILL.md + eval cases + lint + 安全扫描，不写盘）** | 无（作者自己写） | `skill-creator` 面向作者 | 无 |
+| **效率可证** | **v5：estimate + 可复跑 benchmark（docs/benchmark.md）** | 安装量统计 | 作者侧评估 | 无 |
+| 经验 → 自进化 | 经验记忆 + 👍/👎 归因 + 权重学习 + 10% 探索 | 安装量统计 | 作者侧评估 | 少数有使用记录 |
+| 安装前安全 | 本地启发式扫描 + 信任分级 + 许可证 | 合作方审计（Vercel 公布） | 市场分层 + 来源校验 | 部分有 trust score |
+| 更新 / 回滚 | 内容 diff + 备份 + 一键回滚 | lockfile + update | 市场内更新 | 部分有更新检查 |
+| 数据 / 遥测 | 全本地，无遥测 | 安装遥测默认开启（可关） | 使用数据不回传作者 | 本地 |
+| 规模口径 | 6,399 条 GitHub 公开 `SKILL.md` 元数据快照（2026-10-28） | 官方博客称 69,000+ / 站点另有 1.5M 级数字 | 官方精选，未公布总量 | 各家不同 |
 
-> 「四项同时具备」的判断来自我们对 28 个相关项目的公开资料梳理（自报口径，欢迎 issue 指正）；如果你发现有项目已做到，告诉我们，我们会更新这张表。
-
----
-
-## 在其他智能体里用（Claude Code / Codex / Cursor）
-
-同一个推荐 + 经验 + 自进化引擎，通过 **MCP（stdio）** 接入任意支持 MCP 的智能体：
-
-```bash
-# Claude Code
-claude mcp add ronge -- npx -y dsh-ronge-adaptive-skill-archive mcp
-
-# Codex: ~/.codex/config.toml
-# [mcp_servers.ronge]
-# command = "npx"
-# args = ["-y", "dsh-ronge-adaptive-skill-archive", "mcp"]
-
-# Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
-```
-
-提供 `recommend_skills`（已装技能推荐）、`discover_skills`（从 6,399 条索引找未装技能，按本地 256 维哈希向量 + 中英概念 + 信号分排序）、`search_skills`、`scan_skill_text`、`install_skill`（高风险拒绝）、`record_outcome`、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
-
-## 核心功能
-
-### 当前组合通知 + 只看未装
-
-- 面板顶部常驻「当前组合」：运行中的 skill/skill 组合、平均评级、为什么切到这个组合（推荐理由归因）。
-- 组合切换时右下角弹出小通知（即使面板关着也会轮询提醒），点一下打开面板。
-- 卷轴馆默认「只看未安装」，并新增「库里还没装的」区块：按整段会话从 6,399 条索引里挑 3 个未安装技能，带评分/预览/安装。
-- **更优技能自动升级（默认关闭）**：推荐器会对比「已装技能」和「库里未装技能」；发现明显更匹配的未装技能时显示「发现更优的未装技能」（命中关键词、完整度、相比已装的证据）。自动安装需手动开启，只对 `autoSafe` 且低/中风险候选生效，高风险一律拒绝。
-
-### 上下文推荐（带理由）
-
-读取当前会话**最近 8 条用户消息**和**项目根最多 80 个文件名**，对技能的 `name + description + whenToUse` 做本地打分：中英文 token 重叠 + 技能名命中 + 类别线索 + 经验/手感加权，只返回得分 > 0 的 **Top 4**。每条都带结构化理由：命中的名称、关键词、类别、经验次数、「手感」或「探索」。面板打开时每 10 秒静默刷新，不打断输入。
-
-### 正在使用 / 最近使用
-
-从会话真实的 `skill` 工具调用读取当前 turn 正在用的技能；空闲时显示最近使用。不是分析推测，是工具调用事实。
-
-### 计划模式 / 沉浸模式
-
-| 模式 | 行为 |
-|---|---|
-| **计划模式**（默认） | 下一次任务开始前先给方案和 1–3 个推荐 skill，**先问你确认**，确认后再执行 |
-| **沉浸模式** | **不询问**，按上下文自动匹配并组合 1–3 个 skill 执行，结束时说明用了哪些、为什么 |
-
-两种模式都是 prompt 级默认行为，不是硬编码固定管线（诚实边界，见文末）。
-
-### 经验记忆 + 反馈
-
-主会话任务完成、且用了至少一个 skill 时，自动写入一条经验：任务、Skills、结果摘要、耗时、会话。人读的写在 `experience.md`，机读的写在 `experience.json`。推荐分里会加 `min(4, uses × 0.8)`，好评再加、差评再减——用得越稳的 skill 越容易被优先想到。支持跨会话成功率、平均耗时、连续失败，以及经验 JSON 导出/导入。
-
-### 自进化：10% 探索 + 权重学习
-
-推荐权重不是写死的常数，而是**可学习参数**：反馈会被归因到「产生这条推荐的 top 理由类型」，然后以小步长、有上下界地微调。探索配额保证系统不会「越推荐越窄」：**默认 10% 的推荐位给平时很少被推荐的技能；如果探索长期没人采用会自动调低，采用率高会自动调高（可调范围 0–30%）**。完整参数见下一节。
-
-### 安装前安全扫描
-
-预览/安装任何第三方 `SKILL.md` 前，在本机跑一遍启发式静态扫描：shell 执行、`curl | bash`、动态解码（eval/base64）、提示注入语句、网络访问、凭据路径、文件写入、过宽 `allowed-tools`。输出低/中/高风险与命中行号，并展示来源信任级别（official / verified / community / local / unknown）和 `license` 字段。**只读文本，不联网、不上传、不执行。面板安装、更新中心与 MCP `install_skill` 一致：高风险默认拒绝，必须显式 force 才允许写入/更新。**扫描规则仍是启发式正则（含 shell/管道执行/混淆载荷/破坏性命令/全局安装/外传地址等），不是安全保证。
-
-### 更新 diff / 更新全部 / 回滚
-
-`skills-lock.json` 记录每个已安装 skill 的来源、repo、SHA-256、信任、许可证与时间戳。检查更新时返回**内容 diff**（新增/删除/改动行）；支持单条更新、一键全部更新，更新前自动备份到 `backups/<skill>/<timestamp>.md`，随时回滚到上一版。
-
-### 6,399 条卷轴馆
-
-GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,399 条，其中 5,398 条带描述，14 个分类**（AI 2,070 / 编程 789 / 设计 663 / 数据 512 / 其他 1,662 / 视频 163 / 写作 155 / 效率 122 / 办公 86 / 营销 53 / 安全 48 / 研究 41 / 商业 24 / 教育 11）。按分类、最低评分、关键词筛选，预览全文后安装。口径写清楚：这不是「全网所有 skill」，只覆盖 GitHub 上公开可检索到的 `SKILL.md`，且不存正文。
-
-### 小功能
-
-中英双语技能简介、主任务完成提示音（子智能体/fork 不响）、新建 Skill 到 `~/.dsh/skills/`、更新中心（检查已装技能远程更新、diff、更新/回滚）。
+> 「任务拆解 / 组队 / 造技能 / 效率估算」是 v5.0.0 新增，实现状态见 [docs/claims.md](docs/claims.md)；「四项同时具备」基于我们对 28 个相关项目 2026-10 公开资料的梳理，属自报口径，欢迎 issue 指正。
 
 ---
 
-## 越用越好用：机制与参数
+## 12 领域覆盖
 
-```
-你的反馈（复制 /skill = adopt，👍 / 👎）──归因到理由类型──► 权重微调 ──► 下一次排序更准
-        ▲                                                        │
-        └──────────── 经验记忆 + 10% 探索配额持续采样 ◄───────────┘
-```
+v5 的领域包覆盖 12 个领域，每个领域有任务 playbook、真实技能候选与 held-out 用例；覆盖率、组合合法率、上下文成本等结果统一记录在 [docs/benchmark.md](docs/benchmark.md)。
 
-| 信号 | 记录位置 | 影响 |
+| 领域 | 典型交付物 | 会触发它的任务（示例） |
 |---|---|---|
-| 复制 `/skill`（采用） | `rec-feedback.json` + `kindBySkill` | 归因到产生该推荐的 top 理由类型 |
-| 👍 / 👎 | 同上，另加类别与技能「手感」 | 同类理由、类别权重、该技能亲和度一起学习 |
-| 经验条目 👍 / 👎 | `evolution.json` | 通过上次推荐归因，不污染无关技能 |
+| 视频 / 创意 | mp4、分镜、动效 | 做一条 30 秒卡点宣传片 |
+| Office | docx / pptx / xlsx / pdf | 把录音整理成带时间戳的纪要 |
+| 软件工程 | 代码、测试、PR、修复 | 排查失败测试并补回归 |
+| 数据 | 表格、分析、图表 | 分析这批 CSV 的异常并出图 |
+| 研究 | 报告、综述、来源清单 | 收集 10 篇资料做对比综述 |
+| 营销 | 文案、投放、竞品分析 | 给新品写一版小红书文案 |
+| 设计 | UI、海报、品牌 | 给落地页做一版视觉稿 |
+| 安全 | 审计、风险清单 | 检查这个 skill 能不能装 |
+| 教育 | 课程、讲解、题解 | 把这个概念讲给新人 |
+| 商业 | 商业计划、财务模型 | 做一版订阅制收入模型 |
+| 效率 | 流程、自动化、模板 | 自动整理周报与待办 |
+| AI | prompt、agent、RAG | 给 Agent 设计一套工具链 |
 
-- **评估节奏**：每累计 10 条反馈评估一次；任一理由类型样本 ≥ 8 才调整，冷启动完全不动。
-- **权重默认值**：名称 8 / 关键词 1 / 经验 1 / 类别 0.6 / 完成度 1；命中率 ≥ 70% 时 ×1.1、≤ 40% 时 ×0.9（步长 10%），带上下界（如名称 4–14、类别 0.2–1.5）。
-- **类别权重**：视频、办公、Harness、通用四类，范围 0.5–2，按你的真实好评/差评调整。
-- **探索配额**：默认 10%，范围 0–30%。命中时把推荐末位换成一条用得少的候选（标记「探索」）；累计 20 次探索后，若采用率 < 5% 则降 5%，≥ 30% 则升 5%。
-- **护栏**：全部本地、无网络、无模型调用；变更历史最多 50 条，可查看、回滚、重置；不自动删数据。
+> 领域映射来自技能元数据的能力画像（`library/capability-index.json`，v5.0.0 生成），**不是人类专家认证**；跨领域任务的拆解结果请先看 assumptions 再执行。
+
+---
+
+## DSH 原生工具
+
+v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP 之外的原生入口）：
+
+| 工具 | 输入 | 输出 | 副作用 |
+|---|---|---|---|
+| `skill_archive_plan` | `task`，可选 `cwd` / `mode` | 目标、主 / 次意图、交付物、约束、领域、子任务、假设、置信度 | 无（不执行、不写盘） |
+| `skill_archive_compose` | `task`，可选 `maxSkills` | 阶段化组合（顺序 / 并行 / review-gate / escalation）、每步技能与理由、缺口 `draftNeeded`、冲突、估算 | 无 |
+| `skill_archive_draft_skill` | `task`，可选 `plan` / `missing` | `SKILL.md` 草稿、`evalCases`、lint、安全扫描 | 无（**不写盘、不执行**） |
+
+- 没有 install / force / 执行类工具——安装与更新仍然走面板（有预览、安全扫描、备份、回滚）。
+- 接口契约见 [docs/intelligence-architecture.md](docs/intelligence-architecture.md)；实现状态与实测清单见 [docs/claims.md](docs/claims.md)。
+- 面板、HTTP（loopback）与 MCP 共用同一个本地引擎；MCP 让 Claude Code / Codex / Cursor 也能用推荐与经验（见 [docs/cross-agent.md](docs/cross-agent.md)）。
+
+---
+
+## 效率与评测口径（必读）
+
+三类数据严格分开，不混用：
+
+| 类型 | 含义 | 来源 | 当前状态 |
+|---|---|---|---|
+| **已测：推荐召回** | 30 条半人工任务，Top-4 里是否出现可用的已装技能 | [docs/eval.md](docs/eval.md) | Recall@4 = 0.9（27/30），运行于 v2.7.2 工作树，**引用需注明口径** |
+| **已测：库检索** | 24 条任务在 6,399 索引里的类目命中 | [docs/eval.md](docs/eval.md) | Category Hit@5 等指标见文档；Hit@5 偏松，不能证明技能好用 |
+| **v5：规划 / 组队 / 效率** | planCoverage **0.617**、compositionValidity **1.00**、capabilityCoverage **0.850**、hintRecall **0.367**、gapDetection **1.00**（宽松口径：不假装已覆盖）、contextTokens mean **176.9** / p95 **230**（延迟为单机快照，不对外作 SLA）；基线 keyword 0.083/0.217/0.25/0.532；installLoad **0.725** | [docs/benchmark.md](docs/benchmark.md)（60 条 held-out，2026-10-29） | 指标是半人工基准，不等于真实成功率；installLoad 0.725 必须一起读 |
+
+规则：
+
+- **所有数字以脚本输出为准**：`node scripts/eval-real.mjs`、`node scripts/eval-discover.mjs`、`node scripts/benchmark.mjs --smoke`；文档不手改数字。
+- **效率是估算（estimate）**：`efficiencyEstimate` 输出 `method: 'estimate'`，用于规划与对比，不是实测工时或 token 账单；真实节省以 `docs/benchmark.md` 的实测口径为准。
+- **评测不是质量榜**：评测是半人工用例，不是线上遥测；Recall@4 只衡量「已装技能推荐」，不代表 6,399 条库的整体质量。v5 规划 benchmark 见 [docs/benchmark.md](docs/benchmark.md)。
+- 证据矩阵（每条声明 → 证据 → 标签）见 [docs/claims.md](docs/claims.md)。
+
+---
+
+## 安全边界（先读再装）
+
+- **推荐、拆解、组队、草稿、扫描、自进化全部在本机完成**：不调用外部模型、不上传、无遥测。
+- **安装前安全扫描是本地启发式提示，不是安全保证**：能发现 shell 执行、`curl | bash`、动态解码、提示注入、凭据路径、网络访问、文件写入、过宽 `allowed-tools` 等模式，但静态扫描覆盖不了全部攻击面；安装前仍要预览全文。
+- **高风险默认拒绝**：面板安装、更新中心、MCP `install_skill` 一致——高风险 `SKILL.md` 默认拒绝，必须显式 force 才写入/更新（force 是你的责任）。
+- **只从 `raw.githubusercontent.com/**/SKILL.md` 拉取**，上限 256 KiB，不自动拉脚本 / 资源，不覆盖已有技能；重名安装自动改名。
+- **draft 不写盘、不执行**；DSH 侧没有 install / force 工具；MCP 的 `install_skill` 有同样的扫描与拒绝门槛。
+- 新建技能只写入 `~/.dsh/skills/<kebab-case-name>/SKILL.md`，名称白名单拒绝 `/`、`..` 与绝对路径。
+- 数据目录默认 `~/.dsh/dsh-ronge-adaptive-skill-archive/`；卸载 bundle 不会删除数据。
+- **不宣称「无漏洞」**：本项目没有安全认证、没有第三方审计报告；「安全」指上面这些本地检查与拒绝策略。
 
 ---
 
@@ -168,7 +237,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 ### 前置
 
-- DeepSeek Harness（Desktop / Web profile）
+- DeepSeek Harness（Desktop / Web profile）；已验证基线 DSH Desktop 0.2.1-rc.3（见 [docs/dsh-compatibility.md](docs/dsh-compatibility.md)）
 - macOS（提示音用系统 `afplay`；Linux 可改为 `paplay`）
 - 安装插件需要 `danger-full-access` 或审批
 
@@ -177,152 +246,118 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 | 方式 | 命令 | 适合 |
 |---|---|---|
 | **npx 助手** | `npx dsh-ronge-adaptive-skill-archive`（体检：`npx dsh-ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
-| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@3.0.0` | 已发布到 npm，版本解析最顺 |
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v3.0.0` | 不用 npm、固定版本、可审源码 |
+| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.0` | v5.0.0 发布到 npm 后可用 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.0.0` | 固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
-### DSH 兼容性（已测 0.2.1-rc.3）
+> v5.0.0 打 tag / 发布 npm 之前，`@5.0.0` 会 404：请先用本地目录，或安装当时最新的已发布版本。安装后 DSH 需**重启**才会加载新的 Host 模块；浏览器刷新加载 Client。
 
-- 当前 bundle 在 **DeepSeek Harness Desktop 0.2.1-rc.3** 上验证：Host 路由、Client slot（技能按钮 + 右侧抽屉）、locale 元数据、图标、npm 安装与数据迁移均通过。
-- **替换已安装包后需重启 DSH** 才会加载新的 Host 模块；浏览器刷新加载 Client。
-- 兼容性检查：`npm run check:dsh`；完整说明见 [docs/dsh-compatibility.md](docs/dsh-compatibility.md)。
+### 升级
 
-### 升级（旧包名 → v3.0.0）
-
-- **v3.0.0 是 breaking rename**：包名、路由、bundle id、数据目录都改为 `dsh-ronge-adaptive-skill-archive`；显示名不变。
-- 同一 profile 不能同时启用旧包和新包——先移除旧 bundle，再装 v3.0.0；旧数据目录（`skill-studio`、`ronge-adaptive-skill-archive`）会在首次启动时**自动合并复制**到新目录（旧目录保留）。
-- 旧 npm 包会 deprecate 并指向新包；旧 GitHub URL 自动跳转。
-
-重命名细节见 [v3.0.0 发布说明](docs/release-notes-v3.0.0.md)，完整变更见 [CHANGELOG](CHANGELOG.md)。
-
-### 6,399 索引的能力边界（重要）
-
-这 6,399 条是 **GitHub 公开 SKILL.md 的元数据快照**，不是人工质量榜：
-- 1,001 条没有描述、只有 26 条带 `whenToUse`，512 个名称重复（其中 291 个都叫 `skill`）；
-- v2.8.0 起每条带 `quality` 信号：**完整度 55% + GitHub stars/维护度/许可/归档 45%**；4,007 个仓库已拉取，6,397 条有 stars。UI 显示「信号分」+ ★ stars；**它仍不是「好用程度」或安全评级**；
-- 发现/更优推荐会跳过无描述、重复名、非最佳版本和低信号条目；安装同名技能自动改名并改写 frontmatter；
-- 安装前请先「预览」看 SKILL.md 与安全扫描结果。
-
-### 评测口径
-
-- `npm run eval:recommend`：旧 10 条作者用例（Recall@4 = 1.0），只覆盖仓库自带技能。
-- `npm run eval:real`：**30 条更接近真实使用的半人工任务**（视频/Office/Harness/MCP/skill 设计/preset/跨类别），Recall@4 = **0.9 (27/30)**；3 条已知 MISS 保留在 `docs/eval.md`，不洗成 HIT。
-- `npm run eval:discover`：**24 条 6,399 库检索任务**，Category Hit@5 = **0.958 (23/24)**、Category P@5 = **0.733**、Top-1 = **0.917**、Category MRR = **0.938**、Keyword Hit@5 = **0.875**；结果与 MISS 同样在 `docs/eval.md`，不把类别命中当成质量证明。
-- 两者都不代表 6,399 条库的推荐质量；索引没有人工质量标注，信号分只能做完整度/仓库热度启发式。
+- **从 v3.x 升级**：直接覆盖安装 v5.0.0；数据目录、经验、权重、更新记录沿用。
+- **从 v2.x / v1.x 升级**：v3.0.0 起包名 / 路由 / bundle id 已改名，先移除旧 bundle 再装新版本；旧数据目录会在首次启动时自动合并（旧目录保留）。见 [v3.0.0 发布说明](docs/release-notes-v3.0.0.md)。
 
 ### 数据在哪
 
 | 路径 | 内容 |
 |---|---|
 | `~/.dsh/dsh-ronge-adaptive-skill-archive/config.json` | 模式（plan / immersive） |
-| `~/.dsh/dsh-ronge-adaptive-skill-archive/experience.md` / `.json` | 经验（人读 / 机读） |
-| `~/.dsh/dsh-ronge-adaptive-skill-archive/evolution.json` | 权重、探索配额、变更历史 |
-| `~/.dsh/dsh-ronge-adaptive-skill-archive/rec-feedback.json` | 推荐反馈 |
-| `~/.dsh/dsh-ronge-adaptive-skill-archive/skills-lock.json` | 安装来源 / SHA-256 / 信任 / 许可证 |
-| `~/.dsh/dsh-ronge-adaptive-skill-archive/backups/<skill>/<timestamp>.md` | 更新前备份 |
+| `.../experience.md` / `experience.json` | 经验（人读 / 机读） |
+| `.../evolution.json` | 权重、探索配额、变更历史 |
+| `.../rec-feedback.json` | 推荐反馈 |
+| `.../skills-lock.json` | 安装来源 / SHA-256 / 信任 / 许可证 |
+| `.../backups/<skill>/<timestamp>.md` | 更新前备份 |
 | `~/.dsh/skills/<name>/SKILL.md` | 已安装 / 新建的技能 |
-
-技能来源（优先级从高到低）：项目 `.dsh/skills` → 项目 `.agents/skills` → profile 目录 → `~/.dsh/skills` → 用户 agents 目录 → 预设包，并合并会话 `ctx.skills` 注册表。
-
-### 插件市场索引（可选）
-
-[docs/plugin-market.json](docs/plugin-market.json) 是 DSH format 1 市场索引，可托管到 https URL 后在 DSH 的自定义插件市场里被发现。发版后运行 `npm run build:market-index` 更新版本。
-
----
-
-## 隐私与安全边界
-
-- **推荐、扫描、自进化全部在本机完成**，不调用外部模型或网络；不上传、不写日志、无遥测。
-- 推荐只读取当前会话最近的消息和项目根目录文件名；面板显示来自真实工具调用的数据。
-- 安装前扫描是**本地启发式提示，不是安全保证**（静态扫描无法覆盖全部攻击面）；安装前仍应预览全文。
-- 只允许从 `raw.githubusercontent.com/**/SKILL.md` 拉取，最大 256 KiB，不自动拉脚本/资源，不覆盖已有 skill。
-- 新建技能只写入 `~/.dsh/skills/<kebab-case-name>/SKILL.md`，名称白名单拒绝 `/`、`..` 和绝对路径。
-- 更新中心只处理已装技能的 SKILL.md 更新；提示音失败不影响任务。
-- 换提示音：`export DSH_TASK_CHIME_SOUND=/System/Library/Sounds/Ping.aiff`
 
 ---
 
 ## 架构
 
 ```
-┌─ DeepSeek Harness ──────────────────────────────────────────┐
-│  session header ──[技能]──► 右侧抽屉（client.js，无构建）    │
-│        │                          │                         │
-│  session events              HTTP（仅 loopback，无新端口）   │
-│        └───────────┬──────────────┘                         │
-│                    ▼                                        │
-│        Host（index.js，仅 Node 内置模块）                    │
-│  catalog · 推荐 · 经验 · 自进化 · 安全扫描 · lock/diff/回滚  │
-│  卷轴馆索引 · 更新中心 · 提示音 · system prompt 注入          │
-│                    │                                        │
-│   ~/.dsh/dsh-ronge-adaptive-skill-archive/  ← 配置/经验/权重     │
-│   ~/.dsh/skills/                        ← 安装/新建的 skill  │
-└─────────────────────────────────────────────────────────────┘
+┌─ DeepSeek Harness ──────────────────────────────────────────────┐
+│  session header ──[技能]──► 右侧抽屉（client.js，无构建）        │
+│        │                          │                             │
+│  session events              HTTP（仅 loopback，无新端口）       │
+│        └───────────┬──────────────┘                             │
+│                    ▼                                            │
+│  Host（index.js）                                               │
+│   推荐 / 经验 / 自进化 / 安全扫描 / 更新 / 卷轴馆               │
+│   v5 智能引擎：decompose · compose · draft · efficiency         │
+│   DSH 原生工具：skill_archive_plan / compose / draft_skill      │
+│                    │                                            │
+│  lib/intelligence（纯函数、零依赖、无网络）                     │
+│  MCP server（跨 agent：推荐 / 发现 / 安装 / 经验）              │
+│                    │                                            │
+│   ~/.dsh/dsh-ronge-adaptive-skill-archive/  ← 配置/经验/权重    │
+│   ~/.dsh/skills/                            ← 安装/新建的技能    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Host 只依赖 Node 内置模块；Client 是 plain JS，经 `window.__ModuleLoader__.load` 注册，无需构建、无 JSX。路由只监听 loopback，由 `webServer` 注册。
+Host 只依赖 Node 内置模块；Client 是 plain JS（`window.__ModuleLoader__.load`，无 JSX、无构建）；智能引擎是纯函数模块，零依赖、确定性、无网络。路由只监听 loopback。
 
 ---
 
-## 路线图
+## 已知限制
 
-以下是接下来想补的方向（计划，不是承诺；欢迎 PR 认领）：
-
-- **输入框推荐 chips**：面板内 Top 2 chips 已有一键复制 `/skill`，下一步接进 composer。
-- **按项目置顶**：每个 workspace 记住常用 skill，打开面板先显示 pinned。
-- **本地语义搜索**：词典/本地 embedding 混合，搜「帮我做张海报」也能命中图片类技能。
-- **推荐理由三段式**：任务类型 / 项目指纹 / 经验值分组展示，并扩大离线金标集。
-- **原生右侧栏 tab 与快捷键**：不再用抽屉，`Cmd+Shift+S` 打开面板。
-- **健康报告迭代**：frontmatter 缺失、重名、断链一次标出。
+1. **推荐 / 检索是启发式**：关键词 + 中文二元组 + 256 维哈希向量 + 信号分，不是神经模型；改写、隐喻、小语种仍会失手。
+2. **拆解 / 组队是规则引擎**：decompose / compose 基于领域词表、交付物识别与能力画像，不是 LLM 推理；多意图任务可能主次颠倒，执行前请先看 assumptions 与 conflicts。
+3. **效率是估算**：`estimate` 不等于实测节省；benchmark 是 12 领域 held-out 用例的半人工基准，不是线上遥测。
+4. **6,399 不是质量榜**：1,001 条无描述、512 个重名、没有人工质量标注；quality 是完整度 + 仓库信号的启发式，stars 是 2026-10-29 快照，会过期。数据口径与来源见 [docs/attribution.md](docs/attribution.md)。
+5. **评测覆盖有限**：30 条已装技能、24 条库检索，以及 v5 规划 benchmark（见 [docs/benchmark.md](docs/benchmark.md)）；样本小，单条变化会影响指标。
+6. **Plan / Immersive 是 prompt 级**：模型可能忽略模式指令；不是权限级硬约束。
+7. **单宿主**：DSH 原生；MCP 可接入 Claude Code / Codex / Cursor，但没有 DSH 面板 UI。
+8. **12 领域 ≠ 人类专家**：领域包提供路由与 playbook，不能宣称达到任何行业的人类专家水平。
+9. **未审计**：没有第三方安全审计或认证；扫描是启发式，不构成安全保证。
 
 ---
 
-## 贡献
-
-见 [CONTRIBUTING.md](CONTRIBUTING.md)。无构建步骤、无运行时依赖；改完跑：
+## 开发与贡献
 
 ```bash
 npm run check            # 校验 client factory id 与包名一致
-npm test                 # 单元 + 路由 + 迁移测试（不联网）
-npm run eval:recommend   # 离线推荐金标集 Recall@K
-node --check index.js && node --check client.js
+npm test                 # 单元 + 路由 + 迁移 + 兼容性测试（不联网）
+node scripts/eval-real.mjs      # 30 条真实任务 Recall@K
+node scripts/eval-discover.mjs  # 24 条库检索评测
+node scripts/benchmark.mjs --smoke   # v5 智能引擎 smoke（合并后可用）
+npm run check:dsh        # DSH 兼容性静态检查
 ```
 
-欢迎从 [Issues](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/issues) 里的「推荐不准」「某个 skill 该降权」开始——这类反馈比 star 更有用。
+欢迎从 [Issues](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/issues) 的「拆解错了 / 组队不合理 / 推荐不准 / 声明没证据」开始；声明纠错比 star 更有价值。提交对外文档改动前，请先更新 [docs/claims.md](docs/claims.md) 的对应行。
 
 ---
 
 ## License
 
-MIT。见 [LICENSE](LICENSE)。
+MIT。见 [LICENSE](LICENSE)。索引中的技能元数据归原作者，边界见 [docs/attribution.md](docs/attribution.md)。
 
 ---
 
 <p align="center">
-<b>如果这个面板帮你少翻一次目录、少装错一个 skill，欢迎点一个 Star。</b><br>
-也欢迎把「我这里推荐不准」发到 Issues——那是最有价值的反馈。
+<b>如果这个驾驶舱帮你少想一步「该用哪个技能」，欢迎点一个 Star。</b><br>
+不刷星、不承诺榜单；发现夸大的声明，请直接开 issue 打脸——我们会改文档或删声明。
 </p>
 
 ---
 
 ## English
 
-**Ronge's Adaptive Skill Cockpit (Immersive Edition)** is a context-aware, self-evolving skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive). A single bundle adds a right-side drawer that answers three questions most skill tools ignore: *which skill fits this task now*, *which skills am I actually using*, and *which ones actually work for me*.
+**Ronge's Adaptive Skill Cockpit (v5)** is a DSH-native skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive). It goes beyond listing and installing skills: it **decomposes a task, composes a skill team, drafts the missing skill, and keeps the efficiency claim auditable**.
 
-- **Contextual recommendations with reasons** — recent session messages + project file names → Top 4, with name / keyword / category / experience / affinity reasons. Local heuristic, no model calls.
-- **Now using** — read from real `skill` tool calls, not inferred.
-- **Plan / Immersive modes** — ask-first skill orchestration, or no-ask auto-composition of 1–3 skills.
-- **Experience memory + feedback** — `experience.md/json`, cross-session success rate, export/import.
-- **Self-evolution** — feedback-attributed, bounded weight tuning plus a 10% exploration quota; fully local, logged, and rollback-able.
-- **Pre-install safety scan** — local heuristic scan (shell exec, pipe-to-shell, dynamic eval, prompt injection, credentials, over-broad `allowed-tools`), trust level and license.
-- **Update center** — content diff, update-all, backup before overwrite, one-click rollback.
-- **6,399-skill index** — snapshot of public GitHub `SKILL.md` files (14 categories, 1–5 rating), an update center for installed skills, and a completion chime.
+- **Plan → compose → draft** — three read-only DSH tools (`skill_archive_plan`, `skill_archive_compose`, `skill_archive_draft_skill`) turn one task into deliverables, staged skill plans, and a `SKILL.md` draft with eval cases + lint + safety scan. Nothing is written or executed.
+- **Context-aware recommendations** — Top 4 with structured reasons (name / keyword / category / experience / affinity / exploration), local heuristic, no model calls.
+- **Live "now using"** — read from real `skill` tool calls, not inferred.
+- **Plan / Immersive modes** — ask-first orchestration, or no-ask auto-composition.
+- **Experience + self-evolution** — local feedback-weighted learning with a 10% exploration quota (0–30%), logged and rollback-able.
+- **Honest efficiency** — `method: 'estimate'` by default; measured numbers only from `docs/benchmark.md` and `docs/eval.md`. Claims matrix: [docs/claims.md](docs/claims.md).
+- **Safety boundary** — local heuristic scan (not a guarantee), high-risk installs refused by default, only `raw.githubusercontent.com/**/SKILL.md` (≤ 256 KiB), no auto-assets, backup + rollback.
+- **12 domains** — video/creative, Office, software, data, research, marketing, design, security, education, business, productivity, AI.
+- **6,399-skill metadata index** — public GitHub `SKILL.md` snapshot (2026-10-28), 14 categories; metadata only, no body redistribution ([docs/attribution.md](docs/attribution.md)).
 
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v3.0.0
-# then open any session → 「技能」in the header → switch Plan / Immersive
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.0
+# then open any session → 「技能」 → switch Plan / Immersive
 ```
 
-**Privacy**: everything (recommendations, scans, learning) runs locally; no telemetry, no uploads. The safety scan is a heuristic hint, not a security guarantee. MIT licensed — see [LICENSE](LICENSE) and [CONTRIBUTING.md](CONTRIBUTING.md).
+**Privacy**: everything (recommendations, plans, drafts, scans, learning) runs locally; no telemetry, no uploads. MIT licensed — see [LICENSE](LICENSE), [CONTRIBUTING.md](CONTRIBUTING.md), and the claim/evidence matrix in [docs/claims.md](docs/claims.md).

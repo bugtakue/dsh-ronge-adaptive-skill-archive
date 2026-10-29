@@ -16,8 +16,12 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { atomicWriteFile, atomicWriteJson, isInside, withKeyLock } from './lib/fsx.js'
+import { scanSkillText } from './lib/security.js'
 
-export const inject = ['webServer', 'skills']
+const PKG_NAME = 'dsh-ronge-adaptive-skill-archive'
+const PKG_VERSION = '5.0.0'
+export const inject = ['webServer', 'skills', 'tools']
 
 const PACKAGE_DIR = path.dirname(fileURLToPath(import.meta.url))
 const DEFAULT_CHIME = '/System/Library/Sounds/Glass.aiff'
@@ -322,7 +326,7 @@ function modeFile() {
 
 function ensureStudioDir() {
   migrateLegacyStudioDir()
-  fs.mkdirSync(studioDir(), { recursive: true })
+  fs.mkdirSync(studioDir(), { recursive: true, mode: 0o700 })
 }
 
 function loadStudioState() {
@@ -501,127 +505,6 @@ function experienceSnapshot(cwd) {
 // --- Security & trust (G1) -------------------------------------------------
 // Local, heuristic scan of a SKILL.md. It never uploads anything and never
 // executes a skill: it only flags the instruction text a user is about to trust.
-const RISK_RULES = [
-  {
-    id: 'shell-exec',
-    label: 'shell 执行',
-    severity: 'high',
-    pattern: /\b(?:child_process|execSync|spawnSync|os\.system|subprocess\.(?:run|call|Popen))\b/i,
-  },
-  {
-    id: 'pipe-to-shell',
-    label: '下载后直接执行',
-    severity: 'high',
-    pattern: /(?:curl|wget)[^\n|]{0,200}\|\s*(?:sh|bash|zsh)\b/i,
-  },
-  {
-    id: 'dynamic-eval',
-    label: '动态执行/解码',
-    severity: 'high',
-    pattern: /\b(?:(?:eval|new Function)\s*\(|base64\s+-d\b|atob\s*\()/i,
-  },
-  {
-    id: 'prompt-injection',
-    label: '提示注入模式',
-    severity: 'high',
-    pattern:
-      /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:the\s+)?(?:previous|prior|above|earlier)\s+(?:instructions|rules|prompts)|system\s+prompt|jailbreak/i,
-  },
-  {
-    id: 'network',
-    label: '网络访问',
-    severity: 'medium',
-    pattern: /\b(?:curl|wget|https?:\/\/|fetch\s*\(|requests\.(?:get|post)|axios\b)/i,
-  },
-  {
-    id: 'credentials',
-    label: '凭据/密钥访问',
-    severity: 'medium',
-    pattern:
-      /(?:\.ssh\/|id_rsa|\.aws\/credentials|(?:^|[^.\w])\.env\b|keychain|\.netrc|\.npmrc|api[_-]?key|secret[_-]?key)/i,
-  },
-  {
-    id: 'file-write',
-    label: '文件系统写入/提权',
-    severity: 'low',
-    pattern: /\b(?:rm\s+-rf|sudo\s+|chmod\s+\+?x|\bwriteFileSync\b|\bwriteFile\b)/i,
-  },
-  {
-    id: 'destructive',
-    label: '破坏性命令',
-    severity: 'high',
-    pattern: /\b(?:rm\s+-rf\s+\/(?:\s|$)|mkfs\.|dd\s+if=\/dev\/zero|:(){ :\|:& };:)/i,
-  },
-  {
-    id: 'obfuscation',
-    label: '混淆载荷',
-    severity: 'high',
-    pattern: /(?:[A-Za-z0-9+/]{120,}={0,2}|(?:\\x[0-9a-f]{2}){8,}|String\.fromCharCode\s*\()/i,
-  },
-  {
-    id: 'destructive-absolute',
-    label: '绝对路径递归删除',
-    severity: 'medium',
-    pattern: /\brm\s+-rf\s+\/(?!\s|$)[A-Za-z0-9._-]+/i,
-  },
-  {
-    id: 'global-install',
-    label: '全局安装/系统修改',
-    severity: 'medium',
-    pattern: /\b(?:npm\s+(?:i|install)\s+-g|pip\s+install\s+(?:--user\s+)?(?:-e\s+)?\.(?:\s|$)|gem\s+install|brew\s+install)\b/i,
-  },
-  {
-    id: 'exfil',
-    label: '疑似数据外传',
-    severity: 'medium',
-    pattern: /\b(?:webhook\.site|discord(?:app)?\.com\/api\/webhooks|pastebin\.com|transfer\.sh|0x0\.st)\b/i,
-  },
-]
-
-const RISK_WEIGHT = { high: 40, medium: 15, low: 5 }
-
-function scanSkillText(text) {
-  const source = String(text || '')
-  const lines = source.split(/\r?\n/)
-  const findings = []
-  for (const rule of RISK_RULES) {
-    for (let index = 0; index < lines.length; index += 1) {
-      const line = lines[index]
-      if (!line || line.length > 4000) continue
-      if (!rule.pattern.test(line)) continue
-      findings.push({
-        rule: rule.id,
-        label: rule.label,
-        severity: rule.severity,
-        line: index + 1,
-        excerpt: line.trim().slice(0, 120),
-      })
-      break
-    }
-  }
-  const frontmatter = parseFrontmatter(source)
-  const allowedTools = String(frontmatter['allowed-tools'] || '')
-  if (
-    allowedTools &&
-    (allowedTools.includes('*') || /(?:^|[\s,])(?:Bash|shell|bash)(?:[\s,]|$)/.test(allowedTools))
-  ) {
-    findings.push({
-      rule: 'broad-tools',
-      label: 'allowed-tools 过宽',
-      severity: 'medium',
-      line: 1,
-      excerpt: ('allowed-tools: ' + allowedTools).slice(0, 120),
-    })
-  }
-  const score = findings.reduce((total, finding) => total + (RISK_WEIGHT[finding.severity] || 0), 0)
-  const level = findings.some((finding) => finding.severity === 'high')
-    ? 'high'
-    : score >= RISK_WEIGHT.medium
-      ? 'medium'
-      : 'low'
-  return { level, score, findings: findings.slice(0, 8) }
-}
-
 const OFFICIAL_ORGS = new Set(['anthropics', 'openai', 'github', 'microsoft', 'google', 'aws', 'vercel-labs'])
 
 function classifyTrust(skill, sourceMeta) {
@@ -727,10 +610,14 @@ function backupsDir(name) {
 
 function backupSkillFile(name, text) {
   const dir = backupsDir(name)
-  fs.mkdirSync(dir, { recursive: true })
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
   const file = path.join(dir, stamp + '.md')
-  fs.writeFileSync(file, String(text ?? ''))
+  atomicWriteFile(file, String(text ?? ''), { mode: 0o600 })
+  try {
+    const backups = fs.readdirSync(dir).filter((entry) => entry.endsWith('.md')).sort().reverse()
+    for (const stale of backups.slice(10)) fs.unlinkSync(path.join(dir, stale))
+  } catch {}
   return file
 }
 
@@ -766,8 +653,7 @@ function assessSkillUpdate(text, force = false) {
   }
 }
 
-async function applySkillUpdate(name, options = {}) {
-  const force = options.force === true
+async function applySkillUpdateUnlocked(name, options = {}) {
   const dir = installedSkillDir(name)
   const file = path.join(dir, 'SKILL.md')
   if (!fs.existsSync(file)) throw new HttpError(404, 'skill "' + name + '" is not installed')
@@ -775,6 +661,7 @@ async function applySkillUpdate(name, options = {}) {
   if (!source || !source.url) throw new HttpError(400, 'skill "' + name + '" has no recorded source')
   const localText = fs.readFileSync(file, 'utf8')
   const { text: remoteText } = await fetchRemoteSkill(source.url)
+  const force = options.force === true && forceReasonAllowed({ force: options.force, forceReason: options.forceReason })
   const assessment = assessSkillUpdate(remoteText, force)
   if (assessment.blocked) {
     throw new HttpError(
@@ -791,7 +678,7 @@ async function applySkillUpdate(name, options = {}) {
     return { ok: true, name, changed: false, diff: { added: 0, removed: 0, lines: [] } }
   }
   const backup = backupSkillFile(name, localText)
-  fs.writeFileSync(file, remoteText)
+  atomicWriteFile(file, remoteText, { mode: 0o644 })
   const frontmatter = parseFrontmatter(remoteText)
   const license = frontmatter.license ? String(frontmatter.license) : null
   const nextSource = {
@@ -800,7 +687,7 @@ async function applySkillUpdate(name, options = {}) {
     license,
     updatedAt: new Date().toISOString(),
   }
-  fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(nextSource, null, 2))
+  atomicWriteJson(path.join(dir, SOURCE_META_FILE), nextSource)
   upsertLock({
     name,
     url: source.url,
@@ -812,6 +699,7 @@ async function applySkillUpdate(name, options = {}) {
     installedAt: source.installedAt || null,
     updatedAt: nextSource.updatedAt,
   })
+  appendAudit('update', { name, url: source.url, sha256: nextSource.sha256, force: options.force === true, forceReason: options.forceReason })
   return {
     ok: true,
     name,
@@ -822,7 +710,11 @@ async function applySkillUpdate(name, options = {}) {
   }
 }
 
-function rollbackSkill(name) {
+function applySkillUpdate(name, options = {}) {
+  return withKeyLock('update:' + String(name || ''), () => applySkillUpdateUnlocked(name, options))
+}
+
+function rollbackSkillUnlocked(name) {
   const dir = installedSkillDir(name)
   const file = path.join(dir, 'SKILL.md')
   if (!fs.existsSync(file)) throw new HttpError(404, 'skill "' + name + '" is not installed')
@@ -830,11 +722,13 @@ function rollbackSkill(name) {
   if (!backups.length) throw new HttpError(404, 'no backup found for "' + name + '"')
   const currentText = fs.readFileSync(file, 'utf8')
   const restoredText = fs.readFileSync(backups[0].file, 'utf8')
+  const security = scanSkillText(restoredText)
+  if (security.level === 'high') throw new HttpError(422, 'high-risk backup blocked: ' + security.findings.map((f) => f.rule).join(', '))
   const backup = backupSkillFile(name, currentText)
-  fs.writeFileSync(file, restoredText)
+  atomicWriteFile(file, restoredText, { mode: 0o644 })
   const source = readJsonFile(path.join(dir, SOURCE_META_FILE), null) || {}
   const nextSource = { ...source, sha256: sha256(restoredText), updatedAt: new Date().toISOString() }
-  fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(nextSource, null, 2))
+  atomicWriteJson(path.join(dir, SOURCE_META_FILE), nextSource)
   upsertLock({
     name,
     sha256: nextSource.sha256,
@@ -842,6 +736,7 @@ function rollbackSkill(name) {
     url: source.url || null,
     updatedAt: nextSource.updatedAt,
   })
+  appendAudit('rollback', { name, url: source.url, sha256: nextSource.sha256 })
   return {
     ok: true,
     name,
@@ -849,6 +744,10 @@ function rollbackSkill(name) {
     backup,
     diff: diffSkillLines(currentText, restoredText),
   }
+}
+
+function rollbackSkill(name) {
+  return withKeyLock('update:' + String(name || ''), () => rollbackSkillUnlocked(name))
 }
 
 async function applyAllSkillUpdates(options = {}) {
@@ -1678,7 +1577,7 @@ function readJsonFile(file, fallback) {
 
 function writeJsonFile(file, value) {
   ensureStudioDir()
-  fs.writeFileSync(file, JSON.stringify(value, null, 2))
+  atomicWriteJson(file, value)
 }
 
 function loadRemoteSources() {
@@ -1750,6 +1649,7 @@ async function refreshRemoteIndex() {
       if (token) headers.Authorization = 'Bearer ' + token
       const repoResponse = await fetch('https://api.github.com/repos/' + source.repo, {
         headers,
+        redirect: 'error',
         signal: AbortSignal.timeout(15000),
       })
       if (!repoResponse.ok) throw new Error('GitHub repo ' + repoResponse.status)
@@ -1757,7 +1657,7 @@ async function refreshRemoteIndex() {
       const branch = repoInfo.default_branch || 'main'
       const treeResponse = await fetch(
         'https://api.github.com/repos/' + source.repo + '/git/trees/' + branch + '?recursive=1',
-        { headers, signal: AbortSignal.timeout(20000) },
+        { headers, redirect: 'error', signal: AbortSignal.timeout(20000) },
       )
       if (!treeResponse.ok) throw new Error('GitHub tree ' + treeResponse.status)
       const tree = await treeResponse.json()
@@ -1825,12 +1725,14 @@ function validateRemoteUrl(raw) {
   } catch {
     throw new HttpError(400, 'invalid remote url')
   }
-  if (url.protocol !== 'https:' || url.hostname !== 'raw.githubusercontent.com') {
+  if (url.protocol !== 'https:' || url.hostname !== 'raw.githubusercontent.com' || (url.port && url.port !== '443')) {
     throw new HttpError(400, 'remote url must be a raw.githubusercontent.com SKILL.md')
   }
+  if (url.search || url.hash) throw new HttpError(400, 'remote url must not contain query or fragment')
   if (!url.pathname.endsWith('/SKILL.md')) {
     throw new HttpError(400, 'remote url must point to a SKILL.md')
   }
+  if (url.pathname.includes('..') || /%2e|%2f|%5c/i.test(url.pathname)) throw new HttpError(400, 'remote url has an unsafe path')
   return url.toString()
 }
 
@@ -1864,11 +1766,14 @@ function systemProxyUrl() {
 }
 
 function curlFetch(url, proxy) {
-  const args = ['-fsSL', '--max-time', '25', '--user-agent', 'ronge-skill-studio', '--max-filesize', '262144']
+  // No -L: a validated raw.githubusercontent.com URL must not be allowed to
+  // redirect anywhere else. --proto pins the transport to HTTPS.
+  const args = ['-fsS', '--proto', '=https', '--max-redirs', '0', '--max-time', '25', '--user-agent', 'ronge-skill-studio', '--max-filesize', '262144']
   if (proxy) args.push('--proxy', proxy)
   args.push(url)
   const text = execFileSync('curl', args, { encoding: 'utf8', timeout: 30000, maxBuffer: 300 * 1024 })
-  if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+  if (Buffer.byteLength(text) > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+  if (!text.trim()) throw new HttpError(502, 'remote skill is empty')
   return text
 }
 
@@ -1886,11 +1791,13 @@ async function fetchRemoteSkill(raw) {
     try {
       const response = await fetch(url, {
         headers: { 'User-Agent': 'ronge-skill-studio' },
+        redirect: 'error',
         signal: AbortSignal.timeout(20000),
       })
       if (!response.ok) throw new HttpError(502, 'remote fetch failed: HTTP ' + response.status)
       const text = await response.text()
-      if (text.length > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+      if (Buffer.byteLength(text) > 262144) throw new HttpError(413, 'remote skill is too large (max 256 KiB)')
+      if (!text.trim()) throw new HttpError(502, 'remote skill is empty')
       return { url, text }
     } catch (fetchError) {
       throw new HttpError(502, 'remote fetch failed: ' + String(curlError.message || curlError).slice(0, 200))
@@ -1952,14 +1859,34 @@ function truncate(text, length) {
   return String(text || '').length > length ? String(text).slice(0, length) : String(text || '')
 }
 
-function installRemoteSkill(payload) {
+function createExclusiveSkillDir(base, desired, repo, url) {
+  fs.mkdirSync(base, { recursive: true, mode: 0o700 })
+  let name = sanitizeSkillName(desired)
+  let counter = 0
+  let renamedFrom = null
+  while (true) {
+    const dir = path.join(base, name)
+    try {
+      fs.mkdirSync(dir, { mode: 0o755 })
+      return { name, dir, renamedFrom }
+    } catch (error) {
+      if (!error || error.code !== 'EEXIST') throw error
+      if (!renamedFrom) renamedFrom = name
+      name = sanitizeSkillName(uniqueSkillName(desired, repo, url + (counter ? '#' + counter : '')))
+      counter += 1
+      if (counter > 50) throw new HttpError(409, 'could not allocate a unique skill directory')
+    }
+  }
+}
+
+function installRemoteSkillUnlocked(payload) {
   const raw = payload && payload.url
   if (!raw) throw new HttpError(400, 'url is required')
   return fetchRemoteSkill(raw).then(({ url, text }) => {
     const assessment = assessRemoteSkill(text)
     if (!assessment.validName) throw new HttpError(400, 'remote SKILL.md has an invalid or missing name')
     if (!assessment.hasDescription) throw new HttpError(400, 'remote SKILL.md has no description')
-    if (assessment.highRisk && payload.force !== true) {
+    if (assessment.highRisk && !forceReasonAllowed(payload)) {
       throw new HttpError(
         422,
         'high-risk SKILL.md blocked: ' +
@@ -1971,25 +1898,13 @@ function installRemoteSkill(payload) {
       )
     }
     const repo = remoteRepoFromUrl(url)
-    let installedName = sanitizeSkillName(assessment.name)
-    let finalText = text
-    let renamedFrom = null
-    let dir = path.join(dshHome(), 'skills', installedName)
-    if (fs.existsSync(dir)) {
-      renamedFrom = installedName
-      installedName = uniqueSkillName(installedName, repo, url)
-      finalText = renameSkillFrontmatter(text, installedName)
-      dir = path.join(dshHome(), 'skills', installedName)
-      let counter = 1
-      while (fs.existsSync(dir)) {
-        installedName = sanitizeSkillName(uniqueSkillName(assessment.name, repo, url + '#' + counter))
-        finalText = renameSkillFrontmatter(text, installedName)
-        dir = path.join(dshHome(), 'skills', installedName)
-        counter += 1
-      }
-    }
-    fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(path.join(dir, 'SKILL.md'), finalText, { flag: 'wx' })
+    const allocated = createExclusiveSkillDir(path.join(dshHome(), 'skills'), assessment.name, repo, url)
+    const installedName = allocated.name
+    const renamedFrom = allocated.renamedFrom
+    const dir = allocated.dir
+    const finalText = installedName === sanitizeSkillName(assessment.name) ? text : renameSkillFrontmatter(text, installedName)
+    // Atomic create: directory creation is exclusive; the file itself uses temp+rename.
+    atomicWriteFile(path.join(dir, 'SKILL.md'), finalText, { mode: 0o644 })
     const license = assessment.front.license ? String(assessment.front.license) : null
     const trust = classifyTrust({ name: installedName, source: 'user-dsh' }, { repo, trust: String(payload.trust || '') })
     const security = assessment.security
@@ -2005,7 +1920,7 @@ function installRemoteSkill(payload) {
       risk: security.level,
       installedAt: new Date().toISOString(),
     }
-    fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(source, null, 2))
+    atomicWriteJson(path.join(dir, SOURCE_META_FILE), source)
     upsertLock({
       name: installedName,
       url,
@@ -2016,6 +1931,7 @@ function installRemoteSkill(payload) {
       installedAt: source.installedAt,
       updatedAt: source.installedAt,
     })
+    appendAudit('install', { name: installedName, url, sha256: source.sha256, force: payload.force === true, forceReason: payload.forceReason })
     return {
       ok: true,
       name: installedName,
@@ -2031,6 +1947,43 @@ function installRemoteSkill(payload) {
   })
 }
 
+function installRemoteSkill(payload) {
+  const key = 'install:' + String(payload?.url || '')
+  return withKeyLock(key, () => installRemoteSkillUnlocked(payload))
+}
+
+function appendAudit(action, payload = {}) {
+  try {
+    ensureStudioDir()
+    const file = path.join(studioDir(), 'audit.jsonl')
+    const line = JSON.stringify({
+      at: new Date().toISOString(),
+      action,
+      name: payload.name || null,
+      url: payload.url || null,
+      sha256: payload.sha256 || null,
+      force: payload.force === true,
+      forceReason: payload.forceReason ? truncate(String(payload.forceReason), 200) : null,
+      outcome: payload.outcome || 'ok',
+    }) + '\n'
+    fs.appendFileSync(file, line, { mode: 0o600 })
+    try {
+      const stat = fs.statSync(file)
+      if (stat.size > 1024 * 1024) {
+        const lines = fs.readFileSync(file, 'utf8').trim().split(/\r?\n/)
+        atomicWriteFile(file, lines.slice(-500).join('\n') + '\n', { mode: 0o600 })
+      }
+    } catch {}
+  } catch {
+    // Audit must never break the primary operation.
+  }
+}
+
+function forceReasonAllowed(payload) {
+  if (payload?.force !== true) return false
+  if (process.env.DSH_RONGE_ALLOW_FORCE !== '1') return false
+  return typeof payload.forceReason === 'string' && payload.forceReason.trim().length >= 10
+}
 
 async function checkSkillUpdates() {
   const root = path.join(dshHome(), 'skills')
@@ -2080,6 +2033,7 @@ async function searchMcpServers(query) {
   if (query) url.searchParams.set('search', query)
   const response = await fetch(url, {
     headers: { 'User-Agent': 'ronge-skill-studio' },
+    redirect: 'error',
     signal: AbortSignal.timeout(20000),
   })
   if (!response.ok) throw new HttpError(502, 'MCP registry fetch failed: HTTP ' + response.status)
@@ -2210,9 +2164,11 @@ The session header has a 荣哥技能卷轴收藏馆（可沉浸式体验版本�
 
 function playChime() {
   const sound = process.env.DSH_TASK_CHIME_SOUND || DEFAULT_CHIME
+  if (!sound || !fs.existsSync(sound)) return
+  const player = process.platform === 'darwin' ? 'afplay' : process.platform === 'linux' ? 'paplay' : null
+  if (!player) return
   try {
-    if (!sound || !fs.existsSync(sound)) return
-    const child = spawn('/usr/bin/afplay', [sound], { stdio: 'ignore', detached: true })
+    const child = spawn(player, [sound], { stdio: 'ignore', detached: true })
     child.on('error', () => {})
     child.unref()
   } catch {
@@ -3251,13 +3207,173 @@ ${whenToUse || description}
 2. Follow the instructions in this file.
 3. Report the result with concrete evidence.
 `
-  fs.writeFileSync(file, body, { flag: 'wx' })
+  atomicWriteFile(file, body, { mode: 0o644 })
   return { ok: true, name, path: file }
+}
+
+let intelligenceModule = null
+let capabilityIndexCache = null
+
+function loadCapabilityIndex() {
+  if (capabilityIndexCache) return capabilityIndexCache
+  try {
+    capabilityIndexCache = JSON.parse(fs.readFileSync(path.join(PACKAGE_DIR, 'library', 'capability-index.json'), 'utf8'))
+  } catch {
+    capabilityIndexCache = null
+  }
+  return capabilityIndexCache
+}
+
+async function loadIntelligence() {
+  if (!intelligenceModule) intelligenceModule = await import('./lib/intelligence/index.js')
+  return intelligenceModule
+}
+
+function toolText(value) {
+  return [{ type: 'text', text: JSON.stringify(value, null, 2) }]
+}
+
+function toolOutput() {
+  return {
+    schema: { type: 'object', additionalProperties: true },
+    render: (args, value) => toolText(value),
+  }
+}
+
+function registerIntelligenceTools(ctx) {
+  const tools = ctx.get ? ctx.get('tools') : ctx.tools
+  if (!tools || typeof tools.register !== 'function') return []
+  const disposers = []
+  if (typeof tools.register === 'function') {
+    disposers.push(
+      tools.register({
+        name: 'skill_archive_plan',
+        description:
+          'Turn a task into a skill plan: deliverables, domains, primary intent and 1–3 installed skills to load first. Use before starting a multi-step or cross-domain task; does not install or change files.',
+        parameters: {
+          type: 'object',
+          properties: {
+            task: { type: 'string', description: 'The user task in their own words.' },
+            cwd: { type: 'string', description: 'Optional current working directory.' },
+            mode: { type: 'string', enum: ['off', 'plan', 'immersive'], description: 'Optional current Harness mode.' },
+          },
+          required: ['task'],
+        },
+        output: toolOutput(),
+        async execute(args) {
+          const intel = await loadIntelligence()
+          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
+          const installed = Array.isArray(skills) ? skills : []
+          const plan = intel.composeSkillPlan({
+            task: String(args?.task || ''),
+            cwd: String(args?.cwd || ''),
+            mode: String(args?.mode || ''),
+            installedSkills: installed,
+            libraryEntries: loadLibraryIndex().entries || [],
+            capabilityIndex: loadCapabilityIndex(),
+            maxSkills: 3,
+          })
+          return { ok: true, plan: { ...plan, stages: plan?.stages?.slice(0, 4) } }
+        },
+      }),
+    )
+    disposers.push(
+      tools.register({
+        name: 'skill_archive_compose',
+        description:
+          'Compose a multi-skill workflow (2–5 skills, ordered stages and handoffs) for a task, including missing capabilities and conflicts. Does not install or change files.',
+        parameters: {
+          type: 'object',
+          properties: {
+            task: { type: 'string', description: 'The user task in their own words.' },
+            cwd: { type: 'string', description: 'Optional current working directory.' },
+            maxSkills: { type: 'integer', minimum: 1, maximum: 5, description: 'Maximum skills to include. Default 4.' },
+          },
+          required: ['task'],
+        },
+        output: toolOutput(),
+        async execute(args) {
+          const intel = await loadIntelligence()
+          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
+          return {
+            ok: true,
+            plan: intel.composeSkillPlan({
+              task: String(args?.task || ''),
+              cwd: String(args?.cwd || ''),
+              installedSkills: Array.isArray(skills) ? skills : [],
+              libraryEntries: loadLibraryIndex().entries || [],
+              capabilityIndex: loadCapabilityIndex(),
+              maxSkills: Number(args?.maxSkills) || 4,
+            }),
+          }
+        },
+      }),
+    )
+    disposers.push(
+      tools.register({
+        name: 'skill_archive_draft_skill',
+        description:
+          'Draft a new SKILL.md for a missing capability in a plan. Returns a validated draft only; it never writes files. Ask the user to review before creating.',
+        parameters: {
+          type: 'object',
+          properties: {
+            task: { type: 'string', description: 'The user task or capability gap.' },
+            missing: { type: 'array', items: { type: 'string' }, description: 'Optional missing capability names from a plan.' },
+          },
+          required: ['task'],
+        },
+        output: toolOutput(),
+        async execute(args) {
+          const intel = await loadIntelligence()
+          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
+          return {
+            ok: true,
+            draft: intel.draftSkill({
+              task: String(args?.task || ''),
+              missing: Array.isArray(args?.missing) ? args.missing : [],
+              existingNames: (Array.isArray(skills) ? skills : []).map((skill) => skill.name).filter(Boolean),
+            }),
+          }
+        },
+      }),
+    )
+  }
+  return disposers
 }
 
 function route(handler) {
   return async (req, res) => {
     try {
+      const headers = req.headers || {}
+      const method = String(req.method || 'GET').toUpperCase()
+      const host = String(headers.host || '')
+      if (host) {
+        let hostName
+        try { hostName = new URL('http://' + host).hostname } catch { throw new HttpError(403, 'invalid host') }
+        if (!['127.0.0.1', 'localhost', '[::1]', '::1'].includes(hostName)) throw new HttpError(403, 'host not allowed')
+      }
+      const key = String(req.socket?.remoteAddress || 'local')
+      const now = Date.now()
+      const bucket = routeRate.get(key) || { start: now, count: 0 }
+      if (now - bucket.start > 60000) { bucket.start = now; bucket.count = 0 }
+      bucket.count += 1
+      routeRate.set(key, bucket)
+      if (bucket.count > 180) throw new HttpError(429, 'rate limit exceeded')
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        const site = String(headers['sec-fetch-site'] || '')
+        if (site === 'cross-site') throw new HttpError(403, 'cross-site request rejected')
+        const contentType = String(headers['content-type'] || '')
+        if (!/^application\/json(?:;|$)/i.test(contentType)) throw new HttpError(415, 'content-type must be application/json')
+        const origin = headers.origin
+        if (origin) {
+          let parsed
+          try { parsed = new URL(String(origin)) } catch { throw new HttpError(403, 'invalid origin') }
+          if (!['http:', 'https:'].includes(parsed.protocol) || !['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname)) {
+            throw new HttpError(403, 'cross-origin request rejected')
+          }
+          if (host && parsed.host !== host) throw new HttpError(403, 'origin does not match host')
+        }
+      }
       await handler(req, res)
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500
@@ -3268,6 +3384,7 @@ function route(handler) {
     }
   }
 }
+const routeRate = new Map()
 
 export function apply(ctx, config = {}) {
   migrateLegacyStudioDir()
@@ -3420,6 +3537,7 @@ export function apply(ctx, config = {}) {
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
+        payload.forceReason = String((req.headers || {})['x-ronge-force-reason'] || payload.forceReason || '')
         const installed = await installRemoteSkill(payload)
         sendJson(res, 201, installed)
       }),
@@ -3443,7 +3561,10 @@ export function apply(ctx, config = {}) {
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
-        const updated = await applySkillUpdate(String(payload?.name ?? ''), { force: payload?.force === true })
+        const updated = await applySkillUpdate(String(payload?.name ?? ''), {
+          force: payload?.force === true,
+          forceReason: String((req.headers || {})['x-ronge-force-reason'] || payload?.forceReason || ''),
+        })
         sendJson(res, 200, updated)
       }),
     }),
@@ -3460,7 +3581,10 @@ export function apply(ctx, config = {}) {
         } catch {
           payload = {}
         }
-        const result = await applyAllSkillUpdates({ force: payload?.force === true })
+        const result = await applyAllSkillUpdates({
+          force: payload?.force === true,
+          forceReason: String((req.headers || {})['x-ronge-force-reason'] || payload?.forceReason || ''),
+        })
         sendJson(res, 200, result)
       }),
     }),
@@ -3472,7 +3596,7 @@ export function apply(ctx, config = {}) {
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
-        const restored = rollbackSkill(String(payload?.name ?? ''))
+        const restored = await rollbackSkill(String(payload?.name ?? ''))
         sendJson(res, 200, restored)
       }),
     }),
@@ -3529,10 +3653,65 @@ export function apply(ctx, config = {}) {
         if (req.method !== 'GET') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
         const cwd = url.searchParams.get('cwd') || config?.cwd || process.cwd()
-        sendJson(res, 200, { ok: true, ...experienceHealth(memory.skills, cwd) })
+        const library = loadLibraryIndex()
+        sendJson(res, 200, {
+          ok: true,
+          ...experienceHealth(memory.skills, cwd),
+          name: PKG_NAME,
+          version: PKG_VERSION,
+          libraryEntries: Array.isArray(library.entries) ? library.entries.length : 0,
+          generatedAt: library.generatedAt || null,
+          security: { remoteHost: 'raw.githubusercontent.com', maxBytes: 262144, highRiskBlocked: true },
+        })
       }),
     }),
   )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/dsh-ronge-adaptive-skill-archive/version',
+      handler: route(async (req, res) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'method not allowed')
+        sendJson(res, 200, { ok: true, name: PKG_NAME, version: PKG_VERSION })
+      }),
+    }),
+  )
+  for (const [action, fnName] of [['plan', 'composeSkillPlan'], ['compose', 'composeSkillPlan'], ['draft', 'draftSkill']]) {
+    disposers.push(
+      ctx.webServer.register({
+        kind: 'exact',
+        path: '/dsh-ronge-adaptive-skill-archive/intelligence/' + action,
+        handler: route(async (req, res) => {
+          if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+          const payload = await readJson(req)
+          const task = String(payload?.task || '').trim()
+          if (!task) throw new HttpError(400, 'task is required')
+          const intel = await loadIntelligence()
+          const listed = ctx.skills?.list ? await ctx.skills.list() : []
+          const installed = (Array.isArray(listed) ? listed : []).map((skill) => ({ ...skill, name: skill.name })).filter((skill) => skill.name)
+          if (action === 'draft') {
+            const draft = intel.draftSkill({
+              task,
+              missing: Array.isArray(payload?.missing) ? payload.missing : [],
+              existingNames: installed.map((skill) => skill.name),
+            })
+            sendJson(res, 200, { ok: true, draft })
+            return
+          }
+          const plan = intel.composeSkillPlan({
+            task,
+            cwd: String(payload?.cwd || ''),
+            mode: String(payload?.mode || ''),
+            installedSkills: installed,
+            libraryEntries: loadLibraryIndex().entries || [],
+            capabilityIndex: loadCapabilityIndex(),
+            maxSkills: Number(payload?.maxSkills) || (action === 'plan' ? 3 : 4),
+          })
+          sendJson(res, 200, { ok: true, plan })
+        }),
+      }),
+    )
+  }
   disposers.push(
     ctx.webServer.register({
       kind: 'exact',
@@ -3645,6 +3824,11 @@ export function apply(ctx, config = {}) {
       }),
     )
   }
+
+  for (const dispose of registerIntelligenceTools(ctx)) disposers.push(dispose)
+  ctx.effect(() => () => {
+    for (const dispose of disposers) dispose()
+  })
 
   ctx.effect(() =>
     ctx.on('session/event', (session, event) => {
