@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.4.0 — 2026-10-29
+
+- **当前组合常驻卡片**：面板顶部显示运行中的 skill/组合、平均评级（来自卷轴馆索引）、为什么切到这个组合（推荐理由归因）；空闲时显示推荐组合。
+- **组合切换小弹窗（bot 通知）**：面板关闭时也会每 12s 静默轮询；运行中组合变化时右下角弹出通知（组合名 ×、★ 评级、原因），可一键打开面板或关闭。
+- **卷轴馆「只看未安装」**：卷轴馆筛选默认隐藏已安装技能；切到「全部」显示已安装徽标；新增「库里还没装的」区块，按上下文从 6,399 条索引取 3 个未安装技能（评分/预览/安装）。
+- 后端新增 `activeCombo`、`discoveries`、`/library?hideInstalled=1`；`searchLibrary` 支持多 token 匹配与排除已安装。
+- 测试：43/43（组合/发现/库过滤）；浏览器 UI 19/19。
+
+
 ## v2.3.0 — 2026-10-29
 
 - **MCP prompts + resources**：新增 `prompts/list|get`（`recommend`、`skill-workflow`，Claude Code 中即 `/mcp__ronge__recommend`）与 `resources/list|read|templates/list`（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`，SKILL.md 读取截断 8 KiB 并标注）。

@@ -1892,24 +1892,59 @@ function loadLibraryIndex() {
   return libraryCache
 }
 
-function searchLibrary(query, category, minRating, page, limit, lang) {
+let libraryRatingCache = null
+
+function libraryRatingMap() {
+  if (libraryRatingCache) return libraryRatingCache
+  const map = new Map()
+  const library = loadLibraryIndex()
+  for (const entry of library?.entries || []) {
+    map.set(entry.name, {
+      rating: Number(entry.rating) || null,
+      category: entry.category || '',
+    })
+  }
+  libraryRatingCache = map
+  return map
+}
+
+function installedSkillNameSet() {
+  const set = new Set()
+  try {
+    const skillsDir = path.join(dshHome(), 'skills')
+    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      if (!fs.existsSync(path.join(skillsDir, entry.name, 'SKILL.md'))) continue
+      set.add(entry.name)
+    }
+  } catch {
+    // No installed skills yet.
+  }
+  return set
+}
+
+function searchLibrary(query, category, minRating, page, limit, lang, options = {}) {
   const language = lang === 'zh' || lang === 'en' ? lang : 'zh'
   const library = loadLibraryIndex()
   if (!library) return { ok: false, error: 'library index is not installed' }
   const q = String(query || '').trim().toLowerCase()
+  const qTokens = q.split(/\s+/).filter(Boolean)
   const categoryFilter = String(category || '').trim()
   const threshold = Number(minRating) || 0
   const pageNumber = Math.max(1, Number(page) || 1)
   const pageSize = Math.min(80, Math.max(1, Number(limit) || 40))
+  const installedNames = options.installed instanceof Set ? options.installed : installedSkillNameSet()
   const filtered = library.entries.filter((entry) => {
+    if (options.excludeInstalled && installedNames.has(entry.name)) return false
     if (categoryFilter && entry.category !== categoryFilter) return false
     if (threshold && Number(entry.rating || 0) < threshold) return false
     if (!q) return true
-    return [entry.name, entry.description, entry.whenToUse, entry.repo, entry.path, entry.category]
+    const haystack = [entry.name, entry.description, entry.whenToUse, entry.repo, entry.path, entry.category]
       .filter(Boolean)
       .join(' ')
       .toLowerCase()
-      .includes(q)
+    if (haystack.includes(q)) return true
+    return qTokens.some((token) => haystack.includes(token))
   })
   const total = filtered.length
   const start = (pageNumber - 1) * pageSize
@@ -1926,7 +1961,7 @@ function searchLibrary(query, category, minRating, page, limit, lang) {
       ...entry,
       intro: localized.intro || entry.description || '',
       categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category || '',
-      installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
+      installed: installedNames.has(entry.name),
     }
   })
   return {
@@ -2346,6 +2381,7 @@ function analyzeSession(ctx, sessionId, cwd) {
     running: lastType !== 'turn/end',
     activeSkills: dedupeSkillCalls(skillCalls.filter((call) => call.turn === maxTurn)).slice(-3),
     recentSkills: dedupeSkillCalls(skillCalls).slice(-6),
+    activeTurn: maxTurn,
     contextText,
     lastUserText,
   }
@@ -2455,6 +2491,119 @@ function recommendSkills(
   })
 }
 
+function comboRatingFor(names) {
+  const ratings = libraryRatingMap()
+  const found = []
+  for (const name of names) {
+    const meta = ratings.get(name)
+    if (meta && Number.isFinite(Number(meta.rating)) && Number(meta.rating) > 0) {
+      found.push(Number(meta.rating))
+    }
+  }
+  if (!found.length) return { rating: null, ratedSkills: 0 }
+  return {
+    rating: Math.round((found.reduce((sum, value) => sum + value, 0) / found.length) * 10) / 10,
+    ratedSkills: found.length,
+  }
+}
+
+function buildActiveCombo(analysis, recommendations, mode) {
+  const active = Array.isArray(analysis.activeSkills) ? analysis.activeSkills : []
+  const recent = Array.isArray(analysis.recentSkills) ? analysis.recentSkills : []
+  const source = active.length ? 'active' : recent.length ? 'recent' : recommendations.length ? 'recommended' : null
+  if (!source) return null
+  const picked =
+    source === 'active'
+      ? active
+      : source === 'recent'
+        ? recent.slice(-3)
+        : recommendations.slice(0, 2).map((item) => ({ name: item.name }))
+  const byName = new Map(recommendations.map((item) => [item.name, item]))
+  const ratings = libraryRatingMap()
+  const skills = picked.map((item) => {
+    const rec = byName.get(item.name)
+    const labels = rec && Array.isArray(rec.reasonsDetail) ? rec.reasonsDetail.map((reason) => reason.label).filter(Boolean) : []
+    const meta = ratings.get(item.name)
+    return {
+      name: item.name,
+      rating: meta && Number.isFinite(Number(meta.rating)) ? Number(meta.rating) : null,
+      category: meta?.category || categoryOf(item.name),
+      reason: labels.slice(0, 2).join(' · '),
+    }
+  })
+  const { rating, ratedSkills } = comboRatingFor(skills.map((item) => item.name))
+  const labels = []
+  for (const skill of skills) {
+    if (skill.reason) labels.push(skill.name + ': ' + skill.reason)
+  }
+  let why = labels.slice(0, 2).join('  /  ')
+  if (!why) {
+    why =
+      source === 'recommended'
+        ? '当前会话上下文与这些技能的关键词/类别匹配'
+        : '由你的会话上下文触发；推荐器会根据使用结果继续调整'
+  }
+  const turn = Number(analysis.activeTurn || analysis.turn || 0) || null
+  const lastAt = picked
+    .map((item) => Number(item.time || 0))
+    .filter((value) => value > 0)
+    .sort((left, right) => right - left)[0]
+  return {
+    source,
+    label: source,
+    mode,
+    skills,
+    names: skills.map((item) => item.name),
+    rating,
+    ratedSkills,
+    why,
+    key: source + ':' + (turn || '') + ':' + skills.map((item) => item.name).join('+'),
+    turn,
+    changedAt: lastAt ? new Date(lastAt).toISOString() : null,
+    contextPreview: String(analysis.lastUserText || '').slice(0, 120),
+  }
+}
+
+function buildDiscoveries(analysis, recommendations, language, installedNames) {
+  const tokens = [...tokenize(analysis.lastUserText || analysis.contextText || '')]
+    .filter((token) => token.length >= 2 && /^[a-z0-9]+$/.test(token))
+    .slice(-6)
+  let entries = []
+  if (tokens.length) {
+    const result = searchLibrary(tokens.join(' '), '', 3, 1, 12, language, {
+      excludeInstalled: true,
+      installed: installedNames,
+    })
+    entries = result.entries || []
+  }
+  if (entries.length < 3 && recommendations.length) {
+    const category = categoryOf(recommendations[0].name)
+    if (category && category !== 'other') {
+      const result = searchLibrary('', category, 4, 1, 12, language, {
+        excludeInstalled: true,
+        installed: installedNames,
+      })
+      for (const entry of result.entries || []) {
+        if (!entries.find((item) => item.name === entry.name)) entries.push(entry)
+      }
+    }
+  }
+  return entries.slice(0, 3).map((entry) => ({
+    name: entry.name,
+    description: String(entry.description || '').slice(0, 240),
+    intro: entry.intro || entry.description || '',
+    category: entry.category,
+    categoryLabel: entry.categoryLabel,
+    rating: entry.rating,
+    trust: entry.trust,
+    rawUrl: entry.rawUrl,
+    url: entry.url,
+    repo: entry.repo,
+    path: entry.path,
+    installed: false,
+  }))
+}
+
 async function buildCatalog(ctx, config, sessionId, lang) {
   let cwd = config?.cwd
   if (!cwd && sessionId) {
@@ -2537,6 +2686,9 @@ async function buildCatalog(ctx, config, sessionId, lang) {
       })
     : []
   noteRecommendationExposure(recommendations)
+  const installedNames = installedSkillNameSet()
+  const activeCombo = buildActiveCombo(analysis, recommendations, studioMode)
+  const discoveries = buildDiscoveries(analysis, recommendations, language, installedNames)
   return {
     ok: true,
     count: summaries.length,
@@ -2549,6 +2701,8 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     generatedAt: new Date().toISOString(),
     skills: summaries,
     recommendations,
+    discoveries,
+    activeCombo,
     activeSkills: analysis.activeSkills,
     recentSkills: analysis.recentSkills,
     running: analysis.running,
@@ -2704,7 +2858,7 @@ export function apply(ctx, config = {}) {
           .slice(0, 40)
           .map((entry) => ({
             ...entry,
-            installed: fs.existsSync(path.join(dshHome(), 'skills', entry.name)),
+            installed: installedNames.has(entry.name),
           }))
         sendJson(res, 200, {
           ok: true,
@@ -2936,6 +3090,10 @@ export function apply(ctx, config = {}) {
           url.searchParams.get('page') || 1,
           url.searchParams.get('limit') || 40,
           url.searchParams.get('lang') || '',
+          {
+            excludeInstalled: url.searchParams.get('hideInstalled') === '1',
+            installed: installedSkillNameSet(),
+          },
         )
         if (result.ok === false) throw new HttpError(503, result.error)
         sendJson(res, 200, result)
@@ -3060,4 +3218,8 @@ export {
   resolveEvolutionWeights,
   scanSkillText,
   tokenize,
+  buildActiveCombo,
+  buildDiscoveries,
+  libraryRatingMap,
+  installedSkillNameSet,
 }

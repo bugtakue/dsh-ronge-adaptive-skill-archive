@@ -5,6 +5,8 @@ import {
   EVOLUTION_DEFAULT_WEIGHTS,
   aggregateSkillStats,
   applyExploration,
+  buildActiveCombo,
+  buildDiscoveries,
   classifyTrust,
   diffSkillLines,
   evaluateEvolutionState,
@@ -382,4 +384,40 @@ test('recommendSkills can include an exploration pick when quota is enabled', ()
   const explored = ranked.find((item) => item.exploration === true)
   assert.ok(explored, 'one recommendation is an exploration pick')
   assert.equal(explored.reasonsDetail[0].kind, 'explore')
+})
+
+
+test('buildActiveCombo exposes names, rating, why and a stable key', () => {
+  const analysis = {
+    activeSkills: [{ name: 'office-pptx', turn: 3, time: 1770000000000 }, { name: 'office-render', turn: 3, time: 1770000001000 }],
+    recentSkills: [],
+    activeTurn: 3,
+    lastUserText: '做一份产品发布 PPT 并渲染预览',
+  }
+  const recommendations = [
+    { name: 'office-pptx', reasonsDetail: [{ kind: 'name', label: 'office-pptx' }, { kind: 'category', label: 'ppt' }] },
+    { name: 'office-render', reasonsDetail: [{ kind: 'keyword', label: '渲染' }] },
+  ]
+  const combo = buildActiveCombo(analysis, recommendations, 'immersive')
+  assert.equal(combo.source, 'active')
+  assert.deepEqual(combo.names, ['office-pptx', 'office-render'])
+  assert.equal(combo.mode, 'immersive')
+  assert.match(combo.key, /^active:3:office-pptx\+office-render$/)
+  assert.ok(combo.why.includes('office-pptx'))
+  assert.ok('rating' in combo)
+
+  const idle = buildActiveCombo({ activeSkills: [], recentSkills: [], activeTurn: 0, lastUserText: '' }, recommendations, 'plan')
+  assert.equal(idle.source, 'recommended')
+  assert.deepEqual(idle.names, ['office-pptx', 'office-render'])
+})
+
+test('buildDiscoveries returns uninstalled library entries with install metadata', () => {
+  const analysis = { lastUserText: 'pdf', contextText: 'pdf', activeTurn: 0 }
+  const result = buildDiscoveries(analysis, [], 'zh', new Set())
+  assert.ok(Array.isArray(result))
+  assert.ok(result.length <= 3)
+  for (const entry of result) {
+    assert.equal(entry.installed, false)
+    assert.ok(entry.name)
+  }
 })

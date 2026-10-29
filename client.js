@@ -25,6 +25,21 @@ window.__ModuleLoader__.load({
       open: '打开技能工厂',
       title: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
       subtitle: '可沉浸式体验 · 上下文感知 · 自进化推荐 · 正在使用 · 一键新建',
+      comboTitle: '当前组合',
+      comboActive: '运行中',
+      comboRecent: '最近使用',
+      comboRecommended: '推荐组合',
+      comboRating: '评级',
+      comboWhy: '为什么',
+      comboSwitch: '已切换 skill 组合',
+      comboOpen: '查看面板',
+      comboDismiss: '知道了',
+      comboLive: '运行中的组合',
+      onlyNew: '未安装',
+      allSkills: '全部',
+      newFromLibrary: '库里还没装的',
+      newFromLibraryHint: '按当前上下文从 6,399 条索引里挑的未安装技能',
+      installedBadge: '已安装',
       recommend: '推荐',
       recommendHint: '根据当前会话内容',
       basedOn: '基于：',
@@ -218,6 +233,21 @@ window.__ModuleLoader__.load({
       open: 'Open Skill Factory',
       title: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
       subtitle: 'Adaptive · self-evolving recommendations · context-aware · active skills · one-click create',
+      comboTitle: 'Current combo',
+      comboActive: 'Running',
+      comboRecent: 'Recently used',
+      comboRecommended: 'Recommended combo',
+      comboRating: 'Rating',
+      comboWhy: 'Why',
+      comboSwitch: 'Skill combo switched',
+      comboOpen: 'Open panel',
+      comboDismiss: 'Got it',
+      comboLive: 'Active combo',
+      onlyNew: 'Not installed',
+      allSkills: 'All',
+      newFromLibrary: 'Not in your library yet',
+      newFromLibraryHint: 'Uninstalled picks from the 6,399 index for this context',
+      installedBadge: 'Installed',
       recommend: 'Recommended',
       recommendHint: 'From the current session',
       basedOn: 'Based on: ',
@@ -999,6 +1029,55 @@ window.__ModuleLoader__.load({
         }
       }, [incomingSessionId])
 
+      // Combo watcher: polls silently even when the drawer is closed, and shows
+      // a small notification only when a *running* skill combo changes.
+      const [comboNotice, setComboNotice] = React.useState(null)
+      const comboSeen = React.useRef(null)
+      const comboNoticeTimer = React.useRef(null)
+      React.useEffect(() => {
+        const sessionId = props && props.sessionId ? props.sessionId : store.sessionId
+        comboSeen.current = null
+        setComboNotice(null)
+        if (!sessionId) return undefined
+        let stopped = false
+        const check = async () => {
+          try {
+            const params = new URLSearchParams({ sessionId })
+            params.set('lang', String(store.lang || '').toLowerCase().startsWith('en') ? 'en' : 'zh')
+            const response = await fetch('/ronge-adaptive-skill-archive/catalog.json?' + params.toString(), {
+              cache: 'no-store',
+            })
+            if (!response.ok) return
+            const payload = await response.json().catch(() => ({}))
+            const combo = payload && payload.activeCombo ? payload.activeCombo : null
+            if (!combo || !combo.key) return
+            if (!comboSeen.current) {
+              comboSeen.current = combo.key
+              return
+            }
+            if (combo.key === comboSeen.current) return
+            comboSeen.current = combo.key
+            if (combo.source !== 'active') return
+            if (stopped) return
+            setComboNotice(combo)
+            if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
+            comboNoticeTimer.current = setTimeout(() => setComboNotice(null), 9000)
+          } catch {
+            // Silent: the watcher never affects the page.
+          }
+        }
+        check()
+        const timer = setInterval(check, 12000)
+        return () => {
+          stopped = true
+          clearInterval(timer)
+          if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
+        }
+      }, [props && props.sessionId])
+
+      const comboNoticeNames = comboNotice && Array.isArray(comboNotice.skills) ? comboNotice.skills.map((item) => item.name) : []
+      const comboNoticeRating = comboNotice && Number.isFinite(Number(comboNotice.rating)) ? Number(comboNotice.rating) : null
+
       return h(
         React.Fragment,
         null,
@@ -1015,6 +1094,50 @@ window.__ModuleLoader__.load({
           h(IconSkills, { size: 15 }),
           h('span', { className: 'sf-trigger-label' }, t('trigger')),
         ),
+        comboNotice
+          ? h(
+              'div',
+              { className: 'sf-combo-toast', role: 'status', 'aria-live': 'polite' },
+              h('span', { className: 'sf-combo-toast-icon' }, h(IconSparkle, { size: 15 })),
+              h(
+                'div',
+                { className: 'sf-combo-toast-body' },
+                h('div', { className: 'sf-combo-toast-title' }, t('comboSwitch')),
+                h(
+                  'div',
+                  { className: 'sf-combo-toast-names' },
+                  comboNoticeNames.join(' × ') +
+                    (comboNoticeRating !== null ? '  ★ ' + comboNoticeRating.toFixed(1) : ''),
+                ),
+                comboNotice.why
+                  ? h('div', { className: 'sf-combo-toast-why' }, String(comboNotice.why))
+                  : null,
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'sf-combo-toast-open',
+                  onClick: () => {
+                    store.set({ open: true, sessionId: props && props.sessionId ? props.sessionId : store.sessionId })
+                    setComboNotice(null)
+                  },
+                },
+                t('comboOpen'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'sf-combo-toast-close',
+                  'aria-label': t('comboDismiss'),
+                  title: t('comboDismiss'),
+                  onClick: () => setComboNotice(null),
+                },
+                h(IconClose, { size: 13 }),
+              ),
+            )
+          : null,
       )
     }
 
@@ -1118,6 +1241,7 @@ window.__ModuleLoader__.load({
       const [libraryLoading, setLibraryLoading] = React.useState(false)
       const [libraryError, setLibraryError] = React.useState(null)
       const [libraryPage, setLibraryPage] = React.useState(1)
+      const [libraryOnlyNew, setLibraryOnlyNew] = React.useState(true)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
       const toastTimer = React.useRef(null)
@@ -1226,6 +1350,8 @@ window.__ModuleLoader__.load({
       const currentMode = data && data.mode ? data.mode : 'off'
       const experience = data && data.experience ? data.experience : null
       const evolution = data && data.evolution && typeof data.evolution === 'object' ? data.evolution : null
+      const combo = data && data.activeCombo && Array.isArray(data.activeCombo.skills) ? data.activeCombo : null
+      const discoveries = data && Array.isArray(data.discoveries) ? data.discoveries : []
       const recFeedback =
         experience && experience.recFeedback && experience.recFeedback.skills && typeof experience.recFeedback.skills === 'object'
           ? experience.recFeedback.skills
@@ -1393,6 +1519,7 @@ window.__ModuleLoader__.load({
         setLibraryLoading(true)
         setLibraryError(null)
         try {
+          const onlyNew = filters.onlyNew !== undefined ? filters.onlyNew : libraryOnlyNew
           const params = new URLSearchParams({
             q: filters.q !== undefined ? filters.q : libraryQuery,
             category: filters.category !== undefined ? filters.category : libraryCategory,
@@ -1400,6 +1527,7 @@ window.__ModuleLoader__.load({
             page: String(page),
             limit: '40',
           })
+          if (onlyNew) params.set('hideInstalled', '1')
           const activeLocale = localeCtx?.locale?.getLocale?.().active || ''
           if (activeLocale) params.set('lang', activeLocale.toLowerCase().startsWith('zh') ? 'zh' : 'en')
           const response = await fetch('/ronge-adaptive-skill-archive/library?' + params.toString(), { cache: 'no-store' })
@@ -1800,6 +1928,9 @@ window.__ModuleLoader__.load({
               { className: 'sf-source sf-rating', title: t('starsAria') },
               '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category),
             ),
+            entry.installed
+              ? h('span', { className: 'sf-source sf-installed-badge' }, t('installedBadge'))
+              : null,
           ),
           h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
           h('div', { className: 'sf-remote-meta' }, (entry.repo || '') + (entry.path ? ' · ' + entry.path : '')),
@@ -1883,6 +2014,30 @@ window.__ModuleLoader__.load({
             h(
               'div',
               { className: 'sf-chiprow' },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: libraryOnlyNew ? 'sf-chip sf-chip-active' : 'sf-chip',
+                  onClick: () => {
+                    setLibraryOnlyNew(true)
+                    loadLibrary(1, false, { onlyNew: true })
+                  },
+                },
+                t('onlyNew'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: libraryOnlyNew ? 'sf-chip' : 'sf-chip sf-chip-active',
+                  onClick: () => {
+                    setLibraryOnlyNew(false)
+                    loadLibrary(1, false, { onlyNew: false })
+                  },
+                },
+                t('allSkills'),
+              ),
               h(
                 'button',
                 {
@@ -2975,6 +3130,95 @@ window.__ModuleLoader__.load({
         )
       }
 
+      const comboLabel = (value) =>
+        !value ? '' : value.source === 'active' ? t('comboActive') : value.source === 'recent' ? t('comboRecent') : t('comboRecommended')
+
+      const renderCombo = () => {
+        if (!combo) return null
+        const names = Array.isArray(combo.names) && combo.names.length ? combo.names : combo.skills.map((item) => item.name)
+        const rating = Number.isFinite(Number(combo.rating)) ? Number(combo.rating) : null
+        return h(
+          'section',
+          { className: 'sf-combo sf-combo-' + (combo.source || 'recommended'), 'aria-label': t('comboTitle') },
+          h('span', { className: 'sf-combo-dot' }),
+          h(
+            'div',
+            { className: 'sf-combo-body' },
+            h(
+              'div',
+              { className: 'sf-combo-row' },
+              h('span', { className: 'sf-combo-label' }, t('comboTitle')),
+              h('span', { className: 'sf-combo-kind' }, comboLabel(combo)),
+              rating !== null ? h('span', { className: 'sf-combo-rating' }, '★ ' + rating.toFixed(1)) : null,
+              h('span', { className: 'sf-combo-names' }, names.join(' × ')),
+            ),
+            h(
+              'div',
+              { className: 'sf-combo-why' },
+              h('span', { className: 'sf-combo-why-label' }, t('comboWhy')),
+              h('span', { className: 'sf-combo-why-text' }, String(combo.why || '')),
+            ),
+          ),
+        )
+      }
+
+      const renderDiscoveries = () => {
+        if (!discoveries.length) return null
+        return h(
+          'section',
+          { className: 'sf-discoveries' },
+          h(SectionHead, {
+            icon: h(IconLibrary, { size: 14 }),
+            title: t('newFromLibrary'),
+            hint: t('newFromLibraryHint'),
+            badge: String(discoveries.length),
+          }),
+          h(
+            'div',
+            { className: 'sf-discovery-list' },
+            discoveries.map((entry) =>
+              h(
+                'div',
+                { className: 'sf-discovery-card', key: entry.name },
+                h(
+                  'div',
+                  { className: 'sf-discovery-head' },
+                  h('strong', { className: 'sf-name' }, entry.name),
+                  h(
+                    'span',
+                    { className: 'sf-source sf-rating' },
+                    '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category || ''),
+                  ),
+                ),
+                h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
+                h(
+                  'div',
+                  { className: 'sf-discovery-actions' },
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary',
+                      onClick: () => openRemotePreview({ ...entry, url: entry.rawUrl || entry.url }),
+                    },
+                    t('preview'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-primary',
+                      onClick: () => installRemote({ ...entry, url: entry.rawUrl || entry.url }),
+                    },
+                    t('install'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+      }
+
       const renderRecommendations = () =>
         h(
           'section',
@@ -3176,6 +3420,7 @@ window.__ModuleLoader__.load({
                 ),
               ),
             ),
+            renderCombo(),
             h(
               'nav',
               { className: 'sf-tabs', role: 'tablist', 'aria-label': t('tabsAria'), onKeyDown: onTabsKeyDown },
@@ -3315,6 +3560,7 @@ window.__ModuleLoader__.load({
                     null,
                     renderActive(),
                     renderRecommendations(),
+                    renderDiscoveries(),
                     renderCatalog(),
                     renderExperience(),
                     renderEvolution(),
@@ -3777,6 +4023,39 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 }
 @media (prefers-reduced-motion:reduce){
 .sf-drawer,.sf-backdrop,.sf-subview,.sf-toast{animation:none}
+.sf-combo{display:flex;gap:9px;align-items:flex-start;margin:0 16px 10px;padding:9px 11px;border:1px solid var(--sf-line);border-radius:12px;background:var(--sf-tint-1)}
+.sf-combo-dot{flex:none;width:7px;height:7px;margin-top:5px;border-radius:50%;background:var(--sf-success);box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-success) 18%,transparent);animation:sf-pulse 2.4s ease-in-out infinite}
+.sf-combo-recommended .sf-combo-dot{background:var(--sf-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-accent) 18%,transparent)}
+.sf-combo-body{flex:1;min-width:0}
+.sf-combo-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.sf-combo-label{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--sf-ink-2);text-transform:uppercase}
+.sf-combo-kind{padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--sf-success) 14%,transparent);color:var(--sf-success);font-size:9.5px;font-weight:600;line-height:1.7}
+.sf-combo-recommended .sf-combo-kind{background:color-mix(in srgb,var(--sf-accent) 14%,transparent);color:var(--sf-accent)}
+.sf-combo-rating{color:var(--sf-warn);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
+.sf-combo-names{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--sf-ink)}
+.sf-combo-why{display:flex;gap:5px;margin-top:3px;font-size:10px;line-height:1.45;color:var(--sf-ink-3)}
+.sf-combo-why-label{flex:none;color:var(--sf-ink-2);font-weight:600}
+.sf-combo-why-text{min-width:0}
+.sf-discoveries{margin:0 16px 14px}
+.sf-discovery-list{display:flex;flex-direction:column;gap:6px}
+.sf-discovery-card{padding:9px 10px;border:1px dashed color-mix(in srgb,var(--sf-accent) 32%,var(--sf-line));border-radius:12px;background:var(--sf-tint-1)}
+.sf-discovery-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sf-discovery-head .sf-name{font-size:12px}
+.sf-discovery-card .sf-desc{margin:4px 0 6px;font-size:10.5px;color:var(--sf-ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sf-discovery-actions{display:flex;justify-content:flex-end;gap:6px}
+.sf-installed-badge{color:var(--sf-success);border:1px solid color-mix(in srgb,var(--sf-success) 30%,transparent);border-radius:999px;padding:0 6px;font-size:9px;line-height:1.6}
+.sf-combo-toast{position:fixed;right:18px;bottom:18px;z-index:90;display:flex;align-items:flex-start;gap:9px;width:min(360px,calc(100vw - 36px));padding:11px 12px;border:1px solid color-mix(in srgb,var(--sf-success) 38%,var(--sf-line));border-radius:14px;background:var(--dsw-alias-bg-layer-1);box-shadow:var(--sf-shadow-pop,0 16px 48px -12px rgba(0,0,0,.4));color:var(--sf-ink);animation:sf-toast-in 200ms cubic-bezier(.2,.7,.2,1)}
+.sf-combo-toast-icon{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--sf-success) 14%,transparent);color:var(--sf-success)}
+.sf-combo-toast-body{flex:1;min-width:0}
+.sf-combo-toast-title{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--sf-success);text-transform:uppercase}
+.sf-combo-toast-names{margin-top:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--sf-ink);word-break:break-word}
+.sf-combo-toast-why{margin-top:3px;font-size:10px;line-height:1.45;color:var(--sf-ink-3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.sf-combo-toast-open{flex:none;align-self:center;padding:5px 8px;border:1px solid color-mix(in srgb,var(--sf-success) 34%,transparent);border-radius:8px;background:transparent;color:var(--sf-success);font:inherit;font-size:10px;font-weight:600;cursor:pointer}
+.sf-combo-toast-open:hover{background:color-mix(in srgb,var(--sf-success) 10%,transparent)}
+.sf-combo-toast-close{flex:none;display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--sf-ink-3);cursor:pointer}
+.sf-combo-toast-close:hover{background:var(--sf-tint-2);color:var(--sf-ink)}
+@media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
+@media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
 .sf-card,.sf-reco-item,.sf-remote-card,.sf-chip,.sf-reco-btn,.sf-fb,.sf-primary,.sf-secondary,.sf-new-btn,.sf-bar-fill,.sf-seg-btn,.sf-tab,.sf-icon-btn,.sf-trigger{transition:none}
 .sf-skeleton::after{animation:none}
 .sf-active-pulse{animation:none}
