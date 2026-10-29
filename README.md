@@ -126,7 +126,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 
 ### 安装前安全扫描
 
-预览/安装任何第三方 `SKILL.md` 前，在本机跑一遍启发式静态扫描：shell 执行、`curl | bash`、动态解码（eval/base64）、提示注入语句、网络访问、凭据路径、文件写入、过宽 `allowed-tools`。输出低/中/高风险与命中行号，并展示来源信任级别（official / verified / community / local / unknown）和 `license` 字段。**只读文本，不联网、不上传、不执行。面板安装与 MCP `install_skill` 一致：高风险默认拒绝，必须显式 force 才允许写入。**
+预览/安装任何第三方 `SKILL.md` 前，在本机跑一遍启发式静态扫描：shell 执行、`curl | bash`、动态解码（eval/base64）、提示注入语句、网络访问、凭据路径、文件写入、过宽 `allowed-tools`。输出低/中/高风险与命中行号，并展示来源信任级别（official / verified / community / local / unknown）和 `license` 字段。**只读文本，不联网、不上传、不执行。面板安装、更新中心与 MCP `install_skill` 一致：高风险默认拒绝，必须显式 force 才允许写入/更新。**扫描规则仍是启发式正则（含 shell/管道执行/混淆载荷/破坏性命令/全局安装/外传地址等），不是安全保证。
 
 ### 更新 diff / 更新全部 / 回滚
 
@@ -192,7 +192,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 这 6,399 条是 **GitHub 公开 SKILL.md 的元数据快照**，不是质量榜：
 - 1,001 条没有描述、只有 26 条带 `whenToUse`，512 个名称重复（其中 291 个都叫 `skill`）；
-- 旧 `rating` 是启发式公式，**不代表质量/安全**；v2.7.0 起索引增加透明的 `quality`（完整度：描述/whenToUse/路径/唯一名称/官方来源）并在 UI 显示；
+- 旧 `rating` 是启发式公式，**不代表质量/安全**；v2.7.x 起索引增加透明的 `quality`（完整度：描述/whenToUse/路径/唯一名称/官方来源，封顶 98，通用短名扣分）并在 UI 显示；
 - 发现/更优推荐会跳过无描述、重复名和非最佳版本；安装同名技能时自动改名为 `name-owner-hash` 并改写 frontmatter，避免互相覆盖；
 - 安装前请先「预览」看 SKILL.md 与安全扫描结果。
 

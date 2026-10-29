@@ -504,6 +504,30 @@ const RISK_RULES = [
     severity: 'low',
     pattern: /\b(?:rm\s+-rf|sudo\s+|chmod\s+\+?x|\bwriteFileSync\b|\bwriteFile\b)/i,
   },
+  {
+    id: 'destructive',
+    label: '破坏性命令',
+    severity: 'high',
+    pattern: /\b(?:rm\s+-rf\s+\/(?:\s|$)|mkfs\.|dd\s+if=\/dev\/zero|:(){ :\|:& };:)/i,
+  },
+  {
+    id: 'obfuscation',
+    label: '混淆载荷',
+    severity: 'high',
+    pattern: /(?:[A-Za-z0-9+/]{120,}={0,2}|(?:\\x[0-9a-f]{2}){8,}|String\.fromCharCode\s*\()/i,
+  },
+  {
+    id: 'global-install',
+    label: '全局安装/系统修改',
+    severity: 'medium',
+    pattern: /\b(?:npm\s+(?:i|install)\s+-g|pip\s+install\s+(?:--user\s+)?(?:-e\s+)?\.(?:\s|$)|gem\s+install|brew\s+install)\b/i,
+  },
+  {
+    id: 'exfil',
+    label: '疑似数据外传',
+    severity: 'medium',
+    pattern: /\b(?:webhook\.site|discord(?:app)?\.com\/api\/webhooks|pastebin\.com|transfer\.sh|0x0\.st)\b/i,
+  },
 ]
 
 const RISK_WEIGHT = { high: 40, medium: 15, low: 5 }
@@ -686,7 +710,16 @@ function installedSkillDir(name) {
   return path.join(dshHome(), 'skills', normalized)
 }
 
-async function applySkillUpdate(name) {
+function assessSkillUpdate(text, force = false) {
+  const security = scanSkillText(text)
+  return {
+    security,
+    blocked: security.level === 'high' && force !== true,
+  }
+}
+
+async function applySkillUpdate(name, options = {}) {
+  const force = options.force === true
   const dir = installedSkillDir(name)
   const file = path.join(dir, 'SKILL.md')
   if (!fs.existsSync(file)) throw new HttpError(404, 'skill "' + name + '" is not installed')
@@ -694,6 +727,18 @@ async function applySkillUpdate(name) {
   if (!source || !source.url) throw new HttpError(400, 'skill "' + name + '" has no recorded source')
   const localText = fs.readFileSync(file, 'utf8')
   const { text: remoteText } = await fetchRemoteSkill(source.url)
+  const assessment = assessSkillUpdate(remoteText, force)
+  if (assessment.blocked) {
+    throw new HttpError(
+      422,
+      'high-risk update blocked: ' +
+        assessment.security.findings
+          .slice(0, 3)
+          .map((finding) => finding.rule + ' (line ' + finding.line + ')')
+          .join(', ') +
+        '; pass force=true only after manual review',
+    )
+  }
   if (sha256(remoteText) === source.sha256) {
     return { ok: true, name, changed: false, diff: { added: 0, removed: 0, lines: [] } }
   }
@@ -758,12 +803,12 @@ function rollbackSkill(name) {
   }
 }
 
-async function applyAllSkillUpdates() {
+async function applyAllSkillUpdates(options = {}) {
   const checked = await checkSkillUpdates()
   const results = []
   for (const update of checked.updates.slice(0, 40)) {
     try {
-      results.push(await applySkillUpdate(update.name))
+      results.push(await applySkillUpdate(update.name, options))
     } catch (error) {
       results.push({
         ok: false,
@@ -3292,7 +3337,7 @@ export function apply(ctx, config = {}) {
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
-        const updated = await applySkillUpdate(String(payload?.name ?? ''))
+        const updated = await applySkillUpdate(String(payload?.name ?? ''), { force: payload?.force === true })
         sendJson(res, 200, updated)
       }),
     }),
@@ -3303,7 +3348,13 @@ export function apply(ctx, config = {}) {
       path: '/ronge-adaptive-skill-archive/discover/update-all',
       handler: route(async (req, res) => {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
-        const result = await applyAllSkillUpdates()
+        let payload = {}
+        try {
+          payload = await readJson(req)
+        } catch {
+          payload = {}
+        }
+        const result = await applyAllSkillUpdates({ force: payload?.force === true })
         sendJson(res, 200, result)
       }),
     }),
@@ -3579,5 +3630,6 @@ export {
   libraryRatingMap,
   installedSkillNameSet,
   assessRemoteSkill,
+  assessSkillUpdate,
   uniqueSkillName,
 }

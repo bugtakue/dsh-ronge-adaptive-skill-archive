@@ -1360,7 +1360,7 @@ window.__ModuleLoader__.load({
         try {
           return window.localStorage.getItem('ronge.autoInstallBetter') === '1'
         } catch {
-          return true
+          return false
         }
       })
       const [ignoredBetter, setIgnoredBetter] = React.useState([])

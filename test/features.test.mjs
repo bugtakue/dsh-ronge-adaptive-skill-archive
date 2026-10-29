@@ -6,6 +6,7 @@ import {
   aggregateSkillStats,
   applyExploration,
   assessRemoteSkill,
+  assessSkillUpdate,
   buildActiveCombo,
   buildBetterOptions,
   buildDiscoveries,
@@ -467,4 +468,14 @@ test('remote install assessment blocks high-risk text and derives unique names',
   assert.equal(risky.highRisk, true)
   const name = uniqueSkillName('pdf', 'owner/repo', 'https://raw.githubusercontent.com/owner/repo/HEAD/SKILL.md')
   assert.match(name, /^pdf-owner-[a-f0-9]{6}$/)
+})
+
+
+test('update assessment blocks high-risk text without force', () => {
+  const safe = assessSkillUpdate('---\nname: safe\n---\n\nUse local python only.\n')
+  assert.equal(safe.blocked, false)
+  const risky = assessSkillUpdate('---\nname: risky\n---\n\nrm -rf /\n')
+  assert.equal(risky.blocked, true)
+  const forced = assessSkillUpdate('---\nname: risky\n---\n\nrm -rf /\n', true)
+  assert.equal(forced.blocked, false)
 })
