@@ -48,6 +48,8 @@ window.__ModuleLoader__.load({
       autoInstalled: '已自动安装更优技能',
       autoInstallFailed: '自动安装失败',
       installUse: '安装并使用',
+      installFailed: '安装失败',
+      installNetworkHint: '下载 SKILL.md 失败：当前网络无法访问 GitHub（raw.githubusercontent.com）。检查 Clash/TUN 或代理规则后重试。',
       ignore: '忽略',
       newFromLibrary: '库里还没装的',
       newFromLibraryHint: '按上下文相关度排序的未安装技能（放宽候选）',
@@ -271,6 +273,8 @@ window.__ModuleLoader__.load({
       autoInstalled: 'Auto-installed',
       autoInstallFailed: 'Auto-install failed',
       installUse: 'Install & use',
+      installFailed: 'Install failed',
+      installNetworkHint: 'Could not download SKILL.md: raw.githubusercontent.com is unreachable. Check proxy/TUN rules and retry.',
       ignore: 'Ignore',
       newFromLibrary: 'Not in your library yet',
       newFromLibraryHint: 'Uninstalled skills ranked by context relevance (broad candidates)',
@@ -1729,11 +1733,10 @@ window.__ModuleLoader__.load({
           showToast((options.auto ? t('autoInstalled') : t('installed')) + ' · ' + entry.name)
           await load(state.sessionId, true)
         } catch (err) {
-          setRemoteInstall({
-            name: entry.name,
-            status: 'error',
-            error: err instanceof Error ? err.message : String(err),
-          })
+          const raw = err instanceof Error ? err.message : String(err)
+          const friendly = /fetch failed|ENOTFOUND|ECONN|TLS|network/i.test(raw) ? t('installNetworkHint') : raw
+          setRemoteInstall({ name: entry.name, status: 'error', error: friendly })
+          showToast(t('installFailed') + ' · ' + entry.name, 'error')
         }
       }
 
@@ -3393,6 +3396,37 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const installStateFor = (entry) =>
+        remoteInstall && remoteInstall.name === entry.name ? remoteInstall : null
+
+      const installButton = (entry, label) => {
+        const state = installStateFor(entry)
+        const busy = state && state.status === 'installing'
+        const done = state && state.status === 'installed'
+        return h(
+          'button',
+          {
+            type: 'button',
+            className: 'sf-primary',
+            disabled: Boolean(busy || done),
+            onClick: () => installRemote({ name: entry.name, url: entry.rawUrl || entry.url, trust: entry.trust }),
+          },
+          busy ? t('installing') : done ? t('installed') : label,
+        )
+      }
+
+      const installStatusLine = (entry) => {
+        const state = installStateFor(entry)
+        if (!state || state.status === 'installing') return null
+        if (state.status === 'error') {
+          return h('div', { className: 'sf-install-error' }, t('installFailed') + ': ' + String(state.error || ''))
+        }
+        if (state.status === 'installed') {
+          return h('div', { className: 'sf-install-ok' }, t('installed') + ' ' + String(state.path || ''))
+        }
+        return null
+      }
+
       const renderBetter = () => {
         if (!betterOptions.length) return null
         return h(
@@ -3436,19 +3470,11 @@ window.__ModuleLoader__.load({
                     )
                   : null,
                 h('div', { className: 'sf-better-why' }, t('betterWhy') + ': ' + String(entry.whyBetter || '')),
+                installStatusLine(entry),
                 h(
                   'div',
                   { className: 'sf-better-actions' },
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      className: 'sf-primary',
-                      onClick: () =>
-                        installRemote({ name: entry.name, url: entry.rawUrl || entry.url, trust: entry.trust }),
-                    },
-                    t('installUse'),
-                  ),
+                  installButton(entry, t('installUse')),
                   h(
                     'button',
                     {
@@ -3501,6 +3527,7 @@ window.__ModuleLoader__.load({
                       t('betterMatched') + ': ' + entry.matched.slice(0, 5).join(' · '),
                     )
                   : null,
+                installStatusLine(entry),
                 h(
                   'div',
                   { className: 'sf-discovery-actions' },
@@ -3513,15 +3540,7 @@ window.__ModuleLoader__.load({
                     },
                     t('preview'),
                   ),
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      className: 'sf-primary',
-                      onClick: () => installRemote({ ...entry, url: entry.rawUrl || entry.url }),
-                    },
-                    t('install'),
-                  ),
+                  installButton(entry, t('install')),
                 ),
               ),
             ),
@@ -3890,6 +3909,7 @@ window.__ModuleLoader__.load({
                     renderCatalog(),
                     renderExperience(),
                     renderEvolution(),
+                    renderRemotePreview(),
                   )
                 : null,
             ),
@@ -4400,6 +4420,8 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-better-matched{font-size:9.5px;color:var(--sf-ink-3);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word}
 .sf-better-why{margin-top:3px;font-size:10px;color:var(--sf-ink-2)}
 .sf-better-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
+.sf-install-error{margin-top:5px;color:var(--sf-danger);font-size:10px;line-height:1.4}
+.sf-install-ok{margin-top:5px;color:var(--sf-success);font-size:10px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
 @media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
 
