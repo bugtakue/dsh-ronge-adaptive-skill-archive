@@ -101,3 +101,32 @@ node --test test/eval-real.test.mjs            # 或 npm test 一起跑
 2. 运行 `node scripts/eval-real.mjs` 与 `npm test`。
 3. 保持总数 ≥30、阈值不下调；新增用例照样允许暴露 MISS，但要有真实来源，不要为了「看起来覆盖了」编造任务。
 4. 与旧基准的关系：`npm run eval:recommend` 的 10 条作者用例保留作快速 smoke，本 30 条是主回归基准；两者结果不要混算，也不要把本文件说成「6,399 条库的评测」。
+
+---
+
+# 第二部分：6,399 库的 `discover_skills` 基准（v2.8.1）
+
+## 口径
+
+- 用例：`test/fixtures/discover-cases.json`，24 条真实任务式 prompt（中文为主、少量英文），覆盖 video / office / coding / design / data / AI / marketing / research / security / productivity / 跨类别。
+- 指标：`Category Hit@5`（top5 里是否出现期望类别）、可选 `Keyword Hit@5`（名称/描述是否出现期望关键词）、结果平均信号分。
+- 脚本：`npm run eval:discover`（可调 `--k` / `--min`，默认 0.75 阈值，低于阈值退出码 1）。
+- 检索：MCP `discover_skills` 的 256 维本地哈希向量 + 中英概念词表 + 关键词 + 信号分融合；过滤 weak / 重名非最佳 / 信号分 <45。
+
+## 当前基线（v2.8.1）
+
+- **Category Hit@5 = 0.875 (21/24)**
+- **Keyword Hit@5 = 0.917 (22/24)**
+- 结果平均信号分：53.6
+- 已知 MISS：
+  - `ai-01`（写 Claude Code SKILL.md）：top5 给了 coding 类，未命中 ai/writing；
+  - `marketing-01`（竞品分析 + 定位）：top5 偏 data/design，未命中 marketing/research；
+  - `productivity-01`（会议录音→纪要→周报）：top5 偏 video/ai，未命中 productivity/writing。
+
+## 局限（必读）
+
+1. 仍是半人工基准：prompt 按真实使用风格写，但不是线上遥测；24 条样本误差大。
+2. 类别标签来自索引的自动分类，不是人工 quality 标注；Category Hit 只说明「找到了对的类」，不代表技能好用。
+3. 信号分含 stars/维护度，热门仓库有偏置；不能把 Hit@5 当质量证明。
+4. 向量是哈希 + 词表，不是神经 embedding；同义改写、小语种、隐喻泛化仍弱。
+5. 与第一部分（已安装技能 Recall@4）口径不同，不要混算。

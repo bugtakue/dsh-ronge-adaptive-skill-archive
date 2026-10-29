@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.8.1 — 2026-10-29
+
+- 新增 **6,399 库 discover 基准**：24 条真实任务 prompt + `npm run eval:discover`，Category Hit@5 = **0.875 (21/24)**、Keyword Hit@5 = **0.917**，MISS 与局限写入 `docs/eval.md`。
+- 测试 55/55（新增 discover 基准测试）。
+- 功能等价 v2.8.0 + 评测增强。
+
+
 ## v2.8.0 — 2026-10-29
 
 - **GitHub 仓库信号进入索引**：通过 GitHub GraphQL 批量拉取 4,007 个仓库的 stars/pushedAt/archived/license（本地缓存 `library/repo-metadata.json`，可重跑）。
