@@ -39,6 +39,7 @@ window.__ModuleLoader__.load({
       onlyNew: '未安装',
       allSkills: '全部',
       betterTitle: '发现更优的未装技能',
+      betterNotice: '发现更优技能',
       betterHint: '比已装的更匹配；安装后自动参与推荐',
       betterWhy: '更匹配',
       betterMatched: '命中关键词',
@@ -261,6 +262,7 @@ window.__ModuleLoader__.load({
       onlyNew: 'Not installed',
       allSkills: 'All',
       betterTitle: 'Better uninstalled matches',
+      betterNotice: 'Better skill found',
       betterHint: 'More relevant than what is installed; installs join recommendations automatically',
       betterWhy: 'More relevant',
       betterMatched: 'Matched keywords',
@@ -1062,10 +1064,15 @@ window.__ModuleLoader__.load({
       const [comboNotice, setComboNotice] = React.useState(null)
       const comboSeen = React.useRef(null)
       const comboNoticeTimer = React.useRef(null)
+      const [betterNotice, setBetterNotice] = React.useState(null)
+      const betterSeen = React.useRef(null)
+      const betterNoticeTimer = React.useRef(null)
       React.useEffect(() => {
         const sessionId = props && props.sessionId ? props.sessionId : store.sessionId
         comboSeen.current = null
         setComboNotice(null)
+        betterSeen.current = null
+        setBetterNotice(null)
         if (!sessionId) return undefined
         let stopped = false
         const check = async () => {
@@ -1077,19 +1084,29 @@ window.__ModuleLoader__.load({
             })
             if (!response.ok) return
             const payload = await response.json().catch(() => ({}))
-            const combo = payload && payload.activeCombo ? payload.activeCombo : null
-            if (!combo || !combo.key) return
-            if (!comboSeen.current) {
-              comboSeen.current = combo.key
-              return
-            }
-            if (combo.key === comboSeen.current) return
-            comboSeen.current = combo.key
-            if (combo.source !== 'active') return
             if (stopped) return
-            setComboNotice(combo)
-            if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
-            comboNoticeTimer.current = setTimeout(() => setComboNotice(null), 9000)
+            const combo = payload && payload.activeCombo ? payload.activeCombo : null
+            if (combo && combo.key) {
+              if (!comboSeen.current) {
+                comboSeen.current = combo.key
+              } else if (combo.key !== comboSeen.current) {
+                comboSeen.current = combo.key
+                if (combo.source === 'active') {
+                  setComboNotice(combo)
+                  if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
+                  comboNoticeTimer.current = setTimeout(() => setComboNotice(null), 9000)
+                }
+              }
+            }
+            const better = payload && Array.isArray(payload.betterOptions) ? payload.betterOptions[0] : null
+            if (better && better.name) {
+              if (betterSeen.current !== better.name) {
+                betterSeen.current = better.name
+                setBetterNotice(better)
+                if (betterNoticeTimer.current) clearTimeout(betterNoticeTimer.current)
+                betterNoticeTimer.current = setTimeout(() => setBetterNotice(null), 12000)
+              }
+            }
           } catch {
             // Silent: the watcher never affects the page.
           }
@@ -1100,6 +1117,7 @@ window.__ModuleLoader__.load({
           stopped = true
           clearInterval(timer)
           if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
+          if (betterNoticeTimer.current) clearTimeout(betterNoticeTimer.current)
         }
       }, [props && props.sessionId, state.sessionId])
 
@@ -1111,6 +1129,10 @@ window.__ModuleLoader__.load({
       const comboNoticeLocalRate =
         comboNotice && comboNotice.localRate !== null && comboNotice.localRate !== undefined && Number.isFinite(Number(comboNotice.localRate))
           ? Number(comboNotice.localRate)
+          : null
+      const betterNoticeRating =
+        betterNotice && betterNotice.rating !== null && betterNotice.rating !== undefined && Number.isFinite(Number(betterNotice.rating))
+          ? Number(betterNotice.rating)
           : null
 
       return h(
@@ -1172,6 +1194,49 @@ window.__ModuleLoader__.load({
                   'aria-label': t('comboDismiss'),
                   title: t('comboDismiss'),
                   onClick: () => setComboNotice(null),
+                },
+                h(IconClose, { size: 13 }),
+              ),
+            )
+          : null,
+        betterNotice
+          ? h(
+              'div',
+              { className: 'sf-combo-toast sf-better-toast', role: 'status', 'aria-live': 'polite' },
+              h('span', { className: 'sf-combo-toast-icon' }, h(IconSparkle, { size: 15 })),
+              h(
+                'div',
+                { className: 'sf-combo-toast-body' },
+                h('div', { className: 'sf-combo-toast-title' }, t('betterNotice')),
+                h(
+                  'div',
+                  { className: 'sf-combo-toast-names' },
+                  betterNotice.name + (betterNoticeRating !== null ? '  ★ ' + betterNoticeRating.toFixed(1) : ''),
+                ),
+                betterNotice.whyBetter
+                  ? h('div', { className: 'sf-combo-toast-why' }, String(betterNotice.whyBetter))
+                  : null,
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'sf-combo-toast-open',
+                  onClick: () => {
+                    store.set({ open: true, sessionId: props && props.sessionId ? props.sessionId : store.sessionId })
+                    setBetterNotice(null)
+                  },
+                },
+                t('comboOpen'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'sf-combo-toast-close',
+                  'aria-label': t('comboDismiss'),
+                  title: t('comboDismiss'),
+                  onClick: () => setBetterNotice(null),
                 },
                 h(IconClose, { size: 13 }),
               ),
@@ -4241,6 +4306,11 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-combo-toast-title{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--sf-success);text-transform:uppercase}
 .sf-combo-toast-names{margin-top:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--sf-ink);word-break:break-word}
 .sf-combo-toast-why{margin-top:3px;font-size:10px;line-height:1.45;color:var(--sf-ink-3);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.sf-better-toast{bottom:96px;border-color:color-mix(in srgb,var(--sf-accent) 40%,var(--sf-line))}
+.sf-better-toast .sf-combo-toast-icon{background:color-mix(in srgb,var(--sf-accent) 14%,transparent);color:var(--sf-accent)}
+.sf-better-toast .sf-combo-toast-title{color:var(--sf-accent)}
+.sf-better-toast .sf-combo-toast-open{border-color:color-mix(in srgb,var(--sf-accent) 34%,transparent);color:var(--sf-accent)}
+.sf-better-toast .sf-combo-toast-open:hover{background:color-mix(in srgb,var(--sf-accent) 10%,transparent)}
 .sf-combo-toast-open{flex:none;align-self:center;padding:5px 8px;border:1px solid color-mix(in srgb,var(--sf-success) 34%,transparent);border-radius:8px;background:transparent;color:var(--sf-success);font:inherit;font-size:10px;font-weight:600;cursor:pointer}
 .sf-combo-toast-open:hover{background:color-mix(in srgb,var(--sf-success) 10%,transparent)}
 .sf-combo-toast-close{flex:none;display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--sf-ink-3);cursor:pointer}

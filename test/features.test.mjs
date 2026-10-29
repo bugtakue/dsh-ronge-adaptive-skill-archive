@@ -8,6 +8,7 @@ import {
   buildActiveCombo,
   buildBetterOptions,
   buildDiscoveries,
+  expandFocusTokens,
   classifyTrust,
   diffSkillLines,
   evaluateEvolutionState,
@@ -440,4 +441,13 @@ test('buildBetterOptions only proposes uninstalled skills that outmatch installe
     assert.ok(entry.whyBetter)
     assert.ok(entry.rawUrl || entry.url)
   }
+})
+
+
+test('focus tokens expand Chinese concepts into English library terms', () => {
+  const tokens = expandFocusTokens(['视频', '插件'])
+  assert.ok(tokens.includes('video'))
+  assert.ok(tokens.includes('plugin'))
+  assert.ok(tokens.includes('harness'))
+  assert.ok(tokens.length <= 80)
 })

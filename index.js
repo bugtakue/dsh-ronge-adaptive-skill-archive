@@ -2673,6 +2673,42 @@ const BETTER_CONTEXT_STOPWORDS = new Set([
   'workflow', 'default', 'example', 'based', 'user', 'users', 'project', 'projects', 'current',
 ])
 
+const SEMANTIC_CONCEPTS = [
+  { id: 'video', terms: ['video', 'videos', '视频', '宣传片', '动画', '剪辑', '分镜', '短片', 'promo', 'motion', 'hyperframes', 'beat'] },
+  { id: 'office', terms: ['office', '文档', '表格', 'ppt', 'pptx', 'word', 'docx', 'excel', 'xlsx', 'pdf', '演示', '报告', '幻灯片', 'slides'] },
+  { id: 'plugin', terms: ['plugin', 'plugins', '插件', 'harness', 'dsh', 'cordis', 'bundle', 'slot', 'panel', '面板', 'ui', '界面'] },
+  { id: 'design', terms: ['design', '设计', 'ui', 'ux', '视觉', 'brand', 'brandkit', 'layout', '排版'] },
+  { id: 'data', terms: ['data', '数据', 'analysis', '分析', 'chart', '图表', 'table', '表格'] },
+  { id: 'writing', terms: ['writing', '写作', '文案', 'copy', 'content'] },
+  { id: 'test', terms: ['test', '测试', 'jest', 'vitest', 'pytest'] },
+  { id: 'security', terms: ['security', '安全', 'scan', '扫描', 'audit'] },
+  { id: 'image', terms: ['image', '图片', '图像', 'photo', '插图'] },
+  { id: 'music', terms: ['music', '音乐', 'audio', '音频', '音效'] },
+]
+
+function normalizeSemanticTerm(term) {
+  return String(term || '').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, '')
+}
+
+function expandFocusTokens(tokens) {
+  const expanded = []
+  const seen = new Set()
+  const add = (token) => {
+    const clean = normalizeSemanticTerm(token)
+    if (!clean || clean.length < 2 || seen.has(clean)) return
+    seen.add(clean)
+    expanded.push(clean)
+  }
+  for (const token of tokens) add(token)
+  for (const token of tokens) {
+    for (const concept of SEMANTIC_CONCEPTS) {
+      if (!concept.terms.some((term) => normalizeSemanticTerm(term) === normalizeSemanticTerm(token))) continue
+      for (const term of concept.terms) add(term)
+    }
+  }
+  return expanded.slice(0, 80)
+}
+
 function betterFocusTokens(analysis, recommendations) {
   const texts = []
   for (const text of analysis.recentUserTexts || []) texts.push(text)
@@ -2687,7 +2723,7 @@ function betterFocusTokens(analysis, recommendations) {
     if (!/^[a-z0-9]+$/.test(clean) && !/[\u4e00-\u9fff]/.test(clean)) continue
     if (!tokens.includes(clean)) tokens.push(clean)
   }
-  return tokens.slice(0, 40)
+  return expandFocusTokens(tokens).slice(0, 80)
 }
 
 function scoreLibraryEntry(entry, tokens, topCategories) {
@@ -2696,12 +2732,18 @@ function scoreLibraryEntry(entry, tokens, topCategories) {
   let hits = 0
   let score = 0
   const matched = []
+  const hasTerm = (haystack, token) => {
+    if (/^[a-z0-9]+$/.test(token)) {
+      return new RegExp('(^|[^a-z0-9])' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![a-z0-9])').test(haystack)
+    }
+    return haystack.includes(token)
+  }
   for (const token of tokens) {
-    if (name.includes(token)) {
+    if (hasTerm(name, token)) {
       score += 3
       hits += 1
       if (matched.length < 6) matched.push(token)
-    } else if (text.includes(token)) {
+    } else if (hasTerm(text, token)) {
       score += 1
       hits += 1
       if (matched.length < 6) matched.push(token)
@@ -3445,6 +3487,7 @@ export {
   buildActiveCombo,
   buildBetterOptions,
   buildDiscoveries,
+  expandFocusTokens,
   libraryRatingMap,
   installedSkillNameSet,
 }
