@@ -26,12 +26,21 @@ let keywordHits = 0
 let keywordCases = 0
 let qualitySum = 0
 let qualityCount = 0
+let precisionSum = 0
+let top1Hits = 0
+let mrrSum = 0
 
 for (const item of cases) {
   const results = __testing.discoverLibrarySkills(String(item.context || ''), k)
   const categories = results.map((entry) => entry.category)
   const categoryHit = categories.some((category) => (item.expectCategories || []).includes(category))
   if (categoryHit) categoryHits += 1
+  const expected = item.expectCategories || []
+  const relevant = categories.filter((category) => expected.includes(category)).length
+  precisionSum += categories.length ? relevant / categories.length : 0
+  if (expected.includes(categories[0])) top1Hits += 1
+  const firstExpectedRank = categories.findIndex((category) => expected.includes(category))
+  mrrSum += firstExpectedRank >= 0 ? 1 / (firstExpectedRank + 1) : 0
   let keywordHit = null
   if (Array.isArray(item.expectKeywords) && item.expectKeywords.length) {
     keywordCases += 1
@@ -71,6 +80,9 @@ const total = cases.length
 const categoryRate = total ? categoryHits / total : 0
 const keywordRate = keywordCases ? keywordHits / keywordCases : 0
 console.log('Category Hit@' + k + ':', Math.round(categoryRate * 1000) / 1000, `(${categoryHits}/${total})`)
+console.log('Category P@' + k + ':', Math.round((precisionSum / total) * 1000) / 1000)
+console.log('Top-1 category hit:', Math.round((top1Hits / total) * 1000) / 1000)
+console.log('Category MRR:', Math.round((mrrSum / total) * 1000) / 1000)
 console.log('Keyword  Hit@' + k + ':', Math.round(keywordRate * 1000) / 1000, `(${keywordHits}/${keywordCases})`)
 console.log('Mean signal score:', qualityCount ? Math.round((qualitySum / qualityCount) * 10) / 10 : 'n/a')
 if (categoryRate < minHit) {

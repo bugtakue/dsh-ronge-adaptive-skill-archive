@@ -442,7 +442,7 @@ test('buildBetterOptions only proposes uninstalled skills that outmatch installe
   for (const entry of result) {
     assert.equal(entry.installed, false)
     assert.ok(entry.name)
-    assert.ok(entry.quality >= 60)
+    assert.ok(entry.quality >= 55)
     assert.ok(Array.isArray(entry.matched) && entry.matched.length >= 1)
     assert.ok(entry.whyBetter)
     assert.ok(entry.rawUrl || entry.url)

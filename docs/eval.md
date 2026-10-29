@@ -115,9 +115,14 @@ node --test test/eval-real.test.mjs            # 或 npm test 一起跑
 
 ## 当前基线（v2.8.1）
 
-- **Category Hit@5 = 0.875 (21/24)**
-- **Keyword Hit@5 = 0.917 (22/24)**
-- 结果平均信号分：53.6
+- **Category Hit@5 = 0.958 (23/24)**（偏松指标：top5 只要有一个类对就算命中）
+- **Category P@5 = 0.733**（top5 中属于期望类别的比例）
+- **Top-1 category hit = 0.917**
+- **Category MRR = 0.938**
+- **Keyword Hit@5 = 0.875 (21/24)**
+- 结果平均信号分：49.1
+- 说明：v2.8.2 加入查询意图类别加权后，严格指标明显上升；但 Category Hit@5 仍偏松，P@5 / Top-1 / MRR 也不能证明技能本身好用。
+- 已知 MISS：`marketing-01`（竞品分析 + 定位）——top5 全是 data 类，类别未命中；`office-03`、`coding-03` 类别命中但关键词未命中（PPT 得到 implement-import-export；依赖升级得到 reviewing-changes）。
 - 已知 MISS：
   - `ai-01`（写 Claude Code SKILL.md）：top5 给了 coding 类，未命中 ai/writing；
   - `marketing-01`（竞品分析 + 定位）：top5 偏 data/design，未命中 marketing/research；

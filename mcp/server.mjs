@@ -395,13 +395,15 @@ function fusedEntryScore(entry, query, lexicalOptions) {
 function searchLibrary(query, category, limit) {
   const parsed = buildQuery(query)
   if (!parsed.raw) return []
+  const intentCategories = queryIntentCategories(query)
   const lexicalOptions = { phrase: true, bothFields: true, category: false }
   const scored = []
   for (const entry of getLibrary().entries || []) {
     if (category && entry.category !== category) continue
     const fused = fusedEntryScore(entry, parsed, lexicalOptions)
     if (!fused.grounded) continue
-    scored.push({ entry, score: fused.score })
+    const intentBoost = intentCategories.has(entry.category) ? 0.18 : 0
+    scored.push({ entry, score: fused.score + intentBoost })
   }
   return scored
     .sort((left, right) => right.score - left.score || Number(right.entry.rating || 0) - Number(left.entry.rating || 0))
@@ -676,12 +678,38 @@ function discoveryResult(entry) {
   }
 }
 
+const CATEGORY_INTENT_TERMS = {
+  video: ['视频', '宣传片', '短片', '影片', '剪辑', '分镜', '动画', '特效', 'video', 'promo', 'film', 'trailer', 'animation', 'motion'],
+  office: ['ppt', 'pptx', 'excel', 'word', 'docx', 'pdf', '文档', '表格', '演示', '幻灯片', '报告', 'office', 'spreadsheet', 'slide', 'presentation'],
+  coding: ['代码', '编程', '重构', '调试', '测试', 'react', 'python', 'typescript', 'api', 'repository', 'debug', 'refactor', 'test', 'coding'],
+  design: ['设计', '界面', 'ui', 'ux', '海报', '品牌', '排版', 'design', 'figma', 'layout'],
+  data: ['数据', '分析', '统计', '可视化', '图表', '指标', 'dashboard', 'pandas', 'csv', 'data', 'analytics', 'chart'],
+  writing: ['写作', '文案', '小红书', '公众号', '论文', 'release notes', 'pr', 'writing', 'copy', 'redbook'],
+  marketing: ['营销', '竞品', '推广', '种草', 'marketing', 'campaign', 'seo'],
+  research: ['调研', '研究', '来源', 'research', 'survey', 'market research'],
+  security: ['安全', '审计', '漏洞', 'security', 'audit', 'vulnerability'],
+  productivity: ['会议', '纪要', '周报', '效率', '文件整理', 'productivity', 'meeting', 'summary'],
+  ai: ['skill', '技能', 'agent', '智能体', 'claude', 'mcp', 'prompt'],
+}
+
+function queryIntentCategories(context) {
+  const lower = String(context || '').toLowerCase()
+  const categories = new Set()
+  for (const [category, terms] of Object.entries(CATEGORY_INTENT_TERMS)) {
+    if (terms.some((term) => lower.includes(String(term).toLowerCase()))) categories.add(category)
+  }
+  return categories
+}
+
 function discoverLibrarySkills(context, limit) {
   const parsed = buildQuery(context)
   parsed.tokens = parsed.tokens.filter((token) => token.length >= 2).slice(0, 40)
   const maxResults = Math.max(1, Math.min(10, limit || 5))
+  const installedNames = new Set(scanInstalledSkills().map((skill) => skill.name))
+  const intentCategories = queryIntentCategories(context)
   const entries = (getLibrary().entries || []).filter(
     (entry) =>
+      !installedNames.has(entry.name) &&
       String(entry.description || '').trim().length >= 20 &&
       !entry.weak &&
       Number(entry.duplicateRank || 0) === 0 &&
@@ -700,7 +728,8 @@ function discoverLibrarySkills(context, limit) {
   for (const entry of entries) {
     const fused = fusedEntryScore(entry, parsed, lexicalOptions)
     if (!fused.grounded) continue
-    scored.push({ entry, score: fused.score })
+    const intentBoost = intentCategories.has(entry.category) ? 0.18 : 0
+    scored.push({ entry, score: fused.score + intentBoost })
   }
   scored.sort((left, right) => right.score - left.score || entryQuality(right.entry) - entryQuality(left.entry))
   return scored.slice(0, maxResults).map(({ entry }) => discoveryResult(entry))
@@ -729,7 +758,11 @@ const TOOLS = [
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Keywords, skill name, or task phrase.' },
-        category: { type: 'string', enum: ['video', 'office', 'harness', 'other'], description: 'Optional category filter.' },
+        category: {
+          type: 'string',
+          enum: ['ai', 'coding', 'design', 'data', 'video', 'writing', 'productivity', 'office', 'marketing', 'security', 'research', 'business', 'education', 'other'],
+          description: 'Optional category filter.',
+        },
         limit: { type: 'integer', minimum: 1, maximum: 20, description: 'Maximum results. Default 10.' },
       },
       required: ['query'],

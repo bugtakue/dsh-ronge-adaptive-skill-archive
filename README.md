@@ -200,7 +200,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 - `npm run eval:recommend`：旧 10 条作者用例（Recall@4 = 1.0），只覆盖仓库自带技能。
 - `npm run eval:real`：**30 条更接近真实使用的半人工任务**（视频/Office/Harness/MCP/skill 设计/preset/跨类别），Recall@4 = **0.9 (27/30)**；3 条已知 MISS 保留在 `docs/eval.md`，不洗成 HIT。
-- `npm run eval:discover`：**24 条 6,399 库检索任务**，Category Hit@5 = **0.875 (21/24)**、Keyword Hit@5 = **0.917**；结果与 MISS 同样在 `docs/eval.md`，不把类别命中当成质量证明。
+- `npm run eval:discover`：**24 条 6,399 库检索任务**，Category Hit@5 = **0.958 (23/24)**、Category P@5 = **0.733**、Top-1 = **0.917**、Category MRR = **0.938**、Keyword Hit@5 = **0.875**；结果与 MISS 同样在 `docs/eval.md`，不把类别命中当成质量证明。
 - 两者都不代表 6,399 条库的推荐质量；索引没有人工质量标注，信号分只能做完整度/仓库热度启发式。
 
 ### 数据在哪

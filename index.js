@@ -517,6 +517,12 @@ const RISK_RULES = [
     pattern: /(?:[A-Za-z0-9+/]{120,}={0,2}|(?:\\x[0-9a-f]{2}){8,}|String\.fromCharCode\s*\()/i,
   },
   {
+    id: 'destructive-absolute',
+    label: '绝对路径递归删除',
+    severity: 'medium',
+    pattern: /\brm\s+-rf\s+\/(?!\s|$)[A-Za-z0-9._-]+/i,
+  },
+  {
     id: 'global-install',
     label: '全局安装/系统修改',
     severity: 'medium',
@@ -2899,7 +2905,7 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
   for (const entry of library?.entries || []) {
     if (installedNames.has(entry.name)) continue
     if (entry.weak || Number(entry.duplicateRank || 0) > 0) continue
-    if (Number(entry.quality || 0) < 60) continue
+    if (Number(entry.quality || 0) < 55) continue
     const scored = scoreLibraryEntry(entry, tokens, categories)
     if (scored.hits < 2) continue
     if (scored.score < 12) continue
@@ -2943,7 +2949,7 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       autoSafe:
         candidate.hits >= 3 &&
         candidate.score >= 16 &&
-        Number(entry.quality || 0) >= 65 &&
+        Number(entry.quality || 0) >= 60 &&
         categories.has(entry.category),
       compareTo: installedBaseline.name
         ? { name: installedBaseline.name, score: installedBaseline.score, hits: installedBaseline.hits }
@@ -2969,7 +2975,7 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     if (installedNames.has(entry.name)) continue
     if (entry.weak || String(entry.description || '').trim().length < 20) continue
     if (Number(entry.duplicateRank || 0) > 0) continue
-    if (Number(entry.quality || 0) < 45) continue
+    if (Number(entry.quality || 0) < 40) continue
     const result = scoreLibraryEntry(entry, tokens, categories)
     scored.push({ entry, ...result })
   }

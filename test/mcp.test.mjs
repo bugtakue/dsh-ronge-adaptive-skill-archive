@@ -130,6 +130,7 @@ test('mcp server speaks the MCP stdio protocol and exposes the tools', async () 
     assert.ok(payload.recommendations[0].reasons.length > 0)
 
     const search = await client.call('search_skills', { query: 'pdf' })
+    if (search.result.isError) throw new Error(String(search.result.content[0].text))
     const found = JSON.parse(search.result.content[0].text)
     assert.ok(found.results.length > 0)
     assert.ok(found.results[0].rawUrl.includes('SKILL.md'))

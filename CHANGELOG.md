@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.8.2 — 2026-10-29
+
+- **信号分抑制仓库热度误伤**：按仓库技能数量计算 repo focus；只有一个附带 SKILL.md 的热门仓库不再把单条技能顶到最高（high 从 65 条降到 31 条，medium 3,588，low 2,780）；筛选改为 40/55/70+。
+- **扫描补 `rm -rf /绝对路径` 为中风险**（根路径/fork bomb 仍为高风险）。
+- **discover 基准增加严格指标**：查询意图类别加权后 Category Hit@5 = 0.958、P@5 = 0.733、Top-1 = 0.917、MRR = 0.938；文档明确 Hit@5 偏松，不能证明好用，只有 1 条类别 MISS 但关键词仍有 3 条 MISS。
+- **MCP 修复**：`discover_skills` 现在真的排除本机已安装技能；`search_skills.category` 枚举改为索引的 14 个分类；查询意图类别加权。
+- 测试 56/56。
+
+
 ## v2.8.1 — 2026-10-29
 
 - 新增 **6,399 库 discover 基准**：24 条真实任务 prompt + `npm run eval:discover`，Category Hit@5 = **0.875 (21/24)**、Keyword Hit@5 = **0.917**，MISS 与局限写入 `docs/eval.md`。

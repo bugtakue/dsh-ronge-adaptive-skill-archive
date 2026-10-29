@@ -2222,7 +2222,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'sf-chiprow' },
               h('span', { className: 'sf-mode-label' }, t('qualityLabel')),
-              [0, 50, 65, 75].map((value) =>
+              [0, 40, 55, 70].map((value) =>
                 h(
                   'button',
                   {

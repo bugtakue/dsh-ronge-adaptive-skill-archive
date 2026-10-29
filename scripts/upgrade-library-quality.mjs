@@ -23,7 +23,11 @@ try {
 }
 
 const nameCounts = new Map()
-for (const entry of entries) nameCounts.set(entry.name, (nameCounts.get(entry.name) || 0) + 1)
+const repoCounts = new Map()
+for (const entry of entries) {
+  nameCounts.set(entry.name, (nameCounts.get(entry.name) || 0) + 1)
+  repoCounts.set(entry.repo, (repoCounts.get(entry.repo) || 0) + 1)
+}
 
 function canonicalPath(p) {
   return (
@@ -59,17 +63,22 @@ function completenessOf(entry) {
 
 function repoScoreFor(entry) {
   const meta = repoMetadata[entry.repo]
-  if (!meta || meta.missing) return 20
+  if (!meta || meta.missing) return 15
   const stars = Number(meta.stars || 0)
-  const starScore = Math.min(45, (Math.log10(stars + 1) / 4) * 45)
+  // Stars describe the repo, not this particular skill. A repo that only ships
+  // one incidental SKILL.md gets much less of the repo signal than a repo that
+  // is actually a skill collection.
+  const repoSkillCount = repoCounts.get(entry.repo) || 1
+  const focus = 0.45 + 0.55 * Math.min(1, repoSkillCount / 3)
+  const starScore = Math.min(40, (Math.log10(stars + 1) / 4) * 40) * focus
   let recency = 0
   if (meta.pushedAt) {
     const days = Math.max(0, (Date.now() - Date.parse(meta.pushedAt)) / 86400000)
-    recency = days <= 90 ? 20 : days <= 365 ? 14 : days <= 730 ? 7 : 0
+    recency = (days <= 90 ? 15 : days <= 365 ? 10 : days <= 730 ? 5 : 0) * focus
   }
-  let score = starScore + recency + (meta.license ? 5 : 0)
+  let score = starScore + recency + (meta.license ? 3 : 0)
   if (meta.archived) score -= 25
-  return Math.max(0, Math.min(70, Math.round(score)))
+  return Math.max(0, Math.min(60, Math.round(score)))
 }
 
 for (const entry of entries) {
@@ -79,8 +88,9 @@ for (const entry of entries) {
   entry.completeness = completeness
   entry.repoScore = repoScore
   entry.quality = Math.max(0, Math.min(99, Math.round(completeness * 0.55 + repoScore * 0.45)))
-  entry.qualityLabel = entry.quality >= 65 ? 'high' : entry.quality >= 45 ? 'medium' : 'low'
+  entry.qualityLabel = entry.quality >= 60 ? 'high' : entry.quality >= 40 ? 'medium' : 'low'
   entry.duplicateName = nameCounts.get(entry.name) || 1
+  entry.repoSkillCount = repoCounts.get(entry.repo) || 1
   if (Number.isFinite(Number(meta.stars))) entry.stars = Number(meta.stars)
   if (meta.pushedAt) entry.pushedAt = meta.pushedAt
   if (meta.archived) entry.archived = true
