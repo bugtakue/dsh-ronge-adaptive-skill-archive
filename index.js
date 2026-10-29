@@ -2661,6 +2661,100 @@ function buildActiveCombo(analysis, recommendations, mode, skillStats = {}) {
   }
 }
 
+function scoreLibraryEntry(entry, tokens, topCategories) {
+  const name = String(entry.name || '').toLowerCase()
+  const text = [entry.description, entry.whenToUse, entry.repo, entry.path].filter(Boolean).join(' ').toLowerCase()
+  let hits = 0
+  let score = 0
+  const matched = []
+  for (const token of tokens) {
+    if (name.includes(token)) {
+      score += 3
+      hits += 1
+      if (matched.length < 6) matched.push(token)
+    } else if (text.includes(token)) {
+      score += 1
+      hits += 1
+      if (matched.length < 6) matched.push(token)
+    }
+  }
+  const rating = Number(entry.rating) || 0
+  score += Math.max(0, rating - 3.5) * 1.2
+  if (topCategories.has(entry.category)) score += 2
+  const trust = String(entry.trust || '').toLowerCase()
+  if (trust === 'official') score += 1.5
+  else if (trust === 'verified') score += 1
+  return { score: Math.round(score * 10) / 10, hits, matched }
+}
+
+function installedTextScore(name, tokens) {
+  const library = loadLibraryIndex()
+  const entry = (library?.entries || []).find((item) => item.name === name)
+  if (!entry) return { hits: 0, score: 0 }
+  return scoreLibraryEntry(entry, tokens, new Set())
+}
+
+function buildBetterOptions(analysis, recommendations, language, installedNames) {
+  if (!recommendations.length) return []
+  const tokens = [...tokenize(analysis.contextText || '')]
+    .filter((token) => token.length >= 2)
+    .slice(0, 300)
+  if (tokens.length < 2) return []
+  const categories = new Set()
+  for (const item of recommendations) {
+    for (const category of LIBRARY_CATEGORY_FOR_SKILL_CATEGORY[categoryOf(item.name)] || []) categories.add(category)
+  }
+  const library = loadLibraryIndex()
+  const candidates = []
+  for (const entry of library?.entries || []) {
+    if (installedNames.has(entry.name)) continue
+    if (Number(entry.rating || 0) < 4) continue
+    const scored = scoreLibraryEntry(entry, tokens, categories)
+    if (scored.hits < 2) continue
+    if (scored.score < 8) continue
+    candidates.push({ entry, ...scored })
+  }
+  candidates.sort((left, right) => right.score - left.score || Number(right.entry.rating) - Number(left.entry.rating))
+  const installedBaseline = recommendations
+    .map((item) => ({ name: item.name, ...installedTextScore(item.name, tokens) }))
+    .sort((left, right) => right.score - left.score)[0] || { name: '', hits: 0, score: 0 }
+  const better = []
+  for (const candidate of candidates) {
+    if (better.length >= 3) break
+    const entry = candidate.entry
+    const gain = Math.round((candidate.score - installedBaseline.score) * 10) / 10
+    if (installedBaseline.name && candidate.score <= installedBaseline.score + 1.5) continue
+    const localized = localizeSkill(
+      { name: entry.name, description: entry.description || '', whenToUse: entry.whenToUse || null },
+      language,
+    )
+    better.push({
+      name: entry.name,
+      description: String(entry.description || '').slice(0, 240),
+      intro: localized.intro || entry.description || '',
+      category: entry.category,
+      categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category,
+      rating: entry.rating,
+      trust: entry.trust,
+      rawUrl: entry.rawUrl,
+      url: entry.url,
+      repo: entry.repo,
+      path: entry.path,
+      matched: candidate.matched,
+      score: candidate.score,
+      gain,
+      compareTo: installedBaseline.name
+        ? { name: installedBaseline.name, score: installedBaseline.score, hits: installedBaseline.hits }
+        : null,
+      whyBetter: installedBaseline.name
+        ? '命中 ' + candidate.hits + ' 个上下文关键词（评分 ' + entry.rating + '）；已装的 ' + installedBaseline.name + ' 命中 ' + installedBaseline.hits + ' 个'
+        : '命中 ' + candidate.hits + ' 个上下文关键词，评分 ' + entry.rating,
+      installed: false,
+    })
+  }
+  return better
+}
+
 function buildDiscoveries(analysis, recommendations, language, installedNames) {
   const categories = new Set()
   for (const item of recommendations) {
@@ -2809,6 +2903,7 @@ async function buildCatalog(ctx, config, sessionId, lang) {
   const installedNames = installedSkillNameSet()
   const activeCombo = buildActiveCombo(analysis, recommendations, studioMode, memory.skills)
   const discoveries = buildDiscoveries(analysis, recommendations, language, installedNames)
+  const betterOptions = buildBetterOptions(analysis, recommendations, language, installedNames)
   return {
     ok: true,
     count: summaries.length,
@@ -2822,6 +2917,7 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     skills: summaries,
     recommendations,
     discoveries,
+    betterOptions,
     activeCombo,
     activeSkills: analysis.activeSkills,
     recentSkills: analysis.recentSkills,
@@ -3345,6 +3441,7 @@ export {
   scanSkillText,
   tokenize,
   buildActiveCombo,
+  buildBetterOptions,
   buildDiscoveries,
   libraryRatingMap,
   installedSkillNameSet,

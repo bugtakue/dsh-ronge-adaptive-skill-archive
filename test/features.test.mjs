@@ -6,6 +6,7 @@ import {
   aggregateSkillStats,
   applyExploration,
   buildActiveCombo,
+  buildBetterOptions,
   buildDiscoveries,
   classifyTrust,
   diffSkillLines,
@@ -419,5 +420,24 @@ test('buildDiscoveries returns uninstalled library entries with install metadata
   for (const entry of result) {
     assert.equal(entry.installed, false)
     assert.ok(entry.name)
+  }
+})
+
+
+test('buildBetterOptions only proposes uninstalled skills that outmatch installed text', () => {
+  const analysis = {
+    contextText: 'pdf form fill extract text merge split document pages',
+    lastUserText: 'pdf form fill extract text merge split document pages',
+  }
+  const recommendations = [{ name: 'office-xlsx', reasonsDetail: [] }]
+  const result = buildBetterOptions(analysis, recommendations, 'zh', new Set(['office-xlsx']))
+  assert.ok(Array.isArray(result))
+  for (const entry of result) {
+    assert.equal(entry.installed, false)
+    assert.ok(entry.name)
+    assert.ok(entry.rating >= 4)
+    assert.ok(Array.isArray(entry.matched) && entry.matched.length >= 1)
+    assert.ok(entry.whyBetter)
+    assert.ok(entry.rawUrl || entry.url)
   }
 })

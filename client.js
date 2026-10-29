@@ -38,6 +38,16 @@ window.__ModuleLoader__.load({
       comboLive: '运行中的组合',
       onlyNew: '未安装',
       allSkills: '全部',
+      betterTitle: '发现更优的未装技能',
+      betterHint: '比已装的更匹配；安装后自动参与推荐',
+      betterWhy: '更匹配',
+      betterMatched: '命中关键词',
+      betterCompare: '相比已装',
+      autoInstallBetter: '自动安装更优',
+      autoInstalled: '已自动安装更优技能',
+      autoInstallFailed: '自动安装失败',
+      installUse: '安装并使用',
+      ignore: '忽略',
       newFromLibrary: '库里还没装的',
       newFromLibraryHint: '按整段会话 + 推荐类别挑的未安装技能',
       installedBadge: '已安装',
@@ -250,6 +260,16 @@ window.__ModuleLoader__.load({
       comboLive: 'Active combo',
       onlyNew: 'Not installed',
       allSkills: 'All',
+      betterTitle: 'Better uninstalled matches',
+      betterHint: 'More relevant than what is installed; installs join recommendations automatically',
+      betterWhy: 'More relevant',
+      betterMatched: 'Matched keywords',
+      betterCompare: 'vs installed',
+      autoInstallBetter: 'Auto-install better',
+      autoInstalled: 'Auto-installed',
+      autoInstallFailed: 'Auto-install failed',
+      installUse: 'Install & use',
+      ignore: 'Ignore',
       newFromLibrary: 'Not in your library yet',
       newFromLibraryHint: 'Uninstalled picks from the 6,399 index, using the whole conversation + recommended categories',
       installedBadge: 'Installed',
@@ -1261,6 +1281,16 @@ window.__ModuleLoader__.load({
       const [libraryError, setLibraryError] = React.useState(null)
       const [libraryPage, setLibraryPage] = React.useState(1)
       const [libraryOnlyNew, setLibraryOnlyNew] = React.useState(true)
+      const [autoInstallBetter, setAutoInstallBetter] = React.useState(() => {
+        try {
+          return window.localStorage.getItem('ronge.autoInstallBetter') !== '0'
+        } catch {
+          return true
+        }
+      })
+      const [ignoredBetter, setIgnoredBetter] = React.useState([])
+      const autoInstallRef = React.useRef(new Set())
+      const autoInstallCount = React.useRef(0)
       const searchRef = React.useRef(null)
       const abortRef = React.useRef(null)
       const toastTimer = React.useRef(null)
@@ -1351,6 +1381,25 @@ window.__ModuleLoader__.load({
       }, [state.open])
 
       React.useEffect(() => {
+        if (!state.open || !autoInstallBetter || !data) return
+        if (autoInstallCount.current >= 1) return
+        const candidate = (data.betterOptions || []).find(
+          (item) =>
+            item &&
+            item.name &&
+            !item.installed &&
+            !ignoredBetter.includes(item.name) &&
+            !autoInstallRef.current.has(item.name),
+        )
+        if (!candidate) return
+        autoInstallRef.current.add(candidate.name)
+        autoInstallCount.current += 1
+        installRemote({ name: candidate.name, url: candidate.rawUrl || candidate.url, trust: candidate.trust }, { auto: true }).catch(
+          () => showToast(t('autoInstallFailed') + ' · ' + candidate.name, 'error'),
+        )
+      }, [data, autoInstallBetter, ignoredBetter, state.open])
+
+      React.useEffect(() => {
         if (!state.open) return undefined
         const onKey = (event) => {
           if (event.key === 'Escape') store.set({ open: false })
@@ -1371,6 +1420,10 @@ window.__ModuleLoader__.load({
       const evolution = data && data.evolution && typeof data.evolution === 'object' ? data.evolution : null
       const combo = data && data.activeCombo && Array.isArray(data.activeCombo.skills) ? data.activeCombo : null
       const discoveries = data && Array.isArray(data.discoveries) ? data.discoveries : []
+      const betterOptions =
+        data && Array.isArray(data.betterOptions)
+          ? data.betterOptions.filter((item) => !ignoredBetter.includes(item.name))
+          : []
       const recFeedback =
         experience && experience.recFeedback && experience.recFeedback.skills && typeof experience.recFeedback.skills === 'object'
           ? experience.recFeedback.skills
@@ -1596,7 +1649,7 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const installRemote = async (entry) => {
+      const installRemote = async (entry, options = {}) => {
         setRemoteInstall({ name: entry.name, status: 'installing' })
         try {
           const response = await fetch('/ronge-adaptive-skill-archive/discover/install', {
@@ -1607,7 +1660,7 @@ window.__ModuleLoader__.load({
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status)
           setRemoteInstall({ name: entry.name, status: 'installed', path: payload.path })
-          showToast(t('installed') + ' · ' + entry.name)
+          showToast((options.auto ? t('autoInstalled') : t('installed')) + ' · ' + entry.name)
           await load(state.sessionId, true)
         } catch (err) {
           setRemoteInstall({
@@ -3196,6 +3249,88 @@ window.__ModuleLoader__.load({
         )
       }
 
+      const toggleAutoInstall = () => {
+        const next = !autoInstallBetter
+        setAutoInstallBetter(next)
+        try {
+          window.localStorage.setItem('ronge.autoInstallBetter', next ? '1' : '0')
+        } catch {
+          // Preference is best-effort.
+        }
+      }
+
+      const renderBetter = () => {
+        if (!betterOptions.length) return null
+        return h(
+          'section',
+          { className: 'sf-better' },
+          h(SectionHead, {
+            icon: h(IconSparkle, { size: 14 }),
+            title: t('betterTitle'),
+            hint: t('betterHint'),
+            badge: String(betterOptions.length),
+            actions: h(
+              'button',
+              {
+                type: 'button',
+                className: autoInstallBetter ? 'sf-chip sf-chip-active' : 'sf-chip',
+                'aria-pressed': autoInstallBetter,
+                onClick: toggleAutoInstall,
+              },
+              t('autoInstallBetter'),
+            ),
+          }),
+          h(
+            'div',
+            { className: 'sf-better-list' },
+            betterOptions.map((entry) =>
+              h(
+                'div',
+                { className: 'sf-better-card', key: entry.name },
+                h(
+                  'div',
+                  { className: 'sf-better-head' },
+                  h('strong', { className: 'sf-name' }, entry.name),
+                  h('span', { className: 'sf-rating' }, '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category)),
+                ),
+                h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
+                Array.isArray(entry.matched) && entry.matched.length
+                  ? h(
+                      'div',
+                      { className: 'sf-better-matched' },
+                      t('betterMatched') + ': ' + entry.matched.slice(0, 5).join(' · '),
+                    )
+                  : null,
+                h('div', { className: 'sf-better-why' }, t('betterWhy') + ': ' + String(entry.whyBetter || '')),
+                h(
+                  'div',
+                  { className: 'sf-better-actions' },
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-primary',
+                      onClick: () =>
+                        installRemote({ name: entry.name, url: entry.rawUrl || entry.url, trust: entry.trust }),
+                    },
+                    t('installUse'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary',
+                      onClick: () => setIgnoredBetter((current) => current.concat(entry.name)),
+                    },
+                    t('ignore'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+      }
+
       const renderDiscoveries = () => {
         if (!discoveries.length) return null
         return h(
@@ -3610,6 +3745,7 @@ window.__ModuleLoader__.load({
                     null,
                     renderActive(),
                     renderRecommendations(),
+                    renderBetter(),
                     renderDiscoveries(),
                     renderCatalog(),
                     renderExperience(),
@@ -4109,6 +4245,16 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-combo-toast-close{flex:none;display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--sf-ink-3);cursor:pointer}
 .sf-combo-toast-close:hover{background:var(--sf-tint-2);color:var(--sf-ink)}
 .sf-reco-context-meta{display:block;margin-top:3px;font-size:9.5px;color:var(--sf-ink-3);font-variant-numeric:tabular-nums}
+.sf-better{margin:0 16px 14px;padding:10px 11px;border:1px solid color-mix(in srgb,var(--sf-accent) 30%,var(--sf-line));border-radius:12px;background:var(--sf-tint-1)}
+.sf-better-list{display:flex;flex-direction:column;gap:7px;margin-top:7px}
+.sf-better-card{padding:8px 9px;border:1px solid var(--sf-line);border-radius:10px;background:var(--sf-tint-1)}
+.sf-better-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sf-better-head .sf-name{font-size:12px}
+.sf-better-head .sf-rating{color:var(--sf-warn);font-size:9.5px}
+.sf-better-card .sf-desc{margin:4px 0 5px;font-size:10.5px;color:var(--sf-ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sf-better-matched{font-size:9.5px;color:var(--sf-ink-3);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word}
+.sf-better-why{margin-top:3px;font-size:10px;color:var(--sf-ink-2)}
+.sf-better-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
 @media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
 @media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
 
