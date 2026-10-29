@@ -80,13 +80,13 @@ window.__ModuleLoader__.load({
       tabUpdates: '更新',
       tabLibrary: '卷轴馆',
       libraryTitle: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
-      libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和完整度浏览',
+      libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和信号分浏览',
       all: '全部',
       loadMore: '加载更多',
       noLibrary: '没有匹配的卷轴',
       ratingLabel: '评级',
-      qualityLabel: '完整度',
-      qualityHint: '完整度 = 描述/whenToUse/路径/名称唯一性/官方来源的透明度启发式，不是热度或安全排名',
+      qualityLabel: '信号分',
+      qualityHint: '信号分 = 描述/whenToUse/路径/名称唯一性 + GitHub stars/维护度/归档/许可的启发式分数，不是好用程度或安全保证',
       updateTitle: '更新中心',
       updateHint: '检查已安装技能的远程更新：查看 diff、更新或回滚',
       updateEmpty: '还没有检查更新，点下面按钮开始',
@@ -308,13 +308,13 @@ window.__ModuleLoader__.load({
       tabUpdates: 'Updates',
       tabLibrary: 'Scrolls',
       libraryTitle: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
-      libraryHint: 'Index of public GitHub SKILL.md files, by category and completeness',
+      libraryHint: 'Index of public GitHub SKILL.md files, by category and signal score',
       all: 'All',
       loadMore: 'Load more',
       noLibrary: 'No matching scrolls',
       ratingLabel: 'Rating',
-      qualityLabel: 'Completeness',
-      qualityHint: 'Completeness = transparency heuristic over description/whenToUse/path/unique name/official owner; not popularity or security',
+      qualityLabel: 'Signal',
+      qualityHint: 'Signal = completeness + GitHub stars/recency/archived/license heuristic; not usefulness or security',
       updateTitle: 'Update center',
       updateHint: 'Check remote updates for installed skills: diff, update, rollback',
       updateEmpty: 'Not checked yet — start below',
@@ -2074,6 +2074,7 @@ window.__ModuleLoader__.load({
               'span',
               { className: 'sf-source sf-rating', title: t('starsAria') },
               (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                (Number(entry.stars) > 0 ? ' · ★ ' + formatNumber(Number(entry.stars)) : '') +
                 ' · ' +
                 (entry.categoryLabel || entry.category),
             ),
@@ -2221,7 +2222,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'sf-chiprow' },
               h('span', { className: 'sf-mode-label' }, t('qualityLabel')),
-              [0, 55, 70, 85].map((value) =>
+              [0, 50, 65, 75].map((value) =>
                 h(
                   'button',
                   {
@@ -3473,6 +3474,7 @@ window.__ModuleLoader__.load({
                     'span',
                     { className: 'sf-rating', title: t('qualityHint') },
                     (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                      (Number(entry.stars) > 0 ? ' · ★ ' + formatNumber(Number(entry.stars)) : '') +
                       ' · ' +
                       (entry.categoryLabel || entry.category),
                   ),
@@ -3533,6 +3535,7 @@ window.__ModuleLoader__.load({
                     'span',
                     { className: 'sf-source sf-rating' },
                     (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                      (Number(entry.stars) > 0 ? ' · ★ ' + formatNumber(Number(entry.stars)) : '') +
                       ' · ' +
                       (entry.categoryLabel || entry.category || ''),
                   ),

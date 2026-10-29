@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.8.0 — 2026-10-29
+
+- **GitHub 仓库信号进入索引**：通过 GitHub GraphQL 批量拉取 4,007 个仓库的 stars/pushedAt/archived/license（本地缓存 `library/repo-metadata.json`，可重跑）。
+- **质量信号（不是质量榜）**：index 的 `quality` 改为「完整度 55% + GitHub stars/维护度/许可/归档 45%」；6,397/6,399 条有 stars；UI 改叫「信号分」并显示 ★ stars；筛选改为 信号分 50/65/75+。
+- **真实任务评测集**：新增 30 条半人工任务（视频/Office/Harness/MCP/skill 设计/preset/跨类别），`npm run eval:real` → Recall@4 **0.9 (27/30)**；3 条已知 MISS 保留在 `docs/eval.md`，不洗成 HIT。
+- **MCP 本地向量检索**：`discover_skills`/`search_skills` 增加 256 维确定性哈希向量 + 24 组中英概念词表，融合 semantic/keyword/quality；纯本地、无模型下载/无网络/无新依赖。
+- 自动安装默认关闭、安装/更新高危拒绝、重名安装改名、硬编码路由移除（v2.7.x 已含）。
+- 测试 53/53；浏览器 UI 20/20。
+
+
 ## v2.7.2 — 2026-10-29
 
 - **更新中心补上安全门槛**：应用更新前先扫描远程 SKILL.md；高风险默认 422 拒绝，`force=true` 才写入（安装路径早已一致）。更新全部也会逐条拒绝高风险。

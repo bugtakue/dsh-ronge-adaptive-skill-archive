@@ -88,7 +88,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 # Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
 ```
 
-提供 `recommend_skills`（已装技能推荐）、`discover_skills`（从 6,399 条索引找未装技能，按上下文+完整度排序）、`search_skills`、`scan_skill_text`、`install_skill`（高风险拒绝）、`record_outcome`、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
+提供 `recommend_skills`（已装技能推荐）、`discover_skills`（从 6,399 条索引找未装技能，按本地 256 维哈希向量 + 中英概念 + 信号分排序）、`search_skills`、`scan_skill_text`、`install_skill`（高风险拒绝）、`record_outcome`、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
 
 ## 核心功能
 
@@ -190,15 +190,17 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 
 ### 6,399 索引的能力边界（重要）
 
-这 6,399 条是 **GitHub 公开 SKILL.md 的元数据快照**，不是质量榜：
+这 6,399 条是 **GitHub 公开 SKILL.md 的元数据快照**，不是人工质量榜：
 - 1,001 条没有描述、只有 26 条带 `whenToUse`，512 个名称重复（其中 291 个都叫 `skill`）；
-- 旧 `rating` 是启发式公式，**不代表质量/安全**；v2.7.x 起索引增加透明的 `quality`（完整度：描述/whenToUse/路径/唯一名称/官方来源，封顶 98，通用短名扣分）并在 UI 显示；
-- 发现/更优推荐会跳过无描述、重复名和非最佳版本；安装同名技能时自动改名为 `name-owner-hash` 并改写 frontmatter，避免互相覆盖；
+- v2.8.0 起每条带 `quality` 信号：**完整度 55% + GitHub stars/维护度/许可/归档 45%**；4,007 个仓库已拉取，6,397 条有 stars。UI 显示「信号分」+ ★ stars；**它仍不是「好用程度」或安全评级**；
+- 发现/更优推荐会跳过无描述、重复名、非最佳版本和低信号条目；安装同名技能自动改名并改写 frontmatter；
 - 安装前请先「预览」看 SKILL.md 与安全扫描结果。
 
 ### 评测口径
 
-推荐评测 `npm run eval:recommend` 是 10 条作者自写用例（Recall@4），覆盖的是仓库自带技能，**不代表 6,399 条库的推荐质量**；6,399 索引没有人工质量标注，只能做完整度/去重/关键词启发式。欢迎用真实任务反馈补充用例。
+- `npm run eval:recommend`：旧 10 条作者用例（Recall@4 = 1.0），只覆盖仓库自带技能。
+- `npm run eval:real`：**30 条更接近真实使用的半人工任务**（视频/Office/Harness/MCP/skill 设计/preset/跨类别），Recall@4 = **0.9 (27/30)**；3 条已知 MISS 保留在 `docs/eval.md`，不洗成 HIT。
+- 两者都不代表 6,399 条库的推荐质量；索引没有人工质量标注，信号分只能做完整度/仓库热度启发式。
 
 ### 数据在哪
 

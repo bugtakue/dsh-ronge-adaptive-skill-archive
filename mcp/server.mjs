@@ -197,23 +197,211 @@ function getLibrary() {
   return libraryCache
 }
 
+// ---------------------------------------------------------------------------
+// Local, deterministic hash-vector retrieval ("semantic search" without a model)
+//
+// Text -> 256-dim vector: word tokens and CJK character n-grams (2-4) are
+// hashed into buckets with signed feature hashing, then L2-normalized. A small
+// built-in bilingual concept table expands a matched concept into its Chinese
+// and English aliases, so a Chinese request can match an English skill and vice
+// versa. This is a lexical hashing embedding, NOT a neural embedding: there is
+// no network call, no model download and no new dependency, and the same text
+// always maps to the same vector.
+//
+// Ranking fuses 0.6 * cosine(query, entry) with 0.4 * (keyword hits/quality);
+// the existing weak / duplicateRank / quality<45 filters are unchanged.
+// ---------------------------------------------------------------------------
+const EMBED_DIM = 256
+const EMBED_EXPANSION_WEIGHT = 0.8
+const SEMANTIC_FLOOR = 0.12
+const SEMANTIC_WEIGHT = 0.6
+const KEYWORD_WEIGHT = 0.4
+const KEYWORD_QUALITY_SPLIT = 0.7
+
+// zh: every surface is both a trigger and an expansion alias.
+// en: every word is an expansion alias; only `strong` words trigger the group,
+// which keeps ambiguous words such as "editing", "test" or "design" quiet.
+const CONCEPT_GROUPS = [
+  { zh: ['视频', '宣传片', '短片', '影片', '电影', '剪辑', '分镜', '动画', '特效', '卡点', '配乐', '影视'], en: ['video', 'promo', 'film', 'trailer', 'editing', 'storyboard', 'animation', 'motion', 'music', 'movie', 'cinematic'], strong: ['video', 'promo', 'film', 'trailer', 'storyboard', 'cinematic'] },
+  { zh: ['图片', '图像', '海报', '封面', '插画', '修图', '配色', '视觉', '美工', '图形'], en: ['image', 'picture', 'poster', 'cover', 'illustration', 'visual', 'graphic'], strong: ['poster', 'illustration', 'graphic'] },
+  { zh: ['表格', '文档', '演示', '幻灯片', '报告', '报表', '公式', '数据透视', 'excel'], en: ['excel', 'spreadsheet', 'table', 'document', 'word', 'ppt', 'slide', 'presentation', 'report', 'formula'], strong: ['excel', 'spreadsheet', 'ppt', 'slide'] },
+  { zh: ['pdf', '提取', '扫描', '表单', 'ocr'], en: ['pdf', 'extract', 'scan', 'ocr', 'form', 'parse'], strong: ['pdf', 'ocr'] },
+  { zh: ['代码', '编程', '重构', '调试', '函数', '脚本', '接口', '仓库'], en: ['code', 'coding', 'program', 'refactor', 'debug', 'function', 'script', 'api', 'repository'], strong: ['refactor', 'debug', 'api', 'repository'] },
+  { zh: ['网页', '前端', '网站', '浏览器', '界面', 'h5'], en: ['web', 'frontend', 'website', 'browser', 'html', 'css', 'react', 'vue', 'ui'], strong: ['frontend', 'website', 'html', 'css', 'react', 'vue'] },
+  { zh: ['后端', '服务', '数据库', '部署', '服务器'], en: ['backend', 'server', 'database', 'deploy', 'service', 'api'], strong: ['backend', 'database', 'deploy'] },
+  { zh: ['数据', '分析', '统计', '可视化', '图表', '指标', '报表'], en: ['data', 'analysis', 'analytics', 'statistics', 'visualization', 'chart', 'metric', 'dashboard'], strong: ['analytics', 'dashboard', 'visualization', 'statistics'] },
+  { zh: ['智能体', '模型', '提示词', '推理', '大模型', '工作流', '技能'], en: ['agent', 'model', 'prompt', 'llm', 'inference', 'workflow', 'skill'], strong: ['llm', 'prompt', 'agent'] },
+  { zh: ['写作', '文案', '文章', '博客', '润色', '摘要', '笔记', '内容'], en: ['writing', 'copy', 'blog', 'article', 'edit', 'summary', 'note', 'content'], strong: ['writing', 'blog', 'article', 'summary'] },
+  { zh: ['营销', '推广', '品牌', '增长', '转化', '运营', '投放'], en: ['marketing', 'promotion', 'brand', 'growth', 'conversion', 'campaign', 'ads'], strong: ['marketing', 'brand', 'campaign', 'conversion'] },
+  { zh: ['研究', '调研', '检索', '论文', '文献', '学术'], en: ['research', 'survey', 'search', 'paper', 'literature', 'academic'], strong: ['research', 'paper', 'literature'] },
+  { zh: ['安全', '漏洞', '扫描', '风险', '隐私', '渗透'], en: ['security', 'vulnerability', 'scan', 'risk', 'privacy', 'pentest'], strong: ['security', 'vulnerability', 'pentest'] },
+  { zh: ['版本', '提交', '分支', '合并', '代码审查'], en: ['git', 'version', 'commit', 'branch', 'merge', 'review', 'pull'], strong: ['git', 'commit', 'branch', 'merge'] },
+  { zh: ['测试', '单元', '集成', '回归'], en: ['test', 'unit', 'integration', 'regression', 'qa'], strong: ['qa', 'integration', 'regression'] },
+  { zh: ['设计', '排版', '字体', '颜色', '交互'], en: ['design', 'layout', 'typography', 'font', 'color', 'interaction', 'ui', 'ux'], strong: ['typography', 'layout', 'ui', 'ux'] },
+  { zh: ['音频', '配音', '语音', '播客', '音乐', '声音'], en: ['audio', 'voiceover', 'speech', 'podcast', 'music', 'sound'], strong: ['audio', 'voiceover', 'podcast'] },
+  { zh: ['小红书', '抖音', '微博', '公众号', '社交媒体', '自媒体'], en: ['xiaohongshu', 'tiktok', 'weibo', 'wechat', 'social', 'media', 'creator'], strong: ['xiaohongshu', 'tiktok', 'wechat', 'social'] },
+  { zh: ['财务', '金融', '会计', '发票', '报销', '预算'], en: ['finance', 'financial', 'accounting', 'invoice', 'expense', 'budget'], strong: ['finance', 'accounting', 'invoice'] },
+  { zh: ['合同', '法律', '合规', '条款'], en: ['contract', 'legal', 'compliance', 'clause'], strong: ['legal', 'contract', 'compliance'] },
+  { zh: ['教学', '课程', '学习', '考试', '教育'], en: ['teach', 'course', 'learning', 'exam', 'education'], strong: ['course', 'learning', 'education'] },
+  { zh: ['效率', '管理', '计划', '任务', '清单'], en: ['productivity', 'management', 'plan', 'task', 'checklist'], strong: ['productivity', 'checklist'] },
+  { zh: ['翻译', '本地化', '语言'], en: ['translate', 'translation', 'language', 'localization'], strong: ['translate', 'translation', 'localization'] },
+  { zh: ['搜索', '优化', '排名'], en: ['seo', 'search', 'optimization', 'ranking'], strong: ['seo', 'optimization'] },
+]
+
+function normalizeForEmbed(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function hashFeature(feature) {
+  // FNV-1a 32-bit + murmur3 finalizer: plain FNV-1a low bits are too clustered
+  // for 256 buckets on short tokens.
+  let hash = 0x811c9dc5
+  for (let index = 0; index < feature.length; index += 1) {
+    hash ^= feature.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  hash ^= hash >>> 16
+  hash = Math.imul(hash, 0x85ebca6b)
+  hash ^= hash >>> 13
+  hash = Math.imul(hash, 0xc2b2ae35)
+  hash ^= hash >>> 16
+  return hash >>> 0
+}
+
+function addEmbedFeature(features, feature, weight) {
+  features.set(feature, (features.get(feature) || 0) + weight)
+}
+
+function embedFeatures(text) {
+  const value = normalizeForEmbed(text)
+  const features = new Map()
+  if (!value) return features
+  const tokens = tokenize(value)
+  for (const token of tokens) addEmbedFeature(features, 'w:' + token, 1)
+  for (const run of value.match(/[\u4e00-\u9fff]+/g) || []) {
+    for (let size = 2; size <= 4; size += 1) {
+      for (let start = 0; start + size <= run.length; start += 1) {
+        addEmbedFeature(features, 'c:' + run.slice(start, start + size), size === 2 ? 0.6 : size === 3 ? 0.4 : 0.25)
+      }
+    }
+  }
+  const expansion = []
+  for (const group of CONCEPT_GROUPS) {
+    const zhHit = group.zh.some((surface) => value.includes(surface))
+    const enHit = group.strong.some((word) => tokens.has(word))
+    if (!zhHit && !enHit) continue
+    expansion.push(...group.zh, ...group.en)
+  }
+  if (expansion.length) {
+    for (const token of tokenize(expansion.join(' '))) addEmbedFeature(features, 'w:' + token, EMBED_EXPANSION_WEIGHT)
+    for (const surface of expansion) {
+      if (!/[\u4e00-\u9fff]/.test(surface)) continue
+      for (let size = 2; size <= Math.min(4, surface.length); size += 1) {
+        addEmbedFeature(features, 'c:' + surface.slice(0, size), EMBED_EXPANSION_WEIGHT * 0.4)
+      }
+    }
+  }
+  return features
+}
+
+function vectorFromFeatures(features) {
+  const vector = new Float32Array(EMBED_DIM)
+  for (const [feature, weight] of features) {
+    const hash = hashFeature(feature)
+    vector[hash % EMBED_DIM] += (hash >>> 31) === 0 ? weight : -weight
+  }
+  let norm = 0
+  for (let index = 0; index < EMBED_DIM; index += 1) norm += vector[index] * vector[index]
+  norm = Math.sqrt(norm)
+  if (norm > 0) for (let index = 0; index < EMBED_DIM; index += 1) vector[index] /= norm
+  return vector
+}
+
+function embedText(text) {
+  return vectorFromFeatures(embedFeatures(text))
+}
+
+function cosineSimilarity(left, right) {
+  let dot = 0
+  for (let index = 0; index < EMBED_DIM; index += 1) dot += left[index] * right[index]
+  return dot
+}
+
+const ENTRY_VECTORS = new WeakMap()
+
+function entryVector(entry) {
+  let vector = ENTRY_VECTORS.get(entry)
+  if (!vector) {
+    vector = embedText(
+      [entry.name, String(entry.description || '').slice(0, 900), String(entry.whenToUse || '').slice(0, 300)].filter(Boolean).join(' '),
+    )
+    ENTRY_VECTORS.set(entry, vector)
+  }
+  return vector
+}
+
+// `quality` is the 0-100 index score. Tolerate a future `stars` field: a value
+// of 5 or less is treated as a 5-star scale and rescaled to 0-100.
+function entryQuality(entry) {
+  const quality = Number(entry.quality)
+  if (Number.isFinite(quality) && quality > 0) return Math.min(100, quality)
+  const stars = Number(entry.stars)
+  if (Number.isFinite(stars) && stars > 0) return stars <= 5 ? stars * 20 : Math.min(100, stars)
+  return 0
+}
+
+function buildQuery(text) {
+  const raw = String(text || '').trim()
+  const features = embedFeatures(raw)
+  return {
+    raw,
+    tokens: [...tokenize(raw)],
+    lower: raw.toLowerCase(),
+    vector: vectorFromFeatures(features),
+    hasFeatures: features.size > 0,
+  }
+}
+
+function lexicalScore(entry, query, options) {
+  const name = String(entry.name || '').toLowerCase()
+  const text = [entry.description, entry.whenToUse, options.category ? entry.category : ''].filter(Boolean).join(' ').toLowerCase()
+  let score = 0
+  if (options.phrase && name.includes(query.lower)) score += 6
+  for (const token of query.tokens) {
+    const inName = name.includes(token)
+    if (inName) score += 3
+    if (options.bothFields ? text.includes(token) : !inName && text.includes(token)) score += 1
+  }
+  return score
+}
+
+function fusedEntryScore(entry, query, lexicalOptions) {
+  const semantic = query.hasFeatures ? Math.max(0, cosineSimilarity(query.vector, entryVector(entry))) : 0
+  const raw = lexicalScore(entry, query, lexicalOptions)
+  const keyword = raw / (raw + 4)
+  const quality = Math.min(1, Math.max(0, entryQuality(entry) / 100))
+  return {
+    semantic,
+    raw,
+    score: SEMANTIC_WEIGHT * semantic + KEYWORD_WEIGHT * (KEYWORD_QUALITY_SPLIT * keyword + (1 - KEYWORD_QUALITY_SPLIT) * quality),
+    grounded: semantic >= SEMANTIC_FLOOR || raw > 0,
+  }
+}
+
 function searchLibrary(query, category, limit) {
-  const raw = String(query || '').trim()
-  if (!raw) return []
-  const tokens = tokenize(raw)
-  const lower = raw.toLowerCase()
+  const parsed = buildQuery(query)
+  if (!parsed.raw) return []
+  const lexicalOptions = { phrase: true, bothFields: true, category: false }
   const scored = []
   for (const entry of getLibrary().entries || []) {
     if (category && entry.category !== category) continue
-    const name = String(entry.name || '').toLowerCase()
-    const text = [entry.description, entry.whenToUse].filter(Boolean).join(' ').toLowerCase()
-    let score = 0
-    if (name.includes(lower)) score += 6
-    for (const token of tokens) {
-      if (name.includes(token)) score += 3
-      if (text.includes(token)) score += 1
-    }
-    if (score > 0) scored.push({ entry, score })
+    const fused = fusedEntryScore(entry, parsed, lexicalOptions)
+    if (!fused.grounded) continue
+    scored.push({ entry, score: fused.score })
   }
   return scored
     .sort((left, right) => right.score - left.score || Number(right.entry.rating || 0) - Number(left.entry.rating || 0))
@@ -471,48 +659,51 @@ const RESOURCE_TEMPLATES = [
   },
 ]
 
-function discoverLibrarySkills(context, limit) {
-  const raw = String(context || '').trim()
-  const tokens = [...tokenize(raw)].filter((token) => token.length >= 2).slice(0, 40)
-  const entries = (getLibrary().entries || []).filter(
-    (entry) =>
-      String(entry.description || '').trim().length >= 20 &&
-      !entry.weak &&
-      Number(entry.duplicateRank || 0) === 0 &&
-      Number(entry.quality || 0) >= 45,
-  )
-  const scored = []
-  for (const entry of entries) {
-    const name = String(entry.name || '').toLowerCase()
-    const text = [entry.description, entry.whenToUse, entry.category].filter(Boolean).join(' ').toLowerCase()
-    let hits = 0
-    let score = Number(entry.quality || 0) * 0.05
-    for (const token of tokens) {
-      if (name.includes(token)) {
-        score += 3
-        hits += 1
-      } else if (text.includes(token)) {
-        score += 1
-        hits += 1
-      }
-    }
-    if (tokens.length && hits === 0) continue
-    scored.push({ entry, score })
-  }
-  scored.sort((left, right) => right.score - left.score || Number(right.entry.quality) - Number(left.entry.quality))
-  return scored.slice(0, Math.max(1, Math.min(10, limit || 5))).map(({ entry }) => ({
+function discoveryResult(entry) {
+  return {
     name: entry.name,
     description: String(entry.description || '').slice(0, 240),
     category: entry.category,
     rating: entry.rating,
     quality: entry.quality,
     qualityLabel: entry.qualityLabel,
+    stars: entry.stars,
     trust: entry.trust,
     rawUrl: entry.rawUrl,
     repo: entry.repo,
     path: entry.path,
     install: 'install_skill({ url: rawUrl, agent: "claude-code" })',
-  }))
+  }
+}
+
+function discoverLibrarySkills(context, limit) {
+  const parsed = buildQuery(context)
+  parsed.tokens = parsed.tokens.filter((token) => token.length >= 2).slice(0, 40)
+  const maxResults = Math.max(1, Math.min(10, limit || 5))
+  const entries = (getLibrary().entries || []).filter(
+    (entry) =>
+      String(entry.description || '').trim().length >= 20 &&
+      !entry.weak &&
+      Number(entry.duplicateRank || 0) === 0 &&
+      entryQuality(entry) >= 45,
+  )
+  const lexicalOptions = { phrase: false, bothFields: false, category: true }
+  // Empty context keeps the old quality-only behaviour.
+  if (!parsed.raw) {
+    return entries
+      .slice()
+      .sort((left, right) => entryQuality(right) - entryQuality(left))
+      .slice(0, maxResults)
+      .map(discoveryResult)
+  }
+  const scored = []
+  for (const entry of entries) {
+    const fused = fusedEntryScore(entry, parsed, lexicalOptions)
+    if (!fused.grounded) continue
+    scored.push({ entry, score: fused.score })
+  }
+  scored.sort((left, right) => right.score - left.score || entryQuality(right.entry) - entryQuality(left.entry))
+  return scored.slice(0, maxResults).map(({ entry }) => discoveryResult(entry))
 }
 
 const TOOLS = [
@@ -533,7 +724,7 @@ const TOOLS = [
   {
     name: 'search_skills',
     description:
-      'Search the bundled public SKILL.md index (6,399 entries) by keyword. Returns names, descriptions, categories, ratings, trust levels and raw GitHub URLs. Use it to discover a skill that is not installed yet.',
+      'Search the bundled public SKILL.md index (6,399 entries) with local hash-vector semantic ranking fused with keyword and quality scores. Chinese and English task phrases both work because a built-in bilingual concept list bridges them; no network call or model is used. Returns names, descriptions, categories, ratings, trust levels and raw GitHub URLs. Use it to discover a skill that is not installed yet.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -547,7 +738,7 @@ const TOOLS = [
   {
     name: 'discover_skills',
     description:
-      'Search the bundled 6,399-entry public SKILL.md index for skills that are NOT installed yet, ranked by context relevance and completeness. Use it on any MCP client (Cursor/Claude Code/Codex) to find new skills; install with install_skill.',
+      'Search the bundled 6,399-entry public SKILL.md index for skills that are NOT installed yet, ranked by local hash-vector semantic relevance plus index quality. Chinese or English task phrases both work (deterministic local hashing, no network or model). Use it on any MCP client (Cursor/Claude Code/Codex) to find new skills; install with install_skill.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -861,4 +1052,19 @@ export function startMcpServer() {
   process.stdin.on('end', () => process.exit(0))
 }
 
-export const __testing = { buildRecommendations, searchLibrary, recordOutcome, experienceSummary, installSkill, scanInstalledSkills, promptMessages, readResource }
+export const __testing = {
+  buildRecommendations,
+  searchLibrary,
+  discoverLibrarySkills,
+  embedFeatures,
+  embedText,
+  cosineSimilarity,
+  entryQuality,
+  entryVector,
+  recordOutcome,
+  experienceSummary,
+  installSkill,
+  scanInstalledSkills,
+  promptMessages,
+  readResource,
+}

@@ -2899,7 +2899,7 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
   for (const entry of library?.entries || []) {
     if (installedNames.has(entry.name)) continue
     if (entry.weak || Number(entry.duplicateRank || 0) > 0) continue
-    if (Number(entry.quality || 0) < 70) continue
+    if (Number(entry.quality || 0) < 60) continue
     const scored = scoreLibraryEntry(entry, tokens, categories)
     if (scored.hits < 2) continue
     if (scored.score < 12) continue
@@ -2929,6 +2929,9 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       rating: entry.rating,
       quality: entry.quality,
       qualityLabel: entry.qualityLabel,
+      stars: entry.stars,
+      pushedAt: entry.pushedAt,
+      archived: entry.archived,
       trust: entry.trust,
       rawUrl: entry.rawUrl,
       url: entry.url,
@@ -2940,7 +2943,7 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       autoSafe:
         candidate.hits >= 3 &&
         candidate.score >= 16 &&
-        Number(entry.quality || 0) >= 80 &&
+        Number(entry.quality || 0) >= 65 &&
         categories.has(entry.category),
       compareTo: installedBaseline.name
         ? { name: installedBaseline.name, score: installedBaseline.score, hits: installedBaseline.hits }
@@ -2982,6 +2985,9 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     rating: entry.rating,
     quality: entry.quality,
     qualityLabel: entry.qualityLabel,
+    stars: entry.stars,
+    pushedAt: entry.pushedAt,
+    archived: entry.archived,
     trust: entry.trust,
     rawUrl: entry.rawUrl,
     url: entry.url,
