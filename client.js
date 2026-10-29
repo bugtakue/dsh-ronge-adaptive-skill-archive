@@ -1387,6 +1387,7 @@ window.__ModuleLoader__.load({
           (item) =>
             item &&
             item.name &&
+            item.autoSafe === true &&
             !item.installed &&
             !ignoredBetter.includes(item.name) &&
             !autoInstallRef.current.has(item.name),

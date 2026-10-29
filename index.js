@@ -2661,6 +2661,35 @@ function buildActiveCombo(analysis, recommendations, mode, skillStats = {}) {
   }
 }
 
+const BETTER_CONTEXT_STOPWORDS = new Set([
+  'it', 'the', 'and', 'for', 'with', 'this', 'that', 'from', 'your', 'you', 'are', 'was', 'have', 'has',
+  'can', 'will', 'into', 'over', 'when', 'what', 'how', 'all', 'any', 'not', 'but', 'out', 'own', 'its',
+  'they', 'them', 'then', 'than', 'too', 'very', 'also', 'just', 'now', 'one', 'two', 'new', 'old',
+  'get', 'set', 'add', 'make', 'made', 'use', 'used', 'using', 'via', 'per', 'etc', 'read', 'write',
+  'work', 'works', 'working', 'product', 'release', 'build', 'error', 'task', 'tasks', 'code', 'file',
+  'files', 'page', 'pages', 'line', 'lines', 'value', 'values', 'list', 'lists', 'name', 'names',
+  'test', 'tests', 'data', 'app', 'apps', 'api', 'apis', 'skill', 'skills', 'agent', 'agents', 'tool',
+  'tools', 'text', 'docs', 'doc', 'document', 'cli', 'time', 'value', 'support', 'help', 'guide',
+  'workflow', 'default', 'example', 'based', 'user', 'users', 'project', 'projects', 'current',
+])
+
+function betterFocusTokens(analysis, recommendations) {
+  const texts = []
+  for (const text of analysis.recentUserTexts || []) texts.push(text)
+  if (!texts.length && analysis.lastUserText) texts.push(analysis.lastUserText)
+  for (const item of recommendations.slice(0, 2)) texts.push(String(item.name || '').replace(/[-_]/g, ' '))
+  const tokens = []
+  for (const token of tokenize(texts.join(' '))) {
+    const clean = String(token || '').toLowerCase()
+    if (clean.length < 2) continue
+    if (BETTER_CONTEXT_STOPWORDS.has(clean)) continue
+    if (/^[a-z0-9]+$/.test(clean) && clean.length < 3) continue
+    if (!/^[a-z0-9]+$/.test(clean) && !/[\u4e00-\u9fff]/.test(clean)) continue
+    if (!tokens.includes(clean)) tokens.push(clean)
+  }
+  return tokens.slice(0, 40)
+}
+
 function scoreLibraryEntry(entry, tokens, topCategories) {
   const name = String(entry.name || '').toLowerCase()
   const text = [entry.description, entry.whenToUse, entry.repo, entry.path].filter(Boolean).join(' ').toLowerCase()
@@ -2696,9 +2725,7 @@ function installedTextScore(name, tokens) {
 
 function buildBetterOptions(analysis, recommendations, language, installedNames) {
   if (!recommendations.length) return []
-  const tokens = [...tokenize(analysis.contextText || '')]
-    .filter((token) => token.length >= 2)
-    .slice(0, 300)
+  const tokens = betterFocusTokens(analysis, recommendations)
   if (tokens.length < 2) return []
   const categories = new Set()
   for (const item of recommendations) {
@@ -2711,7 +2738,7 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
     if (Number(entry.rating || 0) < 4) continue
     const scored = scoreLibraryEntry(entry, tokens, categories)
     if (scored.hits < 2) continue
-    if (scored.score < 8) continue
+    if (scored.score < 12) continue
     candidates.push({ entry, ...scored })
   }
   candidates.sort((left, right) => right.score - left.score || Number(right.entry.rating) - Number(left.entry.rating))
@@ -2723,7 +2750,8 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
     if (better.length >= 3) break
     const entry = candidate.entry
     const gain = Math.round((candidate.score - installedBaseline.score) * 10) / 10
-    if (installedBaseline.name && candidate.score <= installedBaseline.score + 1.5) continue
+    if (installedBaseline.name && candidate.score <= installedBaseline.score + 2) continue
+    if (candidate.hits < 2) continue
     const localized = localizeSkill(
       { name: entry.name, description: entry.description || '', whenToUse: entry.whenToUse || null },
       language,
@@ -2743,6 +2771,11 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       matched: candidate.matched,
       score: candidate.score,
       gain,
+      autoSafe:
+        candidate.hits >= 3 &&
+        candidate.score >= 16 &&
+        Number(entry.rating || 0) >= 4.3 &&
+        categories.has(entry.category),
       compareTo: installedBaseline.name
         ? { name: installedBaseline.name, score: installedBaseline.score, hits: installedBaseline.hits }
         : null,
