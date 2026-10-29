@@ -45,6 +45,7 @@ window.__ModuleLoader__.load({
       betterMatched: '命中关键词',
       betterCompare: '相比已装',
       autoInstallBetter: '自动安装更优',
+      autoInstallHint: '默认关闭；开启后只自动安装 autoSafe 且通过安全扫描的候选',
       autoInstalled: '已自动安装更优技能',
       autoInstallFailed: '自动安装失败',
       installUse: '安装并使用',
@@ -84,6 +85,8 @@ window.__ModuleLoader__.load({
       loadMore: '加载更多',
       noLibrary: '没有匹配的卷轴',
       ratingLabel: '评级',
+      qualityLabel: '完整度',
+      qualityHint: '完整度 = 描述/whenToUse/路径/名称唯一性/官方来源的透明度启发式，不是热度或安全排名',
       updateTitle: '更新中心',
       updateHint: '检查已安装技能的远程更新：查看 diff、更新或回滚',
       updateEmpty: '还没有检查更新，点下面按钮开始',
@@ -270,6 +273,7 @@ window.__ModuleLoader__.load({
       betterMatched: 'Matched keywords',
       betterCompare: 'vs installed',
       autoInstallBetter: 'Auto-install better',
+      autoInstallHint: 'Off by default; only autoSafe, low/medium-risk candidates are installed automatically',
       autoInstalled: 'Auto-installed',
       autoInstallFailed: 'Auto-install failed',
       installUse: 'Install & use',
@@ -309,6 +313,8 @@ window.__ModuleLoader__.load({
       loadMore: 'Load more',
       noLibrary: 'No matching scrolls',
       ratingLabel: 'Rating',
+      qualityLabel: 'Completeness',
+      qualityHint: 'Completeness = transparency heuristic over description/whenToUse/path/unique name/official owner; not popularity or security',
       updateTitle: 'Update center',
       updateHint: 'Check remote updates for installed skills: diff, update, rollback',
       updateEmpty: 'Not checked yet — start below',
@@ -1352,7 +1358,7 @@ window.__ModuleLoader__.load({
       const [libraryOnlyNew, setLibraryOnlyNew] = React.useState(true)
       const [autoInstallBetter, setAutoInstallBetter] = React.useState(() => {
         try {
-          return window.localStorage.getItem('ronge.autoInstallBetter') !== '0'
+          return window.localStorage.getItem('ronge.autoInstallBetter') === '1'
         } catch {
           return true
         }
@@ -1665,7 +1671,7 @@ window.__ModuleLoader__.load({
           const params = new URLSearchParams({
             q: filters.q !== undefined ? filters.q : libraryQuery,
             category: filters.category !== undefined ? filters.category : libraryCategory,
-            minRating: String(filters.minRating !== undefined ? filters.minRating : libraryMinRating),
+            minQuality: String(filters.minRating !== undefined ? filters.minRating : libraryMinRating),
             page: String(page),
             limit: '40',
           })
@@ -2067,7 +2073,9 @@ window.__ModuleLoader__.load({
             h(
               'span',
               { className: 'sf-source sf-rating', title: t('starsAria') },
-              '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category),
+              (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                ' · ' +
+                (entry.categoryLabel || entry.category),
             ),
             entry.installed
               ? h('span', { className: 'sf-source sf-installed-badge' }, t('installedBadge'))
@@ -2213,19 +2221,20 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'sf-chiprow' },
               h('span', { className: 'sf-mode-label' }, t('ratingLabel')),
-              [0, 3, 4, 4.5].map((value) =>
+              [0, 55, 70, 85].map((value) =>
                 h(
                   'button',
                   {
                     type: 'button',
                     key: value,
+                    title: t('qualityHint'),
                     className: libraryMinRating === value ? 'sf-chip sf-chip-active' : 'sf-chip',
                     onClick: () => {
                       setLibraryMinRating(value)
                       loadLibrary(1, false, { minRating: value })
                     },
                   },
-                  value === 0 ? t('all') : '★ ' + value + '+',
+                  value === 0 ? t('all') : t('qualityLabel') + ' ' + value + '+',
                 ),
               ),
             ),
@@ -3443,6 +3452,7 @@ window.__ModuleLoader__.load({
                 type: 'button',
                 className: autoInstallBetter ? 'sf-chip sf-chip-active' : 'sf-chip',
                 'aria-pressed': autoInstallBetter,
+                title: t('autoInstallHint'),
                 onClick: toggleAutoInstall,
               },
               t('autoInstallBetter'),
@@ -3459,7 +3469,13 @@ window.__ModuleLoader__.load({
                   'div',
                   { className: 'sf-better-head' },
                   h('strong', { className: 'sf-name' }, entry.name),
-                  h('span', { className: 'sf-rating' }, '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category)),
+                  h(
+                    'span',
+                    { className: 'sf-rating', title: t('qualityHint') },
+                    (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                      ' · ' +
+                      (entry.categoryLabel || entry.category),
+                  ),
                 ),
                 h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
                 Array.isArray(entry.matched) && entry.matched.length
@@ -3516,7 +3532,9 @@ window.__ModuleLoader__.load({
                   h(
                     'span',
                     { className: 'sf-source sf-rating' },
-                    '★ ' + entry.rating + ' · ' + (entry.categoryLabel || entry.category || ''),
+                    (entry.quality !== undefined ? t('qualityLabel') + ' ' + entry.quality : '★ ' + entry.rating) +
+                      ' · ' +
+                      (entry.categoryLabel || entry.category || ''),
                   ),
                 ),
                 h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),

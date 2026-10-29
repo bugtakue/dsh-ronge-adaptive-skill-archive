@@ -471,6 +471,50 @@ const RESOURCE_TEMPLATES = [
   },
 ]
 
+function discoverLibrarySkills(context, limit) {
+  const raw = String(context || '').trim()
+  const tokens = [...tokenize(raw)].filter((token) => token.length >= 2).slice(0, 40)
+  const entries = (getLibrary().entries || []).filter(
+    (entry) =>
+      String(entry.description || '').trim().length >= 20 &&
+      !entry.weak &&
+      Number(entry.duplicateRank || 0) === 0 &&
+      Number(entry.quality || 0) >= 45,
+  )
+  const scored = []
+  for (const entry of entries) {
+    const name = String(entry.name || '').toLowerCase()
+    const text = [entry.description, entry.whenToUse, entry.category].filter(Boolean).join(' ').toLowerCase()
+    let hits = 0
+    let score = Number(entry.quality || 0) * 0.05
+    for (const token of tokens) {
+      if (name.includes(token)) {
+        score += 3
+        hits += 1
+      } else if (text.includes(token)) {
+        score += 1
+        hits += 1
+      }
+    }
+    if (tokens.length && hits === 0) continue
+    scored.push({ entry, score })
+  }
+  scored.sort((left, right) => right.score - left.score || Number(right.entry.quality) - Number(left.entry.quality))
+  return scored.slice(0, Math.max(1, Math.min(10, limit || 5))).map(({ entry }) => ({
+    name: entry.name,
+    description: String(entry.description || '').slice(0, 240),
+    category: entry.category,
+    rating: entry.rating,
+    quality: entry.quality,
+    qualityLabel: entry.qualityLabel,
+    trust: entry.trust,
+    rawUrl: entry.rawUrl,
+    repo: entry.repo,
+    path: entry.path,
+    install: 'install_skill({ url: rawUrl, agent: "claude-code" })',
+  }))
+}
+
 const TOOLS = [
   {
     name: 'recommend_skills',
@@ -498,6 +542,19 @@ const TOOLS = [
         limit: { type: 'integer', minimum: 1, maximum: 20, description: 'Maximum results. Default 10.' },
       },
       required: ['query'],
+    },
+  },
+  {
+    name: 'discover_skills',
+    description:
+      'Search the bundled 6,399-entry public SKILL.md index for skills that are NOT installed yet, ranked by context relevance and completeness. Use it on any MCP client (Cursor/Claude Code/Codex) to find new skills; install with install_skill.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        context: { type: 'string', description: 'The current task or a short description of what you need.' },
+        limit: { type: 'integer', minimum: 1, maximum: 10, description: 'Maximum results. Default 5.' },
+      },
+      required: ['context'],
     },
   },
   {
@@ -556,6 +613,8 @@ async function callTool(name, args) {
       return buildRecommendations(input.context, input.cwd, input.limit)
     case 'search_skills':
       return { query: input.query, results: searchLibrary(input.query, input.category, input.limit) }
+    case 'discover_skills':
+      return { context: String(input.context || '').slice(0, 500), results: discoverLibrarySkills(input.context, input.limit) }
     case 'scan_skill_text': {
       let text = String(input.text || '')
       if (!text && input.url) {

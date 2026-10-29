@@ -1762,30 +1762,99 @@ function remoteRepoFromUrl(raw) {
   }
 }
 
+function sanitizeSkillName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64)
+}
+
+function uniqueSkillName(base, repo, url) {
+  const owner = truncate(String(repo || '').split('/')[0] || '', 24)
+  const hash = createHash('sha1').update(String(url || '')).digest('hex').slice(0, 6)
+  const suffix = sanitizeSkillName(owner ? owner + '-' + hash : hash)
+  return sanitizeSkillName(base + '-' + suffix)
+}
+
+function renameSkillFrontmatter(text, nextName) {
+  const source = String(text || '')
+  const match = source.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---/)
+  if (!match) return source
+  const body = match[1].replace(/^name\s*:.*$/m, 'name: ' + nextName)
+  return source.replace(match[0], '---\n' + body + '\n---')
+}
+
+function assessRemoteSkill(text) {
+  const source = String(text || '')
+  const front = parseFrontmatter(source)
+  const name = String(front.name || '').trim()
+  const description = String(front.description || '').replace(/\s+/g, ' ').trim()
+  const security = scanSkillText(source)
+  return {
+    front,
+    name,
+    description,
+    security,
+    validName: /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name),
+    hasDescription: Boolean(description),
+    highRisk: security.level === 'high',
+  }
+}
+
+function truncate(text, length) {
+  return String(text || '').length > length ? String(text).slice(0, length) : String(text || '')
+}
+
 function installRemoteSkill(payload) {
   const raw = payload && payload.url
   if (!raw) throw new HttpError(400, 'url is required')
   return fetchRemoteSkill(raw).then(({ url, text }) => {
-    const front = parseFrontmatter(text)
-    const name = String(front.name || '').trim()
-    const description = String(front.description || '').replace(/\s+/g, ' ').trim()
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) {
-      throw new HttpError(400, 'remote SKILL.md has an invalid or missing name')
+    const assessment = assessRemoteSkill(text)
+    if (!assessment.validName) throw new HttpError(400, 'remote SKILL.md has an invalid or missing name')
+    if (!assessment.hasDescription) throw new HttpError(400, 'remote SKILL.md has no description')
+    if (assessment.highRisk && payload.force !== true) {
+      throw new HttpError(
+        422,
+        'high-risk SKILL.md blocked: ' +
+          assessment.security.findings
+            .slice(0, 3)
+            .map((finding) => finding.rule + ' (line ' + finding.line + ')')
+            .join(', ') +
+          '; pass force=true only after manual review',
+      )
     }
-    if (!description) throw new HttpError(400, 'remote SKILL.md has no description')
-    const dir = path.join(dshHome(), 'skills', name)
-    if (fs.existsSync(dir)) throw new HttpError(409, 'skill "' + name + '" already exists locally')
-    fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(path.join(dir, 'SKILL.md'), text, { flag: 'wx' })
     const repo = remoteRepoFromUrl(url)
-    const license = front.license ? String(front.license) : null
-    const trust = classifyTrust({ name, source: 'user-dsh' }, { repo, trust: String(payload.trust || '') })
-    const security = scanSkillText(text)
+    let installedName = sanitizeSkillName(assessment.name)
+    let finalText = text
+    let renamedFrom = null
+    let dir = path.join(dshHome(), 'skills', installedName)
+    if (fs.existsSync(dir)) {
+      renamedFrom = installedName
+      installedName = uniqueSkillName(installedName, repo, url)
+      finalText = renameSkillFrontmatter(text, installedName)
+      dir = path.join(dshHome(), 'skills', installedName)
+      let counter = 1
+      while (fs.existsSync(dir)) {
+        installedName = sanitizeSkillName(uniqueSkillName(assessment.name, repo, url + '#' + counter))
+        finalText = renameSkillFrontmatter(text, installedName)
+        dir = path.join(dshHome(), 'skills', installedName)
+        counter += 1
+      }
+    }
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'SKILL.md'), finalText, { flag: 'wx' })
+    const license = assessment.front.license ? String(assessment.front.license) : null
+    const trust = classifyTrust({ name: installedName, source: 'user-dsh' }, { repo, trust: String(payload.trust || '') })
+    const security = assessment.security
     const source = {
       url,
       repo,
-      name,
-      sha256: sha256(text),
+      name: installedName,
+      originalName: assessment.name,
+      renamedFrom,
+      sha256: sha256(finalText),
       trust,
       license,
       risk: security.level,
@@ -1793,7 +1862,7 @@ function installRemoteSkill(payload) {
     }
     fs.writeFileSync(path.join(dir, SOURCE_META_FILE), JSON.stringify(source, null, 2))
     upsertLock({
-      name,
+      name: installedName,
       url,
       repo,
       sha256: source.sha256,
@@ -1804,7 +1873,9 @@ function installRemoteSkill(payload) {
     })
     return {
       ok: true,
-      name,
+      name: installedName,
+      originalName: assessment.name,
+      renamedFrom,
       path: path.join(dir, 'SKILL.md'),
       source,
       trust,
@@ -1814,6 +1885,7 @@ function installRemoteSkill(payload) {
     }
   })
 }
+
 
 async function checkSkillUpdates() {
   const root = path.join(dshHome(), 'skills')
@@ -1931,6 +2003,7 @@ function searchLibrary(query, category, minRating, page, limit, lang, options = 
   const qTokens = q.split(/\s+/).filter(Boolean)
   const categoryFilter = String(category || '').trim()
   const threshold = Number(minRating) || 0
+  const qualityThreshold = Number(options.minQuality) || 0
   const pageNumber = Math.max(1, Number(page) || 1)
   const pageSize = Math.min(80, Math.max(1, Number(limit) || 40))
   const installedNames = options.installed instanceof Set ? options.installed : installedSkillNameSet()
@@ -1938,6 +2011,7 @@ function searchLibrary(query, category, minRating, page, limit, lang, options = 
     if (options.excludeInstalled && installedNames.has(entry.name)) return false
     if (categoryFilter && entry.category !== categoryFilter) return false
     if (threshold && Number(entry.rating || 0) < threshold) return false
+    if (qualityThreshold && Number(entry.quality || 0) < qualityThreshold) return false
     if (!q) return true
     const haystack = [entry.name, entry.description, entry.whenToUse, entry.repo, entry.path, entry.category]
       .filter(Boolean)
@@ -1987,7 +2061,7 @@ const SOURCE_ORDER = {
 
 const ROUTING_SECTION = `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） routing
 
-The session header has a 荣哥技能卷轴收藏馆（可沉浸式体验版本） panel ("技能") with context-aware skill recommendations, active-skill tracking, and a completion chime. The session skill catalog stays authoritative; before starting a task, call the \`skill\` tool when a matching skill exists. Common routes: video / motion / HyperFrames → beat-promo-director, hyperframes, hyperframes-cli, hyperframes-registry, media-use; Office documents → office, office-docx, office-xlsx, office-pptx, office-render, office-export-pdf, office-recalculate; Harness plugins or UI → cordis-plugin-development, cordis-composition-reference; agent presets or compositions → editing-cordis-compositions; tool and skill design → agent-experience.`
+The session header has a 荣哥技能卷轴收藏馆（可沉浸式体验版本） panel ("技能") with context-aware skill recommendations, active-skill tracking, and a completion chime. The session skill catalog stays authoritative: before starting a task, use the \`skill\` tool when a matching installed skill exists. The panel's recommendations are advisory; verify the chosen skill's description before use. DSH plugin / MCP / skill-design tasks should consult the installed skill catalog rather than assuming fixed skill names.`
 
 function playChime() {
   const sound = process.env.DSH_TASK_CHIME_SOUND || DEFAULT_CHIME
@@ -2749,8 +2823,10 @@ function scoreLibraryEntry(entry, tokens, topCategories) {
       if (matched.length < 6) matched.push(token)
     }
   }
+  const quality = Number(entry.quality) || 0
   const rating = Number(entry.rating) || 0
-  score += Math.max(0, rating - 3.5) * 1.2
+  score += Math.max(0, quality - 40) * 0.08
+  score += Math.max(0, rating - 3.5) * 0.5
   if (topCategories.has(entry.category)) score += 2
   const trust = String(entry.trust || '').toLowerCase()
   if (trust === 'official') score += 1.5
@@ -2777,7 +2853,8 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
   const candidates = []
   for (const entry of library?.entries || []) {
     if (installedNames.has(entry.name)) continue
-    if (Number(entry.rating || 0) < 4) continue
+    if (entry.weak || Number(entry.duplicateRank || 0) > 0) continue
+    if (Number(entry.quality || 0) < 70) continue
     const scored = scoreLibraryEntry(entry, tokens, categories)
     if (scored.hits < 2) continue
     if (scored.score < 12) continue
@@ -2805,6 +2882,8 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       category: entry.category,
       categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category,
       rating: entry.rating,
+      quality: entry.quality,
+      qualityLabel: entry.qualityLabel,
       trust: entry.trust,
       rawUrl: entry.rawUrl,
       url: entry.url,
@@ -2816,14 +2895,14 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
       autoSafe:
         candidate.hits >= 3 &&
         candidate.score >= 16 &&
-        Number(entry.rating || 0) >= 4.3 &&
+        Number(entry.quality || 0) >= 80 &&
         categories.has(entry.category),
       compareTo: installedBaseline.name
         ? { name: installedBaseline.name, score: installedBaseline.score, hits: installedBaseline.hits }
         : null,
       whyBetter: installedBaseline.name
-        ? '命中 ' + candidate.hits + ' 个上下文关键词（评分 ' + entry.rating + '）；已装的 ' + installedBaseline.name + ' 命中 ' + installedBaseline.hits + ' 个'
-        : '命中 ' + candidate.hits + ' 个上下文关键词，评分 ' + entry.rating,
+        ? '命中 ' + candidate.hits + ' 个上下文关键词（完整度 ' + entry.quality + '）；已装的 ' + installedBaseline.name + ' 命中 ' + installedBaseline.hits + ' 个'
+        : '命中 ' + candidate.hits + ' 个上下文关键词，完整度 ' + entry.quality,
       installed: false,
     })
   }
@@ -2840,12 +2919,15 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
   const scored = []
   for (const entry of library?.entries || []) {
     if (installedNames.has(entry.name)) continue
+    if (entry.weak || String(entry.description || '').trim().length < 20) continue
+    if (Number(entry.duplicateRank || 0) > 0) continue
+    if (Number(entry.quality || 0) < 45) continue
     const result = scoreLibraryEntry(entry, tokens, categories)
     scored.push({ entry, ...result })
   }
   // Deliberately permissive: no minimum hits/rating/score. Relevance only
   // changes the order, so a thin context still surfaces useful candidates.
-  scored.sort((left, right) => right.score - left.score || Number(right.entry.rating) - Number(left.entry.rating))
+  scored.sort((left, right) => right.score - left.score || Number(right.entry.quality || 0) - Number(left.entry.quality || 0))
   return scored.slice(0, 5).map(({ entry, matched, hits }) => ({
     name: entry.name,
     description: String(entry.description || '').slice(0, 240),
@@ -2853,6 +2935,8 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     category: entry.category,
     categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category,
     rating: entry.rating,
+    quality: entry.quality,
+    qualityLabel: entry.qualityLabel,
     trust: entry.trust,
     rawUrl: entry.rawUrl,
     url: entry.url,
@@ -3362,6 +3446,7 @@ export function apply(ctx, config = {}) {
           {
             excludeInstalled: url.searchParams.get('hideInstalled') === '1',
             installed: installedSkillNameSet(),
+            minQuality: url.searchParams.get('minQuality') || 0,
           },
         )
         if (result.ok === false) throw new HttpError(503, result.error)
@@ -3493,4 +3578,6 @@ export {
   expandFocusTokens,
   libraryRatingMap,
   installedSkillNameSet,
+  assessRemoteSkill,
+  uniqueSkillName,
 }

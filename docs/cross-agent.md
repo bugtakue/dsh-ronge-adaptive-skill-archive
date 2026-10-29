@@ -52,7 +52,8 @@ args = ["-y", "ronge-adaptive-skill-archive", "mcp"]
 | 工具 | 作用 |
 |---|---|
 | `recommend_skills` | 给当前任务推荐最多 4 个**已安装**的 skill，附理由、一句话简介、探索标记；`cwd` 会加入项目文件名作为上下文 |
-| `search_skills` | 搜 6,399 条公开 `SKILL.md` 索引（名称/描述/类别/评分/信任/rawUrl） |
+| `discover_skills` | 从 6,399 条索引里找**未安装**技能，按上下文相关度 + 完整度排序，附 rawUrl，可直接 `install_skill` |
+| `search_skills` | 搜 6,399 条公开 `SKILL.md` 索引（名称/描述/类别/完整度/信任/rawUrl） |
 | `scan_skill_text` | 本地启发式安全扫描（text 或 raw SKILL.md URL），返回 low/medium/high |
 | `install_skill` | 下载 raw `SKILL.md` → 扫描 → 写入 agent skill 目录（Claude Code / Codex / DSH / agents），带旧文件备份；high 风险默认拦截 |
 | `record_outcome` | 记录使用结果（success/failed/good/bad/adopt/used），驱动亲和度、分类权重和探索配额 |

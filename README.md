@@ -88,7 +88,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 # Cursor: ~/.cursor/mcp.json 的 mcpServers 同上
 ```
 
-提供 `recommend_skills`（带理由）、`search_skills`（6,399 条索引）、`scan_skill_text`（安装前扫描）、`install_skill`（写入 Claude Code / Codex / DSH 技能目录，带备份）、`record_outcome`（反馈驱动自进化）、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
+提供 `recommend_skills`（已装技能推荐）、`discover_skills`（从 6,399 条索引找未装技能，按上下文+完整度排序）、`search_skills`、`scan_skill_text`、`install_skill`（高风险拒绝）、`record_outcome`、`experience_summary`；另有 **prompts**（Claude Code 里是 `/mcp__ronge__recommend`、`/mcp__ronge__skill-workflow`）和 **resources**（`ronge://experience/summary`、`ronge://library/{name}`、`ronge://skill/{name}`）。完整配置与边界见 [docs/cross-agent.md](docs/cross-agent.md)。
 
 ## 核心功能
 
@@ -97,7 +97,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 - 面板顶部常驻「当前组合」：运行中的 skill/skill 组合、平均评级、为什么切到这个组合（推荐理由归因）。
 - 组合切换时右下角弹出小通知（即使面板关着也会轮询提醒），点一下打开面板。
 - 卷轴馆默认「只看未安装」，并新增「库里还没装的」区块：按整段会话从 6,399 条索引里挑 3 个未安装技能，带评分/预览/安装。
-- **更优技能自动升级**：推荐器会对比「已装技能」和「库里未装技能」；发现明显更匹配的未装技能时，面板显示「发现更优的未装技能」（命中关键词、评分、相比已装的证据），默认自动安装（安全扫描拦截高风险），已装且好用的继续保留。
+- **更优技能自动升级（默认关闭）**：推荐器会对比「已装技能」和「库里未装技能」；发现明显更匹配的未装技能时显示「发现更优的未装技能」（命中关键词、完整度、相比已装的证据）。自动安装需手动开启，只对 `autoSafe` 且低/中风险候选生效，高风险一律拒绝。
 
 ### 上下文推荐（带理由）
 
@@ -126,7 +126,7 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 
 ### 安装前安全扫描
 
-预览/安装任何第三方 `SKILL.md` 前，在本机跑一遍启发式静态扫描：shell 执行、`curl | bash`、动态解码（eval/base64）、提示注入语句、网络访问、凭据路径、文件写入、过宽 `allowed-tools`。输出低/中/高风险与命中行号，并展示来源信任级别（official / verified / community / local / unknown）和 `license` 字段。**只读文本，不联网、不上传、不执行。**
+预览/安装任何第三方 `SKILL.md` 前，在本机跑一遍启发式静态扫描：shell 执行、`curl | bash`、动态解码（eval/base64）、提示注入语句、网络访问、凭据路径、文件写入、过宽 `allowed-tools`。输出低/中/高风险与命中行号，并展示来源信任级别（official / verified / community / local / unknown）和 `license` 字段。**只读文本，不联网、不上传、不执行。面板安装与 MCP `install_skill` 一致：高风险默认拒绝，必须显式 force 才允许写入。**
 
 ### 更新 diff / 更新全部 / 回滚
 
@@ -187,6 +187,18 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 - 从 **v1.x** 升级：v1.x 与 v2.x 的包名、路由前缀不同，同一 profile 不能同时启用——先移除旧 bundle，再装 v2.1.0；旧数据目录会在首次启动时**自动复制**（旧目录保留，不删除）。
 
 重命名细节见 [v2.0.0 发布说明](docs/release-notes-v2.0.0.md)，v2.1.0 的变更见 [CHANGELOG](CHANGELOG.md)。
+
+### 6,399 索引的能力边界（重要）
+
+这 6,399 条是 **GitHub 公开 SKILL.md 的元数据快照**，不是质量榜：
+- 1,001 条没有描述、只有 26 条带 `whenToUse`，512 个名称重复（其中 291 个都叫 `skill`）；
+- 旧 `rating` 是启发式公式，**不代表质量/安全**；v2.7.0 起索引增加透明的 `quality`（完整度：描述/whenToUse/路径/唯一名称/官方来源）并在 UI 显示；
+- 发现/更优推荐会跳过无描述、重复名和非最佳版本；安装同名技能时自动改名为 `name-owner-hash` 并改写 frontmatter，避免互相覆盖；
+- 安装前请先「预览」看 SKILL.md 与安全扫描结果。
+
+### 评测口径
+
+推荐评测 `npm run eval:recommend` 是 10 条作者自写用例（Recall@4），覆盖的是仓库自带技能，**不代表 6,399 条库的推荐质量**；6,399 索引没有人工质量标注，只能做完整度/去重/关键词启发式。欢迎用真实任务反馈补充用例。
 
 ### 数据在哪
 
