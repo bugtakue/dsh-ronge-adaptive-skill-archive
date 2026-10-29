@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.4 — 2026-10-29
+
+- 发布流水线补充 `npm dist-tag add <version> latest`：修复 v2.6.2/v2.6.3 并行发布导致 `latest` 停在 2.6.2 的问题。
+- 功能等价 v2.6.3（discover 修复 + 三 tab 更新中心）。
+
+
 ## v2.6.3 — 2026-10-29
 
 - **修复「发现」打不开**：`/discover` 路由漏定义 `installedNames` 导致 500（`installedNames is not defined`），已补上。
