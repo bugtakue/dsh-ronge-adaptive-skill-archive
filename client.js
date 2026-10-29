@@ -39,12 +39,13 @@ window.__ModuleLoader__.load({
       onlyNew: '未安装',
       allSkills: '全部',
       newFromLibrary: '库里还没装的',
-      newFromLibraryHint: '按最近 12 条消息 + 推荐类别挑的未安装技能',
+      newFromLibraryHint: '按整段会话 + 推荐类别挑的未安装技能',
       installedBadge: '已安装',
       recommend: '推荐',
-      recommendHint: '根据最近 12 条消息 + 项目文件',
-      recentMessages: '最近消息',
+      recommendHint: '根据整段会话 + 项目文件',
+      recentMessages: '会话消息',
       projectFiles: '项目文件',
+      projectDocs: '项目文档',
       basedOn: '基于：',
       noRecommend: '暂无推荐，先聊几句或点刷新',
       activeNow: '正在使用',
@@ -250,12 +251,13 @@ window.__ModuleLoader__.load({
       onlyNew: 'Not installed',
       allSkills: 'All',
       newFromLibrary: 'Not in your library yet',
-      newFromLibraryHint: 'Uninstalled picks from the 6,399 index, using the last 12 messages + recommended categories',
+      newFromLibraryHint: 'Uninstalled picks from the 6,399 index, using the whole conversation + recommended categories',
       installedBadge: 'Installed',
       recommend: 'Recommended',
-      recommendHint: 'From the last 12 messages + project files',
-      recentMessages: 'recent messages',
+      recommendHint: 'From the whole conversation + project files',
+      recentMessages: 'messages',
       projectFiles: 'project files',
+      projectDocs: 'project docs',
       basedOn: 'Based on: ',
       noRecommend: 'No recommendation yet — chat a little, then refresh',
       activeNow: 'In use',
@@ -3277,7 +3279,10 @@ window.__ModuleLoader__.load({
                         ' · ' +
                         t('projectFiles') +
                         ' ' +
-                        String(data.contextWindow.files || 0),
+                        String(data.contextWindow.files || 0) +
+                        (Array.isArray(data.contextWindow.snippets) && data.contextWindow.snippets.length
+                          ? ' · ' + t('projectDocs') + ' ' + data.contextWindow.snippets.length
+                          : ''),
                     )
                   : null,
               )

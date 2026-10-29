@@ -2300,6 +2300,53 @@ function categoryOf(name) {
   return 'other'
 }
 
+const PROJECT_CONTEXT_TTL_MS = 30000
+let projectContextCache = new Map()
+
+const PROJECT_SNIPPET_FILES = ['AGENTS.md', 'CLAUDE.md', 'README.md', 'package.json', 'pyproject.toml', 'Cargo.toml', 'go.mod']
+const PROJECT_IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', 'target', 'vendor', '.cache'])
+
+function projectContext(cwd) {
+  const key = String(cwd || '')
+  const cached = projectContextCache.get(key)
+  if (cached && Date.now() - cached.at < PROJECT_CONTEXT_TTL_MS) return cached.value
+  const files = []
+  const snippets = []
+  const walk = (dir, depth) => {
+    if (depth > 2 || files.length >= 200) return
+    let entries = []
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') && entry.name !== '.agents') continue
+      if (PROJECT_IGNORED_DIRS.has(entry.name)) continue
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(full, depth + 1)
+      } else if (entry.isFile()) {
+        if (files.length < 200) files.push(path.relative(cwd, full))
+        if (PROJECT_SNIPPET_FILES.includes(entry.name)) {
+          try {
+            const text = fs.readFileSync(full, 'utf8')
+            if (Buffer.byteLength(text) <= 64 * 1024) {
+              snippets.push({ name: entry.name, text: text.slice(0, 1200) })
+            }
+          } catch {
+            // Best-effort context only.
+          }
+        }
+      }
+    }
+  }
+  walk(cwd, 0)
+  const value = { files, snippets }
+  projectContextCache.set(key, { at: Date.now(), value })
+  return value
+}
+
 function analyzeSession(ctx, sessionId, cwd) {
   const empty = {
     running: false,
@@ -2376,17 +2423,43 @@ function analyzeSession(ctx, sessionId, cwd) {
     // cwd may be a file or unavailable; recommendations still use messages.
   }
 
-  const contextMessages = contextUserTexts.slice(-12)
-  const contextText = [contextMessages.join('\n'), fileNames.join(' ')].join('\n').trim()
+  // Use the whole conversation up to a bounded window, not just the last
+  // sentence. Older messages are kept until the character budget is exhausted.
+  const recentIndex = []
+  let usedChars = 0
+  for (let index = contextUserTexts.length - 1; index >= 0; index -= 1) {
+    const text = contextUserTexts[index]
+    if (!text) continue
+    if (recentIndex.length >= 24) break
+    if (recentIndex.length > 0 && usedChars + text.length > 12000) break
+    recentIndex.unshift(index)
+    usedChars += text.length
+  }
+  const contextMessages = recentIndex.map((index) => contextUserTexts[index])
+  const project = projectContext(cwd)
+  const projectFiles = project.files.slice(0, 200)
+  const title = String(session?.header?.title || session?.header?.name || session?.title || '').slice(0, 200)
+  const contextText = [
+    title ? 'SESSION: ' + title : '',
+    contextMessages.join('\n'),
+    projectFiles.length ? 'PROJECT FILES: ' + projectFiles.join(' ') : '',
+    project.snippets.map((item) => 'FILE ' + item.name + ':\n' + item.text).join('\n'),
+  ]
+    .filter(Boolean)
+    .join('\n')
+    .slice(0, 16000)
   return {
     running: lastType !== 'turn/end',
     contextMessages: contextMessages.length,
-    contextFiles: fileNames.length,
+    contextFiles: projectFiles.length,
+    contextTitle: title,
+    contextSnippets: project.snippets.map((item) => item.name),
     activeSkills: dedupeSkillCalls(skillCalls.filter((call) => call.turn === maxTurn)).slice(-3),
     recentSkills: dedupeSkillCalls(skillCalls).slice(-6),
     activeTurn: maxTurn,
     contextText,
     lastUserText,
+    recentUserTexts: contextMessages.slice(-2),
   }
 }
 
@@ -2753,10 +2826,12 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     activeSkills: analysis.activeSkills,
     recentSkills: analysis.recentSkills,
     running: analysis.running,
-    contextPreview: analysis.lastUserText.slice(0, 160),
+    contextPreview: (analysis.recentUserTexts || [analysis.lastUserText]).filter(Boolean).join(' / ').slice(0, 200),
     contextWindow: {
       messages: Number(analysis.contextMessages || 0),
       files: Number(analysis.contextFiles || 0),
+      snippets: Array.isArray(analysis.contextSnippets) ? analysis.contextSnippets : [],
+      title: analysis.contextTitle || '',
     },
     mode: studioMode,
     experience: experienceSnapshot(cwd),
