@@ -4051,6 +4051,10 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 }
 @media (prefers-reduced-motion:reduce){
 .sf-drawer,.sf-backdrop,.sf-subview,.sf-toast{animation:none}
+.sf-card,.sf-reco-item,.sf-remote-card,.sf-chip,.sf-reco-btn,.sf-fb,.sf-primary,.sf-secondary,.sf-new-btn,.sf-bar-fill,.sf-seg-btn,.sf-tab,.sf-icon-btn,.sf-trigger{transition:none}
+.sf-skeleton::after{animation:none}
+.sf-active-pulse{animation:none}
+}
 .sf-combo{display:flex;gap:9px;align-items:flex-start;margin:0 16px 10px;padding:9px 11px;border:1px solid var(--sf-line);border-radius:12px;background:var(--sf-tint-1)}
 .sf-combo-dot{flex:none;width:7px;height:7px;margin-top:5px;border-radius:50%;background:var(--sf-success);box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-success) 18%,transparent);animation:sf-pulse 2.4s ease-in-out infinite}
 .sf-combo-recommended .sf-combo-dot{background:var(--sf-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-accent) 18%,transparent)}
@@ -4084,10 +4088,7 @@ body[data-ds-dark-theme] .sf-section{box-shadow:inset 0 1px 0 rgba(255,255,255,.
 .sf-combo-toast-close:hover{background:var(--sf-tint-2);color:var(--sf-ink)}
 @media (max-width:640px){.sf-combo-toast{right:10px;left:10px;bottom:10px;width:auto}}
 @media (prefers-reduced-motion:reduce){.sf-combo-toast{animation:none}}
-.sf-card,.sf-reco-item,.sf-remote-card,.sf-chip,.sf-reco-btn,.sf-fb,.sf-primary,.sf-secondary,.sf-new-btn,.sf-bar-fill,.sf-seg-btn,.sf-tab,.sf-icon-btn,.sf-trigger{transition:none}
-.sf-skeleton::after{animation:none}
-.sf-active-pulse{animation:none}
-}
+
 `
 
     window.__SkillFactory = { store }
