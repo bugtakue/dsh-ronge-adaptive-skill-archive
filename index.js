@@ -2789,54 +2789,23 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
 }
 
 function buildDiscoveries(analysis, recommendations, language, installedNames) {
+  const tokens = betterFocusTokens(analysis, recommendations)
+  if (tokens.length < 2) return []
   const categories = new Set()
   for (const item of recommendations) {
-    const mapped = LIBRARY_CATEGORY_FOR_SKILL_CATEGORY[categoryOf(item.name)] || []
-    for (const category of mapped) categories.add(category)
+    for (const category of LIBRARY_CATEGORY_FOR_SKILL_CATEGORY[categoryOf(item.name)] || []) categories.add(category)
   }
-  const found = []
-  const addEntries = (entries) => {
-    for (const entry of entries) {
-      if (installedNames.has(entry.name)) continue
-      if (found.find((item) => item.name === entry.name)) continue
-      found.push(entry)
-    }
+  const library = loadLibraryIndex()
+  const scored = []
+  for (const entry of library?.entries || []) {
+    if (installedNames.has(entry.name)) continue
+    if (Number(entry.rating || 0) < 4) continue
+    const result = scoreLibraryEntry(entry, tokens, categories)
+    if (result.hits < 2 || result.score < 10) continue
+    scored.push({ entry, ...result })
   }
-  const nameTokens = [...new Set(
-    recommendations.flatMap((item) =>
-      String(item.name || '')
-        .split(/[-_]/)
-        .filter((token) => token.length >= 3),
-    ),
-  )].slice(0, 10)
-  if (nameTokens.length) {
-    const result = searchLibrary(nameTokens.join(' '), '', 3, 1, 16, language, {
-      excludeInstalled: true,
-      installed: installedNames,
-    })
-    addEntries(result.entries || [])
-  }
-  for (const category of categories) {
-    const result = searchLibrary('', category, 4, 1, 12, language, {
-      excludeInstalled: true,
-      installed: installedNames,
-    })
-    addEntries(result.entries || [])
-  }
-  if (found.length < 3) {
-    const tokens = [...tokenize(analysis.contextText || analysis.lastUserText || '')]
-      .filter((token) => token.length >= 2)
-      .slice(-10)
-    if (tokens.length) {
-      const result = searchLibrary(tokens.join(' '), '', 4, 1, 12, language, {
-        excludeInstalled: true,
-        installed: installedNames,
-      })
-      addEntries(result.entries || [])
-    }
-  }
-  found.sort((left, right) => Number(right.rating || 0) - Number(left.rating || 0))
-  return found.slice(0, 3).map((entry) => ({
+  scored.sort((left, right) => right.score - left.score || Number(right.entry.rating) - Number(left.entry.rating))
+  return scored.slice(0, 3).map(({ entry, matched }) => ({
     name: entry.name,
     description: String(entry.description || '').slice(0, 240),
     intro: entry.intro || entry.description || '',
@@ -2848,10 +2817,10 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     url: entry.url,
     repo: entry.repo,
     path: entry.path,
+    matched,
     installed: false,
   }))
-}
-async function buildCatalog(ctx, config, sessionId, lang) {
+}async function buildCatalog(ctx, config, sessionId, lang) {
   let cwd = config?.cwd
   if (!cwd && sessionId) {
     try {
