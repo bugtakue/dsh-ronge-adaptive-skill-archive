@@ -136,9 +136,9 @@ claude mcp add ronge -- npx -y ronge-adaptive-skill-archive mcp
 
 GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,399 条，其中 5,398 条带描述，14 个分类**（AI 2,070 / 编程 789 / 设计 663 / 数据 512 / 其他 1,662 / 视频 163 / 写作 155 / 效率 122 / 办公 86 / 营销 53 / 安全 48 / 研究 41 / 商业 24 / 教育 11）。按分类、最低评分、关键词筛选，预览全文后安装。口径写清楚：这不是「全网所有 skill」，只覆盖 GitHub 上公开可检索到的 `SKILL.md`，且不存正文。
 
-### MCP 目录 + 小功能
+### 小功能
 
-「工具」页浏览 MCP 官方 registry 的服务器（只发现，不自动安装/配置）。另有中英双语技能简介、主任务完成提示音（子智能体/fork 不响）、新建 Skill 到 `~/.dsh/skills/`。
+中英双语技能简介、主任务完成提示音（子智能体/fork 不响）、新建 Skill 到 `~/.dsh/skills/`、更新中心（检查已装技能远程更新、diff、更新/回滚）。
 
 ---
 
@@ -215,7 +215,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 - 安装前扫描是**本地启发式提示，不是安全保证**（静态扫描无法覆盖全部攻击面）；安装前仍应预览全文。
 - 只允许从 `raw.githubusercontent.com/**/SKILL.md` 拉取，最大 256 KiB，不自动拉脚本/资源，不覆盖已有 skill。
 - 新建技能只写入 `~/.dsh/skills/<kebab-case-name>/SKILL.md`，名称白名单拒绝 `/`、`..` 和绝对路径。
-- MCP 目录只做发现，不自动安装配置；提示音失败不影响任务。
+- 更新中心只处理已装技能的 SKILL.md 更新；提示音失败不影响任务。
 - 换提示音：`export DSH_TASK_CHIME_SOUND=/System/Library/Sounds/Ping.aiff`
 
 ---
@@ -231,7 +231,7 @@ GitHub 公开、可检索的 `SKILL.md` 元数据快照（2026-10-28）：**6,39
 │                    ▼                                        │
 │        Host（index.js，仅 Node 内置模块）                    │
 │  catalog · 推荐 · 经验 · 自进化 · 安全扫描 · lock/diff/回滚  │
-│  MCP 目录 · 卷轴馆索引 · 提示音 · system prompt 注入         │
+│  卷轴馆索引 · 更新中心 · 提示音 · system prompt 注入          │
 │                    │                                        │
 │   ~/.dsh/ronge-adaptive-skill-archive/  ← 配置/经验/权重     │
 │   ~/.dsh/skills/                        ← 安装/新建的 skill  │
@@ -294,7 +294,7 @@ MIT。见 [LICENSE](LICENSE)。
 - **Self-evolution** — feedback-attributed, bounded weight tuning plus a 10% exploration quota; fully local, logged, and rollback-able.
 - **Pre-install safety scan** — local heuristic scan (shell exec, pipe-to-shell, dynamic eval, prompt injection, credentials, over-broad `allowed-tools`), trust level and license.
 - **Update center** — content diff, update-all, backup before overwrite, one-click rollback.
-- **6,399-skill index** — snapshot of public GitHub `SKILL.md` files (14 categories, 1–5 rating), plus a browsable MCP registry and completion chime.
+- **6,399-skill index** — snapshot of public GitHub `SKILL.md` files (14 categories, 1–5 rating), an update center for installed skills, and a completion chime.
 
 **Install** (in a DSH session):
 

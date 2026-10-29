@@ -3113,6 +3113,7 @@ export function apply(ctx, config = {}) {
         if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'method not allowed')
         const url = new URL(req.url || '/', 'http://127.0.0.1')
         const query = (url.searchParams.get('q') || '').trim().toLowerCase()
+        const installedNames = installedSkillNameSet()
         const index = loadRemoteIndex()
         const entries = index.entries
           .filter((entry) => {

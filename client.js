@@ -74,8 +74,7 @@ window.__ModuleLoader__.load({
       memory: '记忆文件',
       modeBusy: '切换中…',
       tabSkills: '技能',
-      tabDiscover: '发现',
-      tabTools: '工具',
+      tabUpdates: '更新',
       tabLibrary: '卷轴馆',
       libraryTitle: '荣哥技能卷轴收藏馆（可沉浸式体验版本）',
       libraryHint: '全 GitHub 公开 SKILL.md 索引，按分类和评级浏览',
@@ -83,8 +82,9 @@ window.__ModuleLoader__.load({
       loadMore: '加载更多',
       noLibrary: '没有匹配的卷轴',
       ratingLabel: '评级',
-      discoverTitle: '发现远程技能',
-      toolsTitle: 'MCP / Tools 目录',
+      updateTitle: '更新中心',
+      updateHint: '检查已安装技能的远程更新：查看 diff、更新或回滚',
+      updateEmpty: '还没有检查更新，点下面按钮开始',
       searchBtn: '搜索',
       searchRemote: '搜索远程技能…',
       searchTools: '搜索 MCP 服务器…',
@@ -297,8 +297,7 @@ window.__ModuleLoader__.load({
       memory: 'Memory file',
       modeBusy: 'Switching…',
       tabSkills: 'Skills',
-      tabDiscover: 'Discover',
-      tabTools: 'Tools',
+      tabUpdates: 'Updates',
       tabLibrary: 'Scrolls',
       libraryTitle: "Ronge's Adaptive Skill Cockpit (Immersive Edition)",
       libraryHint: 'Index of public GitHub SKILL.md files, by category and rating',
@@ -306,8 +305,9 @@ window.__ModuleLoader__.load({
       loadMore: 'Load more',
       noLibrary: 'No matching scrolls',
       ratingLabel: 'Rating',
-      discoverTitle: 'Discover remote skills',
-      toolsTitle: 'MCP / Tools directory',
+      updateTitle: 'Update center',
+      updateHint: 'Check remote updates for installed skills: diff, update, rollback',
+      updateEmpty: 'Not checked yet — start below',
       searchBtn: 'Search',
       searchRemote: 'Search remote skills…',
       searchTools: 'Search MCP servers…',
@@ -2374,6 +2374,74 @@ window.__ModuleLoader__.load({
         )
       }
 
+      const renderUpdatesView = () =>
+        h(
+          React.Fragment,
+          null,
+          h(
+            'div',
+            { className: 'sf-subhead' },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'sf-icon-btn',
+                'aria-label': t('close'),
+                title: t('close'),
+                onClick: () => setView('skills'),
+              },
+              h(IconArrowLeft, { size: 16 }),
+            ),
+            h(
+              'div',
+              { className: 'sf-subhead-main' },
+              h('strong', { className: 'sf-subhead-title' }, t('updateTitle')),
+              h('span', { className: 'sf-subhead-hint' }, t('updateHint')),
+            ),
+          ),
+          h(
+            'div',
+            { className: 'sf-subfilters' },
+            h(
+              'div',
+              { className: 'sf-subrow' },
+              h(
+                'button',
+                { type: 'button', className: 'sf-secondary sf-btn-sm', onClick: () => checkUpdates() },
+                h(IconRefresh, { size: 13 }),
+                h('span', null, t('checkUpdates')),
+              ),
+              updates
+                ? h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'sf-secondary sf-btn-sm',
+                      disabled: Boolean(updateBusy),
+                      onClick: () => performUpdateAction('all'),
+                    },
+                    t('updateAll'),
+                  )
+                : null,
+            ),
+          ),
+          h(
+            'div',
+            { className: 'sf-subscroll sf-scroll' },
+            updateError ? h('div', { className: 'sf-update-error sf-error' }, updateError) : null,
+            updates ? renderUpdates() : EmptyState({
+              icon: h(IconPulse, { size: 20 }),
+              title: t('updateTitle'),
+              hint: t('updateEmpty'),
+              action: h(
+                'button',
+                { type: 'button', className: 'sf-secondary', onClick: () => checkUpdates() },
+                t('checkUpdates'),
+              ),
+            }),
+          ),
+        )
+
       const renderFeedback = () => {
         if (!experience || !experience.recent || !experience.recent[0]) return null
         const recent = experience.recent[0]
@@ -3603,8 +3671,7 @@ window.__ModuleLoader__.load({
       const tabs = [
         { value: 'skills', label: t('tabSkills'), icon: IconSkills },
         { value: 'library', label: t('tabLibrary'), icon: IconLibrary },
-        { value: 'discover', label: t('tabDiscover'), icon: IconCompass },
-        { value: 'tools', label: t('tabTools'), icon: IconTools },
+        { value: 'discover', label: t('tabUpdates'), icon: IconPulse },
       ]
       const onTabsKeyDown = (event) => {
         if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
@@ -3914,7 +3981,7 @@ window.__ModuleLoader__.load({
               ? h(
                   'div',
                   { className: 'sf-subview' },
-                  view === 'discover' ? renderDiscover() : view === 'tools' ? renderTools() : renderLibrary(),
+                  view === 'discover' ? renderUpdatesView() : renderLibrary(),
                 )
               : null,
           ),
