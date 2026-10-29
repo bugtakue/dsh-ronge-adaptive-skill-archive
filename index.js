@@ -2851,7 +2851,7 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     description: String(entry.description || '').slice(0, 240),
     intro: entry.intro || entry.description || '',
     category: entry.category,
-    categoryLabel: entry.categoryLabel,
+    categoryLabel: LIBRARY_CATEGORY_LABELS[entry.category] || entry.category,
     rating: entry.rating,
     trust: entry.trust,
     rawUrl: entry.rawUrl,
