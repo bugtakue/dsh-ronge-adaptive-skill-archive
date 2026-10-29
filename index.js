@@ -2507,7 +2507,14 @@ function comboRatingFor(names) {
   }
 }
 
-function buildActiveCombo(analysis, recommendations, mode) {
+const LIBRARY_CATEGORY_FOR_SKILL_CATEGORY = {
+  video: ['video'],
+  office: ['office'],
+  harness: ['coding', 'ai'],
+  other: ['ai', 'productivity', 'design'],
+}
+
+function buildActiveCombo(analysis, recommendations, mode, skillStats = {}) {
   const active = Array.isArray(analysis.activeSkills) ? analysis.activeSkills : []
   const recent = Array.isArray(analysis.recentSkills) ? analysis.recentSkills : []
   const source = active.length ? 'active' : recent.length ? 'recent' : recommendations.length ? 'recommended' : null
@@ -2532,6 +2539,19 @@ function buildActiveCombo(analysis, recommendations, mode) {
     }
   })
   const { rating, ratedSkills } = comboRatingFor(skills.map((item) => item.name))
+  const localRates = skills
+    .map((item) => {
+      const stat = skillStats && skillStats[item.name]
+      if (!stat) return null
+      const uses = Number(stat.uses || 0)
+      const successes = Number(stat.successes || 0)
+      if (!uses) return null
+      return Math.min(1, Math.max(0, successes / uses))
+    })
+    .filter((value) => value !== null)
+  const localRate = localRates.length
+    ? Math.round((localRates.reduce((sum, value) => sum + value, 0) / localRates.length) * 100)
+    : null
   const labels = []
   for (const skill of skills) {
     if (skill.reason) labels.push(skill.name + ': ' + skill.reason)
@@ -2556,6 +2576,7 @@ function buildActiveCombo(analysis, recommendations, mode) {
     names: skills.map((item) => item.name),
     rating,
     ratedSkills,
+    localRate,
     why,
     key: source + ':' + (turn || '') + ':' + skills.map((item) => item.name).join('+'),
     turn,
@@ -2565,30 +2586,54 @@ function buildActiveCombo(analysis, recommendations, mode) {
 }
 
 function buildDiscoveries(analysis, recommendations, language, installedNames) {
-  const tokens = [...tokenize(analysis.lastUserText || analysis.contextText || '')]
-    .filter((token) => token.length >= 2 && /^[a-z0-9]+$/.test(token))
-    .slice(-6)
-  let entries = []
-  if (tokens.length) {
-    const result = searchLibrary(tokens.join(' '), '', 3, 1, 12, language, {
+  const categories = new Set()
+  for (const item of recommendations) {
+    const mapped = LIBRARY_CATEGORY_FOR_SKILL_CATEGORY[categoryOf(item.name)] || []
+    for (const category of mapped) categories.add(category)
+  }
+  const found = []
+  const addEntries = (entries) => {
+    for (const entry of entries) {
+      if (installedNames.has(entry.name)) continue
+      if (found.find((item) => item.name === entry.name)) continue
+      found.push(entry)
+    }
+  }
+  const nameTokens = [...new Set(
+    recommendations.flatMap((item) =>
+      String(item.name || '')
+        .split(/[-_]/)
+        .filter((token) => token.length >= 3),
+    ),
+  )].slice(0, 10)
+  if (nameTokens.length) {
+    const result = searchLibrary(nameTokens.join(' '), '', 3, 1, 16, language, {
       excludeInstalled: true,
       installed: installedNames,
     })
-    entries = result.entries || []
+    addEntries(result.entries || [])
   }
-  if (entries.length < 3 && recommendations.length) {
-    const category = categoryOf(recommendations[0].name)
-    if (category && category !== 'other') {
-      const result = searchLibrary('', category, 4, 1, 12, language, {
+  for (const category of categories) {
+    const result = searchLibrary('', category, 4, 1, 12, language, {
+      excludeInstalled: true,
+      installed: installedNames,
+    })
+    addEntries(result.entries || [])
+  }
+  if (found.length < 3) {
+    const tokens = [...tokenize(analysis.lastUserText || analysis.contextText || '')]
+      .filter((token) => token.length >= 3)
+      .slice(-6)
+    if (tokens.length) {
+      const result = searchLibrary(tokens.join(' '), '', 4, 1, 12, language, {
         excludeInstalled: true,
         installed: installedNames,
       })
-      for (const entry of result.entries || []) {
-        if (!entries.find((item) => item.name === entry.name)) entries.push(entry)
-      }
+      addEntries(result.entries || [])
     }
   }
-  return entries.slice(0, 3).map((entry) => ({
+  found.sort((left, right) => Number(right.rating || 0) - Number(left.rating || 0))
+  return found.slice(0, 3).map((entry) => ({
     name: entry.name,
     description: String(entry.description || '').slice(0, 240),
     intro: entry.intro || entry.description || '',
@@ -2603,7 +2648,6 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     installed: false,
   }))
 }
-
 async function buildCatalog(ctx, config, sessionId, lang) {
   let cwd = config?.cwd
   if (!cwd && sessionId) {
@@ -2687,7 +2731,7 @@ async function buildCatalog(ctx, config, sessionId, lang) {
     : []
   noteRecommendationExposure(recommendations)
   const installedNames = installedSkillNameSet()
-  const activeCombo = buildActiveCombo(analysis, recommendations, studioMode)
+  const activeCombo = buildActiveCombo(analysis, recommendations, studioMode, memory.skills)
   const discoveries = buildDiscoveries(analysis, recommendations, language, installedNames)
   return {
     ok: true,

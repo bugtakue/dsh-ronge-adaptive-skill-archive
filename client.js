@@ -30,6 +30,7 @@ window.__ModuleLoader__.load({
       comboRecent: '最近使用',
       comboRecommended: '推荐组合',
       comboRating: '评级',
+      comboLocalRate: '本地成功率',
       comboWhy: '为什么',
       comboSwitch: '已切换 skill 组合',
       comboOpen: '查看面板',
@@ -238,6 +239,7 @@ window.__ModuleLoader__.load({
       comboRecent: 'Recently used',
       comboRecommended: 'Recommended combo',
       comboRating: 'Rating',
+      comboLocalRate: 'Local success',
       comboWhy: 'Why',
       comboSwitch: 'Skill combo switched',
       comboOpen: 'Open panel',
@@ -1073,10 +1075,17 @@ window.__ModuleLoader__.load({
           clearInterval(timer)
           if (comboNoticeTimer.current) clearTimeout(comboNoticeTimer.current)
         }
-      }, [props && props.sessionId])
+      }, [props && props.sessionId, state.sessionId])
 
       const comboNoticeNames = comboNotice && Array.isArray(comboNotice.skills) ? comboNotice.skills.map((item) => item.name) : []
-      const comboNoticeRating = comboNotice && Number.isFinite(Number(comboNotice.rating)) ? Number(comboNotice.rating) : null
+      const comboNoticeRating =
+        comboNotice && comboNotice.rating !== null && comboNotice.rating !== undefined && Number.isFinite(Number(comboNotice.rating))
+          ? Number(comboNotice.rating)
+          : null
+      const comboNoticeLocalRate =
+        comboNotice && comboNotice.localRate !== null && comboNotice.localRate !== undefined && Number.isFinite(Number(comboNotice.localRate))
+          ? Number(comboNotice.localRate)
+          : null
 
       return h(
         React.Fragment,
@@ -1107,7 +1116,11 @@ window.__ModuleLoader__.load({
                   'div',
                   { className: 'sf-combo-toast-names' },
                   comboNoticeNames.join(' × ') +
-                    (comboNoticeRating !== null ? '  ★ ' + comboNoticeRating.toFixed(1) : ''),
+                    (comboNoticeRating !== null
+                      ? '  ★ ' + comboNoticeRating.toFixed(1)
+                      : comboNoticeLocalRate !== null
+                        ? '  ' + t('comboLocalRate') + ' ' + comboNoticeLocalRate + '%'
+                        : ''),
                 ),
                 comboNotice.why
                   ? h('div', { className: 'sf-combo-toast-why' }, String(comboNotice.why))
@@ -3136,7 +3149,14 @@ window.__ModuleLoader__.load({
       const renderCombo = () => {
         if (!combo) return null
         const names = Array.isArray(combo.names) && combo.names.length ? combo.names : combo.skills.map((item) => item.name)
-        const rating = Number.isFinite(Number(combo.rating)) ? Number(combo.rating) : null
+        const rating =
+          combo.rating !== null && combo.rating !== undefined && Number.isFinite(Number(combo.rating))
+            ? Number(combo.rating)
+            : null
+        const localRate =
+          combo.localRate !== null && combo.localRate !== undefined && Number.isFinite(Number(combo.localRate))
+            ? Number(combo.localRate)
+            : null
         return h(
           'section',
           { className: 'sf-combo sf-combo-' + (combo.source || 'recommended'), 'aria-label': t('comboTitle') },
@@ -3149,7 +3169,15 @@ window.__ModuleLoader__.load({
               { className: 'sf-combo-row' },
               h('span', { className: 'sf-combo-label' }, t('comboTitle')),
               h('span', { className: 'sf-combo-kind' }, comboLabel(combo)),
-              rating !== null ? h('span', { className: 'sf-combo-rating' }, '★ ' + rating.toFixed(1)) : null,
+              h(
+                'span',
+                { className: 'sf-combo-rating', title: t('comboRating') },
+                rating !== null
+                  ? '★ ' + rating.toFixed(1)
+                  : localRate !== null
+                    ? t('comboLocalRate') + ' ' + localRate + '%'
+                    : '★ —',
+              ),
               h('span', { className: 'sf-combo-names' }, names.join(' × ')),
             ),
             h(
