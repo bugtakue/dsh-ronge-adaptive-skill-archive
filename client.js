@@ -50,7 +50,7 @@ window.__ModuleLoader__.load({
       installUse: '安装并使用',
       ignore: '忽略',
       newFromLibrary: '库里还没装的',
-      newFromLibraryHint: '只显示重点词强匹配的未安装技能',
+      newFromLibraryHint: '按上下文相关度排序的未安装技能（放宽候选）',
       installedBadge: '已安装',
       recommend: '推荐',
       recommendHint: '根据整段会话 + 项目文件',
@@ -273,7 +273,7 @@ window.__ModuleLoader__.load({
       installUse: 'Install & use',
       ignore: 'Ignore',
       newFromLibrary: 'Not in your library yet',
-      newFromLibraryHint: 'Only strong keyword matches from the 6,399 index',
+      newFromLibraryHint: 'Uninstalled skills ranked by context relevance (broad candidates)',
       installedBadge: 'Installed',
       recommend: 'Recommended',
       recommendHint: 'From the whole conversation + project files',
@@ -3426,6 +3426,13 @@ window.__ModuleLoader__.load({
                   ),
                 ),
                 h('p', { className: 'sf-desc' }, entry.intro || entry.description || ''),
+                Array.isArray(entry.matched) && entry.matched.length
+                  ? h(
+                      'div',
+                      { className: 'sf-better-matched' },
+                      t('betterMatched') + ': ' + entry.matched.slice(0, 5).join(' · '),
+                    )
+                  : null,
                 h(
                   'div',
                   { className: 'sf-discovery-actions' },

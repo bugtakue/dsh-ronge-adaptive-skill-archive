@@ -2832,7 +2832,6 @@ function buildBetterOptions(analysis, recommendations, language, installedNames)
 
 function buildDiscoveries(analysis, recommendations, language, installedNames) {
   const tokens = betterFocusTokens(analysis, recommendations)
-  if (tokens.length < 2) return []
   const categories = new Set()
   for (const item of recommendations) {
     for (const category of LIBRARY_CATEGORY_FOR_SKILL_CATEGORY[categoryOf(item.name)] || []) categories.add(category)
@@ -2841,13 +2840,13 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
   const scored = []
   for (const entry of library?.entries || []) {
     if (installedNames.has(entry.name)) continue
-    if (Number(entry.rating || 0) < 4) continue
     const result = scoreLibraryEntry(entry, tokens, categories)
-    if (result.hits < 2 || result.score < 10) continue
     scored.push({ entry, ...result })
   }
+  // Deliberately permissive: no minimum hits/rating/score. Relevance only
+  // changes the order, so a thin context still surfaces useful candidates.
   scored.sort((left, right) => right.score - left.score || Number(right.entry.rating) - Number(left.entry.rating))
-  return scored.slice(0, 3).map(({ entry, matched }) => ({
+  return scored.slice(0, 5).map(({ entry, matched, hits }) => ({
     name: entry.name,
     description: String(entry.description || '').slice(0, 240),
     intro: entry.intro || entry.description || '',
@@ -2860,9 +2859,12 @@ function buildDiscoveries(analysis, recommendations, language, installedNames) {
     repo: entry.repo,
     path: entry.path,
     matched,
+    hits,
     installed: false,
   }))
-}async function buildCatalog(ctx, config, sessionId, lang) {
+}
+
+async function buildCatalog(ctx, config, sessionId, lang) {
   let cwd = config?.cwd
   if (!cwd && sessionId) {
     try {

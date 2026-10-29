@@ -417,11 +417,14 @@ test('buildDiscoveries returns uninstalled library entries with install metadata
   const analysis = { lastUserText: 'pdf', contextText: 'pdf', activeTurn: 0 }
   const result = buildDiscoveries(analysis, [], 'zh', new Set())
   assert.ok(Array.isArray(result))
-  assert.ok(result.length <= 3)
+  assert.ok(result.length <= 5)
   for (const entry of result) {
     assert.equal(entry.installed, false)
     assert.ok(entry.name)
   }
+  const empty = buildDiscoveries({ lastUserText: '', contextText: '', recentUserTexts: [] }, [], 'zh', new Set())
+  assert.ok(Array.isArray(empty))
+  assert.ok(empty.length >= 1, 'broad discovery still returns candidates without context')
 })
 
 
