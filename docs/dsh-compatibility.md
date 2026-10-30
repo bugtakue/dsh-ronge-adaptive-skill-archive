@@ -7,10 +7,10 @@
 
 ```bash
 # npm（推荐）
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.2
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.3
 
 # GitHub tag（固定版本、可审源码）
-plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.2
+plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.3
 
 # 本地目录（开发）
 plugin_manager install_bundle target=/absolute/path/to/dsh-ronge-adaptive-skill-archive
@@ -42,7 +42,7 @@ plugin_manager install_bundle target=/absolute/path/to/dsh-ronge-adaptive-skill-
 - Host E2E：20/20（真实 loopback HTTP + raw.githubusercontent.com）
 - UI E2E：27/27
 - `npm run check:dsh`：manifest / factory id / slots / routes / 数据迁移 / market index 全部通过
-- npm registry 安装 v3.0.0 历史验证；v5.3.2 发布后以 registry 为准；市场索引 format 1 托管在 `https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/plugin-market.json`
+- npm registry 安装 v3.0.0 历史验证；v5.3.3 发布后以 registry 为准；市场索引 format 1 托管在 `https://bugtakue.github.io/dsh-ronge-adaptive-skill-archive/plugin-market.json`
 
 ## 已知边界
 

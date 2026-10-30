@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.3.3 — 2026-10-30
+
+- **阶段技能上限 2**：plan stage 不再塞入 3+ 技能，降低 agent 一次性加载的上下文。
+- **加载策略**：DSH plan 工具输出 `loadPolicy: one-at-a-time`，明确不建议一次加载多个技能；纯文本任务仍零技能。
+- **plan-only A/B 证据**：contract token 352,580 vs baseline 458,980（-23%），但墙钟 +34%；xlsx token +6%、墙钟 -47%；成功/质量不降。记录在 `docs/benchmark-live-artifacts.md`；仍不写“全面效率提升”。
+- 测试 126/126。
+
+
 ## v5.3.2 — 2026-10-30
 
 - **纯文本任务彻底跳过技能**：即使本机安装了 productivity 类技能，outputMode=text 也返回无技能计划，不再返回 moai/office 等无关技能或 escalation 安装建议。
