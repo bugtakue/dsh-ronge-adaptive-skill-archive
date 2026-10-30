@@ -3354,6 +3354,37 @@ function buildPlanAlternatives(intel, base) {
   return { plans: unique, plan: selected.plan, selectedPlan: selected.id }
 }
 
+function compactToolPlan(plan, diagnostics) {
+  const stages = (plan.stages || []).map((stage) => ({
+    role: stage.role,
+    intent: stage.intent,
+    skills: (stage.skills || []).map((skill) => ({ name: skill.name, why: skill.why, installed: skill.installed })),
+    input: stage.input,
+    output: stage.output,
+    handoff: stage.handoff,
+    acceptance: stage.acceptance,
+    fallback: stage.fallback,
+  }))
+  return {
+    ok: plan.ok,
+    ready: plan.ready,
+    pattern: plan.pattern,
+    primaryIntent: plan.primaryIntent,
+    reviewGap: plan.reviewGap,
+    reviewGapSuggestions: plan.reviewGapSuggestions || [],
+    stages,
+    missing: (plan.missing || []).slice(0, 3).map((item) => ({
+      capability: item.capability,
+      critical: item.critical,
+      suggestedLibrarySkills: (item.suggestedLibrarySkills || []).slice(0, 2),
+      draftNeeded: item.draftNeeded,
+    })),
+    assumptions: (plan.assumptions || []).slice(0, 3),
+    confidence: plan.confidence,
+    diagnostics,
+  }
+}
+
 function registerIntelligenceTools(ctx) {
   const tools = ctx.get ? ctx.get('tools') : ctx.tools
   if (!tools || typeof tools.register !== 'function') return []
@@ -3388,8 +3419,7 @@ function registerIntelligenceTools(ctx) {
             context: planRequestContext(cwd),
             maxSkills: 5,
           })
-          plan.diagnostics = { installedCount: resolved.count, installedSource: resolved.source, cwd }
-          return { ok: true, plan: { ...plan, stages: plan?.stages?.slice(0, 4) } }
+          return { ok: true, plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd }) }
         },
       }),
     )
@@ -3412,18 +3442,18 @@ function registerIntelligenceTools(ctx) {
           const intel = await loadIntelligence()
           const cwd = String(args?.cwd || '')
           const resolved = await resolveInstalledSkills(ctx, cwd)
+          const plan = intel.composeSkillPlan({
+            task: String(args?.task || ''),
+            cwd,
+            installedSkills: resolved.skills,
+            libraryEntries: loadLibraryIndex().entries || [],
+            capabilityIndex: loadCapabilityIndex(),
+            context: planRequestContext(cwd),
+            maxSkills: Number(args?.maxSkills) || 5,
+          })
           return {
             ok: true,
-            plan: intel.composeSkillPlan({
-              task: String(args?.task || ''),
-              cwd,
-              installedSkills: resolved.skills,
-              libraryEntries: loadLibraryIndex().entries || [],
-              capabilityIndex: loadCapabilityIndex(),
-              context: planRequestContext(cwd),
-              maxSkills: Number(args?.maxSkills) || 5,
-            }),
-            diagnostics: { installedCount: resolved.count, installedSource: resolved.source, cwd },
+            plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd }),
           }
         },
       }),

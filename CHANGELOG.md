@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.3.2 — 2026-10-30
+
+- **纯文本任务彻底跳过技能**：即使本机安装了 productivity 类技能，outputMode=text 也返回无技能计划，不再返回 moai/office 等无关技能或 escalation 安装建议。
+- **DSH 工具输出压缩**：`skill_archive_plan`/`compose` 只返回必要字段（stages/acceptance/missing/diagnostics），降低 Agent 上下文成本。
+- 测试 126/126。
+
+
 ## v5.3.1 — 2026-10-30
 
 - **纯文本任务不再加载 office/video 技能**：`decomposeTask` 增加 outputMode；纯文本（正文/直接返回/不写文件）返回无技能计划，避免 plan 把文档技能强塞给简报任务。
