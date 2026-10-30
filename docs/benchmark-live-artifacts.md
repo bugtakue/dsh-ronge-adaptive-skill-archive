@@ -53,8 +53,11 @@
 | 任务 | arm | success | tokens | toolCalls | wallMs |
 |---|---|---:|---:|---:|---:|
 | meeting minutes | baseline | 1（6 行动项，负责人/日期） | 212,714 | 6 | 38,196 |
-| meeting minutes | plan-only | 文件已生成，运行未结束 | **593,536（未完成）** | 12 | >? |
-| pptx deck | baseline | 运行未结束 | 120,440（未完成） | 3 | >? |
-| pptx deck | plan-only | 运行未结束 | 186,650（未完成） | 6 | >? |
+| meeting minutes | plan-only | 1（6 行动项，文件有效） | **2,737,424** | 33 | 196,875 |
+| pptx deck | baseline | 1（5 页，含图表/表） | **1,071,024** | 13 | 170,500 |
+| pptx deck | plan-only | 1（文件有效，运行收尾中） | **657,234（>）** | 12 | >? |
 
 结论：**plan-only 不可复现为效率改进**。meeting 任务反而出现约 2.8× token；contract 的 -23% 只是单点，不足以对外宣称效率。当前应停止把“省 token”作为卖点，转向计划质量/可解释性，或重做 planner 成本结构后再测。
+
+
+**最终判定**：meeting plan-only 约 **12.9× baseline token、5.2× 墙钟**；这不是偶发噪声。PPTX plan-only 低于 baseline，但会议任务失败说明 planner 没有按任务复杂度收敛。下一步必须先做“简单任务不进入 planner/不输出验收阶段”的短路，否则不能把 plan-only 作为默认。
