@@ -59,7 +59,8 @@
 | C5 | 已安装推荐 Recall@4 = 0.9（27/30）、discover Hit@5 0.958 等为旧版半人工基线 | `docs/eval.md` | needs-human（v5 复跑） |
 | C6 | 真实任务 A/B（pilot 2 条） | `docs/benchmark-live-pilot.json` + `docs/benchmark-live.md` | **v5.3.2 复跑：brief plugin token 82,092（baseline 50,970），video 136,336（baseline 64,404）；仍不是效率胜利** |
 | C7 | Artifact A/B pilot（2 条） | `docs/benchmark-live-artifacts.md` | **plan+全量技能无效率胜利（docx 4.1M/9×）；plan-only 有改善：contract -23% token、xlsx -47% 墙钟，但非双指标全胜** |
-| C8 | 效率提升百分比 | `efficiencyEstimate` 只给 `method:'estimate'`；benchmark 不测真实任务 token 节省 | **unsupported**（禁止写具体百分比） |
+| C8 | 12-task A/B | 目前仅 4 条 artifact + 2 条 text；meeting plan-only 2.8× token，**不可复现改善** | **not-achieved**（不能对外写效率提升） |
+| C9 | 效率提升百分比 | `efficiencyEstimate` 只给 `method:'estimate'`；benchmark 不测真实任务 token 节省 | **unsupported**（禁止写具体百分比） |
 
 ### D. v5 新能力（已交付）
 

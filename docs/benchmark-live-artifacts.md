@@ -47,3 +47,14 @@
 - 成功率和产物质量均未下降，contract 还多识别出一个条款效力瑕疵。
 
 产品含义：默认应 **plan-only**，技能加载必须按阶段显式、可选，不能默认全量加载。
+
+## 第三批：meeting minutes + pptx（2026-10-30，plan-only）
+
+| 任务 | arm | success | tokens | toolCalls | wallMs |
+|---|---|---:|---:|---:|---:|
+| meeting minutes | baseline | 1（6 行动项，负责人/日期） | 212,714 | 6 | 38,196 |
+| meeting minutes | plan-only | 文件已生成，运行未结束 | **593,536（未完成）** | 12 | >? |
+| pptx deck | baseline | 运行未结束 | 120,440（未完成） | 3 | >? |
+| pptx deck | plan-only | 运行未结束 | 186,650（未完成） | 6 | >? |
+
+结论：**plan-only 不可复现为效率改进**。meeting 任务反而出现约 2.8× token；contract 的 -23% 只是单点，不足以对外宣称效率。当前应停止把“省 token”作为卖点，转向计划质量/可解释性，或重做 planner 成本结构后再测。
