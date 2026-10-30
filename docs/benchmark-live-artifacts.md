@@ -31,3 +31,19 @@
 2. 对简单 artifact 任务提供 compact execution path，不返回完整 plan；
 3. 设计严格 baseline（无 installed skills）后再跑 12 条；
 4. 未达标前不写效率百分比。
+
+## plugin-lite（只 plan、不加载技能）后续实验
+
+| 任务 | arm | success | tokens | toolCalls | wallMs |
+|---|---|---:|---:|---:|---:|
+| contract review | baseline | 1 | 458,980 | 12 | 52,746 |
+| contract review | plugin-lite | 1（3 个问题，含 1 条条款效力瑕疵） | **352,580** | 9 | 70,709 |
+| xlsx summary | baseline | 1 | 199,652 | 7 | 37,114 |
+| xlsx summary | plugin-lite | 1 | **211,700** | 7 | **19,720** |
+
+结论：**plan-only 明显优于 plan+全量技能**，但仍不是干净的效率胜利：
+- contract：token 约 -23%，但墙钟约 +34%；
+- xlsx：token 约 +6%，但墙钟约 -47%；
+- 成功率和产物质量均未下降，contract 还多识别出一个条款效力瑕疵。
+
+产品含义：默认应 **plan-only**，技能加载必须按阶段显式、可选，不能默认全量加载。

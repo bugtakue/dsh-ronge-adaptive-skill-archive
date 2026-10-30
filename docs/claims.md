@@ -58,7 +58,7 @@
 | C4 | hintRecall 0.45 是当前短板（AI 领域 0.00，多个领域 0.20）；latency 是机器相关单次墙钟，不作为对外 SLA | `docs/benchmark.md` | verified |
 | C5 | 已安装推荐 Recall@4 = 0.9（27/30）、discover Hit@5 0.958 等为旧版半人工基线 | `docs/eval.md` | needs-human（v5 复跑） |
 | C6 | 真实任务 A/B（pilot 2 条） | `docs/benchmark-live-pilot.json` + `docs/benchmark-live.md` | **v5.3.2 复跑：brief plugin token 82,092（baseline 50,970），video 136,336（baseline 64,404）；仍不是效率胜利** |
-| C7 | Artifact A/B pilot（2 条） | `docs/benchmark-live-artifacts.md` | **无效率胜利：xlsx plugin +63% token；docx plugin 4.1M tokens/9×、247s/4.7×；方法不严格** |
+| C7 | Artifact A/B pilot（2 条） | `docs/benchmark-live-artifacts.md` | **plan+全量技能无效率胜利（docx 4.1M/9×）；plan-only 有改善：contract -23% token、xlsx -47% 墙钟，但非双指标全胜** |
 | C8 | 效率提升百分比 | `efficiencyEstimate` 只给 `method:'estimate'`；benchmark 不测真实任务 token 节省 | **unsupported**（禁止写具体百分比） |
 
 ### D. v5 新能力（已交付）

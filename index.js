@@ -3382,6 +3382,7 @@ function compactToolPlan(plan, diagnostics) {
     assumptions: (plan.assumptions || []).slice(0, 3),
     confidence: plan.confidence,
     diagnostics,
+    loadPolicy: 'one-at-a-time; do not load skills for text-only tasks',
   }
 }
 
@@ -3394,7 +3395,7 @@ function registerIntelligenceTools(ctx) {
       tools.register({
         name: 'skill_archive_plan',
         description:
-          'Turn a task into a skill plan: deliverables, domains, primary intent and 1–3 installed skills to load first. Use before starting a multi-step or cross-domain task; does not install or change files.',
+          'Turn a task into a skill plan: deliverables, domains, primary intent and recommended installed skills. Load at most one skill at a time only when a stage actually needs it; for simple text tasks do not load skills. Does not install or change files.',
         parameters: {
           type: 'object',
           properties: {
