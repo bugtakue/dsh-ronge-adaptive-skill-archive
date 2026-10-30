@@ -3184,18 +3184,31 @@ function createSkill(payload) {
   if (description.length > 500) throw new HttpError(400, 'description must be at most 500 characters')
   if (whenToUse.length > 500) throw new HttpError(400, 'whenToUse must be at most 500 characters')
 
-  const dir = path.join(dshHome(), 'skills', name)
-  const file = path.join(dir, 'SKILL.md')
-  if (fs.existsSync(dir)) throw new HttpError(409, `skill "${name}" already exists`)
-  fs.mkdirSync(dir, { recursive: true })
-  const frontmatter = [
-    '---',
-    `name: ${name}`,
-    `description: ${JSON.stringify(description)}`,
-  ]
-  if (whenToUse) frontmatter.push(`whenToUse: ${JSON.stringify(whenToUse)}`)
-  frontmatter.push('---', '')
-  const body = `${frontmatter.join('\n')}
+  const suppliedContent = typeof payload?.content === 'string' ? payload.content.trim() : ''
+  let content = ''
+  let security = null
+  if (suppliedContent) {
+    if (Buffer.byteLength(suppliedContent) > 128 * 1024) throw new HttpError(413, 'generated SKILL.md is too large')
+    const front = parseFrontmatter(suppliedContent)
+    if (!suppliedContent.startsWith('---') || !front || typeof front !== 'object') {
+      throw new HttpError(400, 'content must start with SKILL.md frontmatter')
+    }
+    if (String(front.name || '') !== name) throw new HttpError(400, 'content frontmatter name must match name')
+    if (!String(front.description || '').trim()) throw new HttpError(400, 'content frontmatter description is required')
+    security = scanSkillText(suppliedContent)
+    if (security.level === 'high') {
+      throw new HttpError(422, 'high-risk generated SKILL.md blocked: ' + security.findings.map((finding) => finding.rule).join(', '))
+    }
+    content = suppliedContent.endsWith('\n') ? suppliedContent : suppliedContent + '\n'
+  } else {
+    const frontmatter = [
+      '---',
+      `name: ${name}`,
+      `description: ${JSON.stringify(description)}`,
+    ]
+    if (whenToUse) frontmatter.push(`whenToUse: ${JSON.stringify(whenToUse)}`)
+    frontmatter.push('---', '')
+    content = `${frontmatter.join('\n')}
 # ${name}
 
 ## When to use
@@ -3208,9 +3221,17 @@ ${whenToUse || description}
 2. Follow the instructions in this file.
 3. Report the result with concrete evidence.
 `
-  atomicWriteFile(file, body, { mode: 0o644 })
-  return { ok: true, name, path: file }
+  }
+
+  const dir = path.join(dshHome(), 'skills', name)
+  const file = path.join(dir, 'SKILL.md')
+  if (fs.existsSync(dir)) throw new HttpError(409, `skill "${name}" already exists`)
+  fs.mkdirSync(dir, { recursive: true, mode: 0o755 })
+  atomicWriteFile(file, content, { mode: 0o644 })
+  appendAudit('create', { name, sha256: sha256(content), source: suppliedContent ? 'generated-draft' : 'template' })
+  return { ok: true, name, path: file, bytes: Buffer.byteLength(content), generated: Boolean(suppliedContent), security }
 }
+
 
 let intelligenceModule = null
 let capabilityIndexCache = null
@@ -3254,8 +3275,6 @@ async function resolveInstalledSkills(ctx, cwd) {
   } catch {
     registry = []
   }
-  // The registry can be agent-scoped/partial; the filesystem scan is what makes
-  // the panel complete. Merge both, with registry entries taking precedence.
   const merged = new Map()
   for (const skill of scanSkills(cwd)) {
     if (skill && skill.name) merged.set(skill.name, { ...skill, source: skill.source || 'scan' })
@@ -3285,7 +3304,6 @@ async function resolveInstalledSkills(ctx, cwd) {
   const source = registry.length && merged.size > registry.length ? 'scan+registry' : registry.length ? 'registry' : 'scan'
   return { skills, source, count: skills.length }
 }
-
 
 function planRequestCwd(ctx, payload) {
   if (payload && payload.cwd) return String(payload.cwd)

@@ -282,6 +282,7 @@ window.__ModuleLoader__.load({
       intelInput: '输入',
       intelOutput: '输出',
       intelHandoff: '交接物',
+      intelAcceptance: '验收标准',
       intelFallback: '失败备选',
       intelMissing: '缺失能力',
       intelDraftNeeded: '需生成草稿',
@@ -575,6 +576,7 @@ window.__ModuleLoader__.load({
       intelInput: 'Input',
       intelOutput: 'Output',
       intelHandoff: 'Handoff',
+      intelAcceptance: 'Acceptance',
       intelFallback: 'Fallback',
       intelMissing: 'Missing capabilities',
       intelDraftNeeded: 'Draft needed',
@@ -2236,6 +2238,7 @@ window.__ModuleLoader__.load({
             if (stage.output) lines.push('   ' + t('intelOutput') + ': ' + textValue(stage.output))
             if (stage.handoff) lines.push('   ' + t('intelHandoff') + ': ' + textValue(stage.handoff))
             if (stage.fallback) lines.push('   ' + t('intelFallback') + ': ' + textValue(stage.fallback))
+            if (stage.acceptance) lines.push('   ' + t('intelAcceptance') + ': ' + textValue(stage.acceptance))
           })
         }
         const missing = Array.isArray(plan.missing) ? plan.missing.filter(Boolean) : []
@@ -2347,6 +2350,7 @@ window.__ModuleLoader__.load({
               name: String(intelDraft.name),
               description: String(intelDraft.description || ''),
               whenToUse: String(intelDraft.whenToUse || ''),
+              content: typeof intelDraft.content === 'string' ? intelDraft.content : '',
             }),
           })
           const payload = await response.json().catch(() => ({}))
@@ -4205,6 +4209,14 @@ window.__ModuleLoader__.load({
                           { className: 'sf-intel-line' },
                           h('span', { className: 'sf-intel-k' }, t('intelFallback')),
                           h('span', null, textValue(stage.fallback)),
+                        )
+                      : null,
+                    stage.acceptance
+                      ? h(
+                          'div',
+                          { className: 'sf-intel-line' },
+                          h('span', { className: 'sf-intel-k' }, t('intelAcceptance')),
+                          h('span', null, textValue(stage.acceptance)),
                         )
                       : null,
                   ),

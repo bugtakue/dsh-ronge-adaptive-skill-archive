@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.2.0 — 2026-10-30
+
+- **执行桥（第一版）**：每个 stage 增加 `acceptance` 验收标准；客户端「复制为 Agent 指令」包含输入/输出/交接/失败备选/验收，计划真正可交付执行。
+- **技能创作 v2（第一版）**：`/create` 支持完整 draft content 落盘；写入前校验 frontmatter/name/大小并安全扫描，高风险 422 拒绝；客户端确认草稿后提交全文，不再只写模板。
+- plan 继续返回 fast/balanced/quality 方案，host 解析 session cwd，review 独立或显式 `reviewGap`。
+- 测试 120/120；UI E2E 27/27。
+
+
 ## v5.1.0 — 2026-10-30
 
 - **Planner v2 第一版**：`/intelligence/plan` 和 DSH 工具现在返回 fast / balanced / quality 三套方案（不同 maxSkills），客户端可切换；默认 balanced。
