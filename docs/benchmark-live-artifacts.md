@@ -61,3 +61,16 @@
 
 
 **最终判定**：meeting plan-only 约 **12.9× baseline token、5.2× 墙钟**；pptx plan-only 约 **+29% token、+36% 墙钟**。这不是偶发噪声；plan-only 在所有完整 artifact 任务上都没有双指标改善，contract 的 -23% token 是唯一单点且更慢。下一步必须先做“简单任务不进入 planner/不输出验收阶段”的短路，否则不能把 plan-only 作为默认。
+
+
+## v5.3.5 simple 短路复测（meeting）
+
+- tool 修复成功：`skill_archive_plan` 返回 `ok=true / simple=true`，无 lossless JSON 错误。
+- plan 1 stage、无 skill 加载；产物有效，7 个行动项（比 baseline 6 个更全）。
+
+| arm | success | tokens | toolCalls | wallMs |
+|---|---:|---:|---:|---:|
+| baseline | 1 | 212,714 | 6 | 38,196 |
+| plan-only simple | 1 | **370,968** | 10 | **58,829** |
+
+结论：simple 短路把旧 plan-only 的 2,737,424 降到 370,968（-86%），但仍比 baseline 高 **+74% token / +54% 墙钟**。**依旧不是效率胜利**；对于简单任务，plan 工具本身的开销无法靠 planner 内部优化抵消。
