@@ -13,14 +13,14 @@
 | 任务 | arm | success | tokens | toolCalls | wallMs |
 |---|---|---:|---:|---:|---:|
 | contract review | baseline | 1（2 问题，条款出处） | 458,980 | 12 | 52,746 |
-| contract review | plugin | 文件已生成；运行未结束，不能计入 | >1,067,148（未完成） | 20 | >? |
+| contract review | plugin | 1（2 问题，条款出处；文件有效） | **4,135,674** | 45 | 247,062 |
 | xlsx summary | baseline | 1（12 行 + SUM + Profit） | 199,652 | 7 | 37,114 |
 | xlsx summary | plugin | 1（12 行 + SUM + Profit，含 LibreOffice 复算） | 325,628 | 12 | 26,370 |
 
 ## 结论
 
 - **没有效率胜利**：xlsx plugin token 比 baseline 高约 **63%**，虽然墙钟更快；
-  contract plugin 的上下文成本失控（>1M tokens，仍未结束）。
+  contract plugin 最终 **4,135,674 tokens / 45 calls / 247s**，约为 baseline 的 **9 倍 token、4.7 倍耗时**，属于上下文成本失控。
 - 产物质量：两个 xlsx 都通过结构/公式检查；两个 docx 都包含两条矛盾，baseline 版本更详细。
 - **方法缺陷**：baseline 被要求不用 cockpit，但为了完成 docx 仍用了本机 `office-docx`；
   这不是严格 baseline，下一轮必须用“无技能/无工具技能”的受控 runner，否则数字不能对外。
