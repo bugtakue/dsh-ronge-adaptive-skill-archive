@@ -15,7 +15,7 @@
 | 智能评测 | `test/fixtures/intelligence-cases.json` + `scripts/benchmark.mjs` | 60 条；数字见下 |
 | 已安装推荐评测 | `docs/eval.md` + `scripts/eval-real.mjs` | 30 条，v2.7.2 工作树；需 v5 复跑 |
 | 库检索评测 | `docs/eval.md` + `scripts/eval-discover.mjs` | 24 条，v2.8.1 工作树；需 v5 复跑 |
-| 单元/集成测试 | `npm test` | **119/119 通过**（2026-10-30） |
+| 单元/集成测试 | `npm test` | **120/120 通过**（2026-10-30） |
 | Host E2E | `verify/host-e2e.mjs` | **20/20**（含 v5 端点） |
 | UI E2E | `verify/ui-e2e.mjs` | **27/27** |
 | DSH 兼容 | `docs/dsh-compatibility.md` | DSH Desktop 0.2.1-rc.3；安装/重启/迁移 |
@@ -52,10 +52,10 @@
 
 | # | 声明 | 证据 | 标签 |
 |---|---|---|---|
-| C1 | 智能 benchmark 60 条：planCoverage **0.283**、compositionValidity **1.00**、capabilityCoverage **0.656**、hintRecall **0.467**、gapDetection **1.00**（宽松口径）、contextTokens mean 134.6 / p95 193 | `node scripts/benchmark.mjs`；`docs/benchmark.md` | verified（2026-10-30 快照） |
+| C1 | 智能 benchmark 60 条：planCoverage **0.333**、compositionValidity **1.00**、capabilityCoverage **0.717**、hintRecall **0.45**、gapDetection **1.00**（宽松口径）、contextTokens mean 131.5 / p95 191 | `node scripts/benchmark.mjs`；`docs/benchmark.md` | verified（2026-10-30 快照） |
 | C2 | 基线 keyword：plan 0.083 / coverage 0.217 / hint 0.25 / gap 0.532；random 0.017/0.289/0.017/0 | 同上 | verified |
-| C3 | **installLoad 0.403**：计划中约 40.3% 技能需先安装；planCoverage 不是成功率、不是已装可用率 | 同上 | verified（必须一起引用） |
-| C4 | hintRecall 0.467 是当前短板（AI 领域 0.00，多个领域 0.20）；latency 是机器相关单次墙钟，不作为对外 SLA | `docs/benchmark.md` | verified |
+| C3 | **installLoad 0.3**：计划中约 30.0% 技能需先安装；planCoverage 不是成功率、不是已装可用率 | 同上 | verified（必须一起引用） |
+| C4 | hintRecall 0.45 是当前短板（AI 领域 0.00，多个领域 0.20）；latency 是机器相关单次墙钟，不作为对外 SLA | `docs/benchmark.md` | verified |
 | C5 | 已安装推荐 Recall@4 = 0.9（27/30）、discover Hit@5 0.958 等为旧版半人工基线 | `docs/eval.md` | needs-human（v5 复跑） |
 | C6 | 效率提升百分比 | `efficiencyEstimate` 只给 `method:'estimate'`；benchmark 不测真实任务 token 节省 | **unsupported**（禁止写具体百分比） |
 
@@ -74,7 +74,7 @@
 
 | # | 事项 | 状态 |
 |---|---|---|
-| E1 | 测试数 55/57 旧冲突 | 已统一为 **119/119**（2026-10-30）；发布前以 `npm test` 为准 |
+| E1 | 测试数 55/57 旧冲突 | 已统一为 **120/120**（2026-10-30）；发布前以 `npm test` 为准 |
 | E2 | README 版本 3.0.0 | 已改为 v5.0.0；发布前与 package/tag 同步 |
 | E3 | 技能条数 vs 仓库数 | 已分开写：6,399 条技能 / 4,007 仓库 |
 | E4 | 索引 vs stars 快照日期 | 已分别标注 2026-10-28 / 2026-10-30 |

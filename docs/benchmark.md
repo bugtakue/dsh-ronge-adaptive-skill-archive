@@ -90,16 +90,16 @@ node scripts/benchmark.mjs --smoke --fail-on-threshold      # 按阈值硬失败
 
 | 指标 | 数值 |
 | --- | ---: |
-| `planCoverage` | **0.283**（36/60） |
+| `planCoverage` | **0.333**（36/60） |
 | `compositionValidity` | **1.00**（60/60） |
-| `capabilityCoverage` | **0.656** |
-| `hintRecall` | **0.467** |
+| `capabilityCoverage` | **0.717** |
+| `hintRecall` | **0.45** |
 | `hintStageRecall` | **0.333** |
 | `gapDetection` | **1.00**（47 个 gap case 全部被诚实处理） |
-| `installLoad` | **0.403**（计划中约 78% 技能需要安装） |
+| `installLoad` | **0.3**（计划中约 78% 技能需要安装） |
 | `decomposeCapabilityCoverage` | **0.967** |
 | `domainMatch` | **0.933** |
-| `contextTokens` | mean 134.6 / p50 181 / p95 193 / max 237 |
+| `contextTokens` | mean 131.5 / p50 181 / p95 191 / max 237 |
 | `latencyMs` | p50 28.4ms / p95 34.2ms / max 89.1ms（60 条合计 90ms） |
 | 错误 | decompose 0 / compose 0 |
 
@@ -112,7 +112,7 @@ node scripts/benchmark.mjs --smoke --fail-on-threshold      # 按阈值硬失败
 | keyword | 0.083 | 0.517 | 0.217 | 0.25 | 0.532 | 0 |
 
 读法：引擎的 planCoverage 约为 keyword 基线的 7.2×、capabilityCoverage 约 3.9×，
-gapDetection 为 1.0（keyword 0.532）；但 hintRecall（0.467）只比 keyword（0.25）高，
+gapDetection 为 1.0（keyword 0.532）；但 hintRecall（0.45）只比 keyword（0.25）高，
 且 hintStageRecall 只有 0.333，说明「选对具体技能」仍是弱项。`random` 的
 compositionValidity=1 是因为它只输出 1 个 stage 的已安装技能，结构上不可能不合法——
 合规率只能当护栏，不能单独用来排名。
@@ -158,17 +158,17 @@ coding/marketing/design/education（0.20）。
 
 ## 已知问题（不美化）
 
-1. **hintRecall 偏低（0.467；hintStageRecall 0.333）**：引擎倾向选「能力匹配但名字不相关」的
+1. **hintRecall 偏低（0.45；hintStageRecall 0.333）**：引擎倾向选「能力匹配但名字不相关」的
    library 技能（例如 AI 任务选到通用技能、设计任务选到非设计技能），domain/capability 排序
    压过了「具体技能适配度」。这是 plan 质量的主要短板；AI 领域 hintRecall=0.00，coding/marketing/
    design/education 只有 0.20。
-2. **installLoad 0.403**：计划里约 78% 是需安装的 library 技能。对只有 10 条已安装技能的环境
+2. **installLoad 0.3**：计划里约 78% 是需安装的 library 技能。对只有 10 条已安装技能的环境
    这是合理的（计划=「装什么」），但 README 引用时必须同时给 installLoad，不能把
    「计划覆盖」说成「已装即可用」。
-3. **planCoverage 0.283 不是成功率**：它只表示期望能力是否被计划（含需安装技能）覆盖；
+3. **planCoverage 0.333 不是成功率**：它只表示期望能力是否被计划（含需安装技能）覆盖；
    真实执行还要安装、执行、验收，本基准不测这些。对比 ceiling：只靠 10 条已安装技能，
-   理论上限只有 13/60（0.217）——0.283 是「算上建议安装」后的数字，两者不能混读。
-4. **上下文成本不低**：plan 的上下文 token 估算 mean 134.6，约是 keyword 基线（6.9）的 26×；
+   理论上限只有 13/60（0.217）——0.333 是「算上建议安装」后的数字，两者不能混读。
+4. **上下文成本不低**：plan 的上下文 token 估算 mean 131.5，约是 keyword 基线（6.9）的 26×；
    组合计划换来了覆盖与缺口诚实度，但不是零成本。引用时要一并给出，别只讲收益。
 5. **domainMatch 0.933**：仍有约 4/60 用例的 decompose 没把正确领域排进 domains，
    集中在多意图任务（主/次领域竞争）。
@@ -192,7 +192,7 @@ coding/marketing/design/education（0.20）。
 6. **不评估执行结果**：不看装完后能不能跑、产物质量、安全性；也不评估理由可解释性、
    用户满意度。`expectedSkillHints` 是「合理候选」，不是唯一正确答案。
 7. **基线很朴素**：random/keyword 只用来标定下限，不代表任何真实产品；keyword 基线的
-   hintRecall（0.25）与引擎（0.467）已经很接近，说明引擎在「具体技能选择」上优势不大。
+   hintRecall（0.25）与引擎（0.45）已经很接近，说明引擎在「具体技能选择」上优势不大。
 8. **引擎是首版（v5.0.0）**：本文数字是 2026-10-29 22:13 快照；引擎继续迭代后必须重跑并更新，
    不要把快照数字永久写进对外物料。
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.0.4 — 2026-10-30
+
+- **内置技能能力画像修复**：DSH 内置技能描述很短（如 `office-docx`），纯关键词提取会漏掉 `document-read/edit/write`、`contract-review`；新增稳定的内置技能能力提示，live 合同+视频计划恢复 `office-docx` + `hyperframes/beat/media-use`。
+- 新增回归测试：内置技能的短描述仍能得到可用能力画像。
+- installed-first 指标：planCoverage 0.333、capabilityCoverage 0.717、hintRecall 0.45、installLoad 0.30。
+- 测试 120/120。
+
+
 ## v5.0.3 — 2026-10-30
 
 - **installed 输入补全**：`resolveInstalledSkills` 现在**同时合并磁盘扫描 + DSH registry**（registry 覆盖同名的扫描项），修复 registry 只返回 7 个 agent-scoped 技能、漏掉 `office-docx`/`hyperframes` 等本机技能的问题；诊断返回 `scan+registry`。
