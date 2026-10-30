@@ -3244,26 +3244,33 @@ function toolOutput() {
 async function resolveInstalledSkills(ctx, cwd) {
   const library = loadLibraryIndex()
   const byName = new Map((library.entries || []).filter((entry) => entry && entry.name).map((entry) => [entry.name, entry]))
-  let listed = []
-  let source = 'registry'
+  let registry = []
   try {
     const view = ctx.get ? ctx.get('skills') || ctx.skills : ctx.skills
-    if (view && typeof view.list === 'function') listed = await view.list(cwd ? { cwd } : undefined)
+    if (view && typeof view.list === 'function') {
+      const listed = await view.list(cwd ? { cwd } : undefined)
+      if (Array.isArray(listed)) registry = listed
+    }
   } catch {
-    listed = []
+    registry = []
   }
-  if (!Array.isArray(listed) || listed.length === 0) {
-    source = 'scan'
-    listed = scanSkills(cwd)
-  }
+  // The registry can be agent-scoped/partial; the filesystem scan is what makes
+  // the panel complete. Merge both, with registry entries taking precedence.
   const merged = new Map()
-  for (const skill of listed) {
+  for (const skill of scanSkills(cwd)) {
+    if (skill && skill.name) merged.set(skill.name, { ...skill, source: skill.source || 'scan' })
+  }
+  for (const skill of registry) {
     if (!skill || !skill.name) continue
-    const libraryEntry = byName.get(skill.name) || {}
-    merged.set(skill.name, {
+    merged.set(skill.name, { ...(merged.get(skill.name) || {}), ...skill, name: skill.name })
+  }
+  const skills = []
+  for (const [name, skill] of merged) {
+    const libraryEntry = byName.get(name) || {}
+    skills.push({
       ...libraryEntry,
       ...skill,
-      name: skill.name,
+      name,
       description: skill.description || libraryEntry.description || '',
       whenToUse: skill.whenToUse || libraryEntry.whenToUse || null,
       quality: libraryEntry.quality,
@@ -3275,8 +3282,10 @@ async function resolveInstalledSkills(ctx, cwd) {
       installed: true,
     })
   }
-  return { skills: [...merged.values()], source, count: merged.size }
+  const source = registry.length && merged.size > registry.length ? 'scan+registry' : registry.length ? 'registry' : 'scan'
+  return { skills, source, count: skills.length }
 }
+
 
 function registerIntelligenceTools(ctx) {
   const tools = ctx.get ? ctx.get('tools') : ctx.tools

@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.0.3 — 2026-10-30
+
+- **installed 输入补全**：`resolveInstalledSkills` 现在**同时合并磁盘扫描 + DSH registry**（registry 覆盖同名的扫描项），修复 registry 只返回 7 个 agent-scoped 技能、漏掉 `office-docx`/`hyperframes` 等本机技能的问题；诊断返回 `scan+registry`。
+- live 合同+视频计划恢复使用本机已安装技能；`installLoad` 从 0.725 降到 0.403，planCoverage 0.283（严格 installed-first 口径）。
+- 测试 119/119。
+
+
 ## v5.0.2 — 2026-10-30
 
 - **版本可信**：`/version`、`/health` 不再硬编码 5.0.0，从 `package.json` 读取；live 版本可验证。
