@@ -633,3 +633,14 @@ test('draftSkill returns a quality score and grade', () => {
   assert.ok(Number.isFinite(draft.quality.score))
   assert.ok(['A', 'B', 'C', 'D'].includes(draft.quality.grade))
 })
+
+
+test('text-only tasks do not load office/video skills', () => {
+  const task = '写一份技能驾驶舱 v5.3 发布简报（150–250 字），直接返回中文正文，不要解释'
+  const decomposition = decomposeTask({ task })
+  assert.equal(decomposition.outputMode, 'text')
+  const plan = composeSkillPlan({ task, installedSkills: evalSkills, libraryEntries: [], maxSkills: 4 })
+  assert.equal(plan.ok, true)
+  assert.equal(plan.stages.length, 0)
+  assert.ok(plan.assumptions.some((item) => String(item).includes('纯文本')))
+})

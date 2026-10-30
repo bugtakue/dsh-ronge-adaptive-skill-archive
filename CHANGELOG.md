@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.3.1 — 2026-10-30
+
+- **纯文本任务不再加载 office/video 技能**：`decomposeTask` 增加 outputMode；纯文本（正文/直接返回/不写文件）返回无技能计划，避免 plan 把文档技能强塞给简报任务。
+- **真实 A/B pilot 记录（负面结果）**：2 条任务成功率打平，plugin arm token 约为 baseline 的 2.1–2.6 倍；已如实写入 `docs/benchmark-live.md` 和 `docs/benchmark-live-pilot.json`，不宣称效率提升。
+- 测试 126/126。
+
+
 ## v5.3.0 — 2026-10-30
 
 - **reviewGap 补位建议**：没有独立复核技能时，plan 返回 `reviewGapSuggestions`（真实库候选），UI 显示可安装的 reviewer，不再只给一句“缺复核”。

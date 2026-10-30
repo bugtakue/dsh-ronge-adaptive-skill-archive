@@ -1,14 +1,157 @@
 [
-  {"id":"video-01","domain":"video","task":"做一条 30 秒产品发布宣传片，竖屏，带字幕和配乐","deliverable":"mp4","checks":["时长 30±3 秒","竖屏 1080x1920","字幕与音频同步"]},
-  {"id":"video-02","domain":"video","task":"把这段培训录屏剪成 2 分钟横屏视频，加章节标题","deliverable":"mp4","checks":["横屏 1920x1080","章节标题出现","导出可播放"]},
-  {"id":"office-01","domain":"office","task":"把会议录音整理成 Word 纪要，含决议、行动项和负责人","deliverable":"docx","checks":["有决议/行动项/负责人","docx 可打开","无占位符"]},
-  {"id":"office-02","domain":"office","task":"把 Excel 销售数据做成 8 页发布 PPT，带图表和结论","deliverable":"pptx","checks":["8 页左右","至少 2 张图表","结论页存在"]},
-  {"id":"office-03","domain":"office","task":"检查这份 docx 合同的金额、日期和付款条款是否一致","deliverable":"docx-report","checks":["逐条列出差异","金额/日期有出处","风险项标注"]},
-  {"id":"code-01","domain":"coding","task":"修复 React 组件测试失败并补一个回归测试","deliverable":"code","checks":["测试通过","新增回归用例","说明根因"]},
-  {"id":"data-01","domain":"data","task":"分析这份 CSV 的月度趋势，输出图表和三条结论","deliverable":"report","checks":["图表可打开","结论有数字支撑","口径说明"]},
-  {"id":"research-01","domain":"research","task":"调研 2026 年 AI 视频工具市场，给出 5 个来源和对比","deliverable":"report","checks":["至少 5 个来源","有对比维度","引用可访问"]},
-  {"id":"marketing-01","domain":"marketing","task":"为新品写一版小红书种草文案，含 3 个卖点和行动号召","deliverable":"text","checks":["3 个卖点","有 CTA","符合平台语气"]},
-  {"id":"security-01","domain":"security","task":"审查一个第三方 SKILL.md 的安装脚本风险，重点看 shell 与凭据","deliverable":"report","checks":["列出风险级别","有复现/证据","给修复建议"]},
-  {"id":"plugin-01","domain":"engineering","task":"做一个 DSH 面板插件，加一个设置项并验证安装/卸载","deliverable":"code","checks":["插件可启用","设置项生效","可卸载"]},
-  {"id":"productivity-01","domain":"productivity","task":"把本周零散笔记整理成周报，附下周三个优先事项","deliverable":"docx","checks":["结构完整","三个优先级","无虚构事实"]}
+  {
+    "id": "video-01",
+    "domain": "video",
+    "task": "做一条 30 秒产品发布宣传片，竖屏，带字幕和配乐",
+    "deliverable": "mp4",
+    "checks": [
+      "时长 30±3 秒",
+      "竖屏 1080x1920",
+      "字幕与音频同步"
+    ]
+  },
+  {
+    "id": "video-02",
+    "domain": "video",
+    "task": "把这段培训录屏剪成 2 分钟横屏视频，加章节标题",
+    "deliverable": "mp4",
+    "checks": [
+      "横屏 1920x1080",
+      "章节标题出现",
+      "导出可播放"
+    ]
+  },
+  {
+    "id": "office-01",
+    "domain": "office",
+    "task": "把会议录音整理成 Word 纪要，含决议、行动项和负责人",
+    "deliverable": "docx",
+    "checks": [
+      "有决议/行动项/负责人",
+      "docx 可打开",
+      "无占位符"
+    ]
+  },
+  {
+    "id": "office-02",
+    "domain": "office",
+    "task": "把 Excel 销售数据做成 8 页发布 PPT，带图表和结论",
+    "deliverable": "pptx",
+    "checks": [
+      "8 页左右",
+      "至少 2 张图表",
+      "结论页存在"
+    ]
+  },
+  {
+    "id": "office-03",
+    "domain": "office",
+    "task": "检查这份 docx 合同的金额、日期和付款条款是否一致",
+    "deliverable": "docx-report",
+    "checks": [
+      "逐条列出差异",
+      "金额/日期有出处",
+      "风险项标注"
+    ]
+  },
+  {
+    "id": "code-01",
+    "domain": "coding",
+    "task": "修复 React 组件测试失败并补一个回归测试",
+    "deliverable": "code",
+    "checks": [
+      "测试通过",
+      "新增回归用例",
+      "说明根因"
+    ]
+  },
+  {
+    "id": "data-01",
+    "domain": "data",
+    "task": "分析这份 CSV 的月度趋势，输出图表和三条结论",
+    "deliverable": "report",
+    "checks": [
+      "图表可打开",
+      "结论有数字支撑",
+      "口径说明"
+    ]
+  },
+  {
+    "id": "research-01",
+    "domain": "research",
+    "task": "调研 2026 年 AI 视频工具市场，给出 5 个来源和对比",
+    "deliverable": "report",
+    "checks": [
+      "至少 5 个来源",
+      "有对比维度",
+      "引用可访问"
+    ]
+  },
+  {
+    "id": "marketing-01",
+    "domain": "marketing",
+    "task": "为新品写一版小红书种草文案，含 3 个卖点和行动号召",
+    "deliverable": "text",
+    "checks": [
+      "3 个卖点",
+      "有 CTA",
+      "符合平台语气"
+    ]
+  },
+  {
+    "id": "security-01",
+    "domain": "security",
+    "task": "审查一个第三方 SKILL.md 的安装脚本风险，重点看 shell 与凭据",
+    "deliverable": "report",
+    "checks": [
+      "列出风险级别",
+      "有复现/证据",
+      "给修复建议"
+    ]
+  },
+  {
+    "id": "plugin-01",
+    "domain": "engineering",
+    "task": "做一个 DSH 面板插件，加一个设置项并验证安装/卸载",
+    "deliverable": "code",
+    "checks": [
+      "插件可启用",
+      "设置项生效",
+      "可卸载"
+    ]
+  },
+  {
+    "id": "productivity-01",
+    "domain": "productivity",
+    "task": "把本周零散笔记整理成周报，附下周三个优先事项",
+    "deliverable": "docx",
+    "checks": [
+      "结构完整",
+      "三个优先级",
+      "无虚构事实"
+    ]
+  },
+  {
+    "id": "pilot-brief",
+    "domain": "marketing",
+    "task": "写一份技能驾驶舱 v5.3 发布简报（150–250 字），含发布日期、3 个能力点、1 个风险提示、1 句行动号召；直接返回正文",
+    "deliverable": "text",
+    "checks": [
+      "日期 2026-10-30",
+      "3 个能力点",
+      "1 个风险提示",
+      "1 句 CTA"
+    ]
+  },
+  {
+    "id": "pilot-video-plan",
+    "domain": "video",
+    "task": "为 Excel 数据分析产品做 30 秒竖屏宣传视频，给出 3 阶段执行计划，每阶段含技能、输入、输出/交接物、验收标准",
+    "deliverable": "plan",
+    "checks": [
+      "3 阶段",
+      "每阶段输入/输出",
+      "每阶段验收标准"
+    ]
+  }
 ]

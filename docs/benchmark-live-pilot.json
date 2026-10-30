@@ -1,0 +1,24 @@
+{
+  "schema": "skill-intelligence-live-ab/v1",
+  "status": "recorded",
+  "generatedAt": "2026-10-30T13:10:36.844Z",
+  "tasks": 14,
+  "records": 4,
+  "arms": {
+    "baseline": {
+      "runs": 2,
+      "successRate": 1,
+      "meanTokens": 57687,
+      "meanToolCalls": 1,
+      "meanWallMs": 17650
+    },
+    "plugin": {
+      "runs": 2,
+      "successRate": 1,
+      "meanTokens": 126734,
+      "meanToolCalls": 4,
+      "meanWallMs": 22179
+    }
+  },
+  "caveat": "Task-level A/B; success is human/rubric reviewed, tokens/time are runner-reported. Do not compare across models or task sets."
+}

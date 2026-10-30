@@ -39,3 +39,21 @@ node scripts/benchmark-live.mjs --record runs.json --out report.json
 
 **尚未运行真实 A/B**。只有 `--dry-run` 协议与汇总工具，不能据此宣称效率提升。
 运行后必须同时报告：样本量、成功率、token、toolCalls、wallMs、模型/任务集，以及原始记录文件。
+
+## 真实 pilot（2026-10-30，2 条任务）
+
+这不是完整 12 条 A/B，而是先跑的 2 条 pilot；同模型、同工具、同时间预算，记录 DSH session usage。
+
+| 任务 | arm | success | tokens | toolCalls | wallMs |
+|---|---|---:|---:|---:|---:|
+| pilot-brief（产品简报，纯文本） | baseline | 1 | 50,970 | 1 | 7,098 |
+| pilot-brief | plugin | 1 | 125,940 | 5 | 19,919 |
+| pilot-video-plan（3 阶段视频计划） | baseline | 1 | 64,404 | 1 | 28,201 |
+| pilot-video-plan | plugin | 1 | 127,528 | 3 | 24,438 |
+
+**结论：这不是效率胜利。** 两条任务成功率打平；plugin arm 的 token 约为 baseline 的 2.1–2.6 倍，brief 还更慢。主要原因：
+- brief 是纯文本任务，但旧 plan 仍推荐/加载了 office 文档技能；
+- plugin arm 额外付出 plan + skill 加载的上下文。
+
+原始记录：`docs/benchmark-live-pilot.json`（4 条 runs）。
+已据此修复「纯文本任务不加载 office/video 技能」，但修复后的完整 A/B 需重跑，不能把旧数字当结论。
