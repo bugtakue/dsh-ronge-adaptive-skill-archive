@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.3.4 — 2026-10-30
+
+- **简单任务短路**：短、单交付物、office/productivity 类任务返回单阶段 `simple: true` 计划，避免 planner 对会议纪要这类任务做多阶段过度分析。
+- DSH plan 工具输出 `simple` 标记；复杂跨域任务仍走完整 plan/review/missing。
+- 测试 128/128。
+
+
 ## v5.3.3 — 2026-10-30
 
 - **阶段技能上限 2**：plan stage 不再塞入 3+ 技能，降低 agent 一次性加载的上下文。

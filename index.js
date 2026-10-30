@@ -3368,6 +3368,7 @@ function compactToolPlan(plan, diagnostics) {
   return {
     ok: plan.ok,
     ready: plan.ready,
+    simple: Boolean(plan.simple),
     pattern: plan.pattern,
     primaryIntent: plan.primaryIntent,
     reviewGap: plan.reviewGap,

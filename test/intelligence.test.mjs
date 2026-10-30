@@ -644,3 +644,15 @@ test('text-only tasks do not load office/video skills', () => {
   assert.equal(plan.stages.length, 0)
   assert.ok(plan.assumptions.some((item) => String(item).includes('纯文本')))
 })
+
+test('simple single-deliverable tasks short-circuit to one stage', () => {
+  const plan = composeSkillPlan({ task: '把会议记录整理成 docx 会议纪要', installedSkills: evalSkills, libraryEntries: [] })
+  assert.equal(plan.simple, true)
+  assert.ok(plan.stages.length <= 1)
+  assert.equal(plan.reviewGap, false)
+})
+
+test('cross-domain tasks are not short-circuited', () => {
+  const plan = composeSkillPlan({ task: CROSS_TASK, installedSkills: evalSkills, libraryEntries: [] })
+  assert.equal(plan.simple, false)
+})

@@ -15,7 +15,7 @@
 | 智能评测 | `test/fixtures/intelligence-cases.json` + `scripts/benchmark.mjs` | 60 条；数字见下 |
 | 已安装推荐评测 | `docs/eval.md` + `scripts/eval-real.mjs` | 30 条，v2.7.2 工作树；需 v5 复跑 |
 | 库检索评测 | `docs/eval.md` + `scripts/eval-discover.mjs` | 24 条，v2.8.1 工作树；需 v5 复跑 |
-| 单元/集成测试 | `npm test` | **126/126 通过**（2026-10-30） |
+| 单元/集成测试 | `npm test` | **128/128 通过**（2026-10-30） |
 | Host E2E | `verify/host-e2e.mjs` | **20/20**（含 v5 端点） |
 | UI E2E | `verify/ui-e2e.mjs` | **27/27** |
 | DSH 兼容 | `docs/dsh-compatibility.md` | DSH Desktop 0.2.1-rc.3；安装/重启/迁移 |
@@ -77,7 +77,7 @@
 
 | # | 事项 | 状态 |
 |---|---|---|
-| E1 | 测试数 55/57 旧冲突 | 已统一为 **126/126**（2026-10-30）；发布前以 `npm test` 为准 |
+| E1 | 测试数 55/57 旧冲突 | 已统一为 **128/128**（2026-10-30）；发布前以 `npm test` 为准 |
 | E2 | README 版本 3.0.0 | 已改为 v5.0.0；发布前与 package/tag 同步 |
 | E3 | 技能条数 vs 仓库数 | 已分开写：6,399 条技能 / 4,007 仓库 |
 | E4 | 索引 vs stars 快照日期 | 已分别标注 2026-10-28 / 2026-10-30 |
