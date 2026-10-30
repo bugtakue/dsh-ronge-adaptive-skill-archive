@@ -3247,7 +3247,7 @@ function loadCapabilityIndex() {
 }
 
 async function loadIntelligence() {
-  if (!intelligenceModule) intelligenceModule = await import('./lib/intelligence/index.js')
+  if (!intelligenceModule) intelligenceModule = await import('./lib/intelligence/index.js?v=' + encodeURIComponent(PKG_VERSION))
   return intelligenceModule
 }
 

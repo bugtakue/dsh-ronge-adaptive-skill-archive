@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.2.1 — 2026-10-30
+
+- **Host 模块缓存修复**：智能引擎动态 import 增加版本 query，避免 DSH 热重载后仍使用旧 compose/stage 代码；新版 acceptance/reviewGap/plan 变更能在 reload 后生效。
+- 功能等价 v5.2.0；测试 120/120。
+
+
 ## v5.2.0 — 2026-10-30
 
 - **执行桥（第一版）**：每个 stage 增加 `acceptance` 验收标准；客户端「复制为 Agent 指令」包含输入/输出/交接/失败备选/验收，计划真正可交付执行。
