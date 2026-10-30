@@ -57,7 +57,7 @@
 | C3 | **installLoad 0.3**：计划中约 30.0% 技能需先安装；planCoverage 不是成功率、不是已装可用率 | 同上 | verified（必须一起引用） |
 | C4 | hintRecall 0.45 是当前短板（AI 领域 0.00，多个领域 0.20）；latency 是机器相关单次墙钟，不作为对外 SLA | `docs/benchmark.md` | verified |
 | C5 | 已安装推荐 Recall@4 = 0.9（27/30）、discover Hit@5 0.958 等为旧版半人工基线 | `docs/eval.md` | needs-human（v5 复跑） |
-| C6 | 真实任务 A/B（pilot 2 条） | `docs/benchmark-live-pilot.json` + `docs/benchmark-live.md` | **pilot recorded：成功率 2/2 打平，plugin token 2.1–2.6×，不是效率胜利** |
+| C6 | 真实任务 A/B（pilot 2 条） | `docs/benchmark-live-pilot.json` + `docs/benchmark-live.md` | **v5.3.2 复跑：brief plugin token 82,092（baseline 50,970），video 136,336（baseline 64,404）；仍不是效率胜利** |
 | C7 | 效率提升百分比 | `efficiencyEstimate` 只给 `method:'estimate'`；benchmark 不测真实任务 token 节省 | **unsupported**（禁止写具体百分比） |
 
 ### D. v5 新能力（已交付）

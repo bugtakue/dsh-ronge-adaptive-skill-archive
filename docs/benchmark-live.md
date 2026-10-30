@@ -57,3 +57,15 @@ node scripts/benchmark-live.mjs --record runs.json --out report.json
 
 原始记录：`docs/benchmark-live-pilot.json`（4 条 runs）。
 已据此修复「纯文本任务不加载 office/video 技能」，但修复后的完整 A/B 需重跑，不能把旧数字当结论。
+
+
+## v5.3.2 复跑（2026-10-30）
+
+| 任务 | arm | success | tokens | toolCalls | wallMs |
+|---|---|---:|---:|---:|---:|
+| pilot-brief | baseline | 1 | 50,970 | 1 | 7,098 |
+| pilot-brief | plugin | 1 | 82,092 | 2 | 14,839 |
+| pilot-video-plan | baseline | 1 | 64,404 | 1 | 28,201 |
+| pilot-video-plan | plugin | 1 | 136,336 | 4 | 30,829 |
+
+结论：纯文本 zero-skill 修复把 plugin brief 从 125,940 降到 82,092，但仍高于 baseline；视频计划 plugin 仍约 2.1×。**依然不是效率胜利。** 这两条任务 baseline 本身能完成，不能体现产品价值；下一轮需要带真实交付物的任务（docx/表格/视频）并评估 artifact 质量，而不是只比计划文本。
