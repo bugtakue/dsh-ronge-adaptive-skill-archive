@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.3.5 — 2026-10-30
+
+- **修复 DSH plan 工具 lossless JSON 错误**：simple 短路计划的 skill 缺少 `why`，tool 输出含 `undefined`，DSH 报 `value is not lossless JSON`；现在 compact 输出递归剥离 undefined/非有限数，并给 skill 稳定 `why`。
+- 新增回归测试：DSH plan tool 输出可 JSON 序列化且无 undefined。
+- 测试 129/129。
+
+
 ## v5.3.4 — 2026-10-30
 
 - **简单任务短路**：短、单交付物、office/productivity 类任务返回单阶段 `simple: true` 计划，避免 planner 对会议纪要这类任务做多阶段过度分析。

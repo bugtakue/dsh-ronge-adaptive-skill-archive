@@ -3354,18 +3354,33 @@ function buildPlanAlternatives(intel, base) {
   return { plans: unique, plan: selected.plan, selectedPlan: selected.id }
 }
 
+function sanitizeToolValue(value) {
+  if (Array.isArray(value)) return value.map((item) => sanitizeToolValue(item)).filter((item) => item !== undefined)
+  if (value && typeof value === 'object') {
+    const out = {}
+    for (const [key, item] of Object.entries(value)) {
+      const clean = sanitizeToolValue(item)
+      if (clean !== undefined) out[key] = clean
+    }
+    return out
+  }
+  if (typeof value === 'number' && !Number.isFinite(value)) return null
+  if (value === undefined) return undefined
+  return value
+}
+
 function compactToolPlan(plan, diagnostics) {
   const stages = (plan.stages || []).map((stage) => ({
     role: stage.role,
     intent: stage.intent,
-    skills: (stage.skills || []).map((skill) => ({ name: skill.name, why: skill.why, installed: skill.installed })),
+    skills: (stage.skills || []).map((skill) => ({ name: skill.name, why: skill.why || '按计划使用该技能', installed: Boolean(skill.installed) })),
     input: stage.input,
     output: stage.output,
     handoff: stage.handoff,
     acceptance: stage.acceptance,
     fallback: stage.fallback,
   }))
-  return {
+  return sanitizeToolValue({
     ok: plan.ok,
     ready: plan.ready,
     simple: Boolean(plan.simple),
@@ -3384,7 +3399,7 @@ function compactToolPlan(plan, diagnostics) {
     confidence: plan.confidence,
     diagnostics,
     loadPolicy: 'one-at-a-time; do not load skills for text-only tasks',
-  }
+  })
 }
 
 function registerIntelligenceTools(ctx) {

@@ -134,3 +134,19 @@ test('cross-site mutating requests are rejected', async () => {
   })
   assert.equal(result.status, 403)
 })
+
+test('DSH plan tool returns lossless JSON and simple short-circuit flag', async () => {
+  const tool = tools.get('skill_archive_plan')
+  assert.ok(tool, 'plan tool registered')
+  const result = await tool.execute({ task: '把会议记录整理成 docx 会议纪要' })
+  assert.equal(result.ok, true)
+  assert.equal(result.plan.simple, true)
+  const serialized = JSON.parse(JSON.stringify(result))
+  assert.equal(serialized.plan.simple, true)
+  const walk = (value) => {
+    if (Array.isArray(value)) return value.forEach(walk)
+    if (value && typeof value === 'object') return Object.values(value).forEach(walk)
+    assert.notEqual(value, undefined, 'tool output must not contain undefined')
+  }
+  walk(result)
+})
