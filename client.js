@@ -271,6 +271,10 @@ window.__ModuleLoader__.load({
       intelStages: '阶段',
       intelInstalledCount: '已安装技能',
       intelReviewGap: '缺少独立复核技能：计划未假装复核',
+      intelPlanOptions: '方案',
+      intelPlanFast: '快速',
+      intelPlanBalanced: '均衡',
+      intelPlanQuality: '高质量',
       intelStage: '阶段',
       intelRole: '角色',
       intelSkills: '技能',
@@ -560,6 +564,10 @@ window.__ModuleLoader__.load({
       intelStages: 'Stages',
       intelInstalledCount: 'Installed skills',
       intelReviewGap: 'No independent reviewer: plan does not fake a review',
+      intelPlanOptions: 'Plans',
+      intelPlanFast: 'Fast',
+      intelPlanBalanced: 'Balanced',
+      intelPlanQuality: 'Quality',
       intelStage: 'Stage',
       intelRole: 'Role',
       intelSkills: 'Skills',
@@ -1567,6 +1575,7 @@ window.__ModuleLoader__.load({
       const [intelError, setIntelError] = React.useState(null)
       const [intelNotice, setIntelNotice] = React.useState(null)
       const [intelPlan, setIntelPlan] = React.useState(null)
+      const [intelPlans, setIntelPlans] = React.useState([])
       const [intelDraft, setIntelDraft] = React.useState(null)
       const [intelDraftFrom, setIntelDraftFrom] = React.useState(null)
       const [intelCreatedPath, setIntelCreatedPath] = React.useState(null)
@@ -2268,6 +2277,7 @@ window.__ModuleLoader__.load({
         if (intelBusy || (action !== 'plan' && action !== 'compose' && action !== 'draft')) return
         setIntelBusy(action)
         setIntelMode(action)
+        setIntelPlans([])
         setIntelError(null)
         setIntelNotice(null)
         setIntelCreatedPath(null)
@@ -2280,7 +2290,8 @@ window.__ModuleLoader__.load({
           } else {
             if (currentMode && currentMode !== 'off') body.mode = currentMode
             if (data && data.cwd) body.cwd = String(data.cwd)
-            if (action === 'compose') body.maxSkills = 4
+            if (state.sessionId) body.sessionId = String(state.sessionId)
+            if (action === 'compose') body.maxSkills = 5
           }
           const response = await abortableFetch('/dsh-ronge-adaptive-skill-archive/intelligence/' + action, {
             method: 'POST',
@@ -2303,6 +2314,7 @@ window.__ModuleLoader__.load({
               setIntelError(t('intelEmpty'))
             } else {
               setIntelPlan(plan)
+              setIntelPlans(Array.isArray(payload.plans) ? payload.plans.filter((item) => item && item.plan) : [])
               setIntelNotice({ kind: 'ok', text: t('intelPlanReady') })
             }
           }
@@ -4103,6 +4115,25 @@ window.__ModuleLoader__.load({
           ),
           plan.reviewGap
             ? h('div', { className: 'sf-intel-note' }, t('intelReviewGap'))
+            : null,
+          intelPlans.length > 1
+            ? h(
+                'div',
+                { className: 'sf-intel-choices' },
+                h('span', { className: 'sf-intel-k' }, t('intelPlanOptions')),
+                intelPlans.map((choice) =>
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      key: 'choice-' + choice.id,
+                      className: 'sf-chip' + (choice.id === plan.variant ? ' sf-chip-active' : ''),
+                      onClick: () => setIntelPlan(choice.plan),
+                    },
+                    choice.id === 'fast' ? t('intelPlanFast') : choice.id === 'quality' ? t('intelPlanQuality') : t('intelPlanBalanced'),
+                  ),
+                ),
+              )
             : null,
           stages.length
             ? h(

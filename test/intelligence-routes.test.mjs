@@ -63,6 +63,9 @@ test('intelligence endpoints return a plan, a draft and version/health', async (
   assert.ok(Array.isArray(plan.body.plan.stages) && plan.body.plan.stages.length >= 1)
   assert.ok(plan.body.plan.primaryIntent)
   assert.ok(plan.body.diagnostics.installedCount >= 10, 'diagnostics expose installed skills')
+  assert.ok(Array.isArray(plan.body.plans) && plan.body.plans.length >= 2, 'plan alternatives returned')
+  assert.ok(plan.body.plans.every((choice) => choice.plan && Array.isArray(choice.plan.stages)), 'each alternative has stages')
+  assert.ok(plan.body.plan.variant, 'selected plan has variant id')
   assert.ok(plan.body.plan.selected.some((skill) => skill.name === 'office-docx'), 'installed office-docx wins over library-only candidates')
 
   const draft = await call('/dsh-ronge-adaptive-skill-archive/intelligence/draft', {

@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.1.0 — 2026-10-30
+
+- **Planner v2 第一版**：`/intelligence/plan` 和 DSH 工具现在返回 fast / balanced / quality 三套方案（不同 maxSkills），客户端可切换；默认 balanced。
+- **上下文输入**：请求支持 `sessionId`，Host 解析会话 cwd；plan 上下文加入工作区文件名（只读文件名，不读正文），帮助识别 docx/xlsx 等交付物。
+- **review 独立化/`reviewGap`**、内置技能能力画像、installed-first 保持不变。
+- 测试 120/120；benchmark 指标仍为 installed-first 严格口径（planCoverage 0.333、installLoad 0.30、hintRecall 0.45）。
+
+
 ## v5.0.4 — 2026-10-30
 
 - **内置技能能力画像修复**：DSH 内置技能描述很短（如 `office-docx`），纯关键词提取会漏掉 `document-read/edit/write`、`contract-review`；新增稳定的内置技能能力提示，live 合同+视频计划恢复 `office-docx` + `hyperframes/beat/media-use`。

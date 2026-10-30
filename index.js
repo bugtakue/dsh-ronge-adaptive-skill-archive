@@ -3287,6 +3287,55 @@ async function resolveInstalledSkills(ctx, cwd) {
 }
 
 
+function planRequestCwd(ctx, payload) {
+  if (payload && payload.cwd) return String(payload.cwd)
+  if (payload && payload.sessionId) {
+    try {
+      const header = ctx.get('agents')?.get?.(payload.sessionId)?.header
+      if (header && header.cwd) return String(header.cwd)
+    } catch {}
+  }
+  return process.cwd()
+}
+
+function planRequestContext(cwd) {
+  try {
+    const files = fs
+      .readdirSync(cwd, { withFileTypes: true })
+      .filter((entry) => !entry.name.startsWith('.') && entry.isFile())
+      .slice(0, 20)
+      .map((entry) => entry.name)
+    return files.length ? 'workspace files: ' + files.join(', ') : ''
+  } catch {
+    return ''
+  }
+}
+
+function buildPlanAlternatives(intel, base) {
+  const configs = [
+    { id: 'fast', label: 'fast', maxSkills: 3 },
+    { id: 'balanced', label: 'balanced', maxSkills: 4 },
+    { id: 'quality', label: 'quality', maxSkills: 5 },
+  ]
+  const plans = configs.map((config) => {
+    const plan = intel.composeSkillPlan({ ...base, maxSkills: config.maxSkills })
+    plan.variant = config.id
+    return { id: config.id, label: config.label, maxSkills: config.maxSkills, plan }
+  })
+  const bySignature = new Map()
+  for (const choice of plans) {
+    const signature = JSON.stringify({
+      pattern: choice.plan.pattern,
+      stages: choice.plan.stages.map((stage) => (stage.skills || []).map((skill) => skill.name)),
+      missing: choice.plan.missing.map((item) => item.capability),
+    })
+    if (!bySignature.has(signature)) bySignature.set(signature, choice)
+  }
+  const unique = [...bySignature.values()]
+  const selected = unique.find((choice) => choice.id === 'balanced') || unique[0]
+  return { plans: unique, plan: selected.plan, selectedPlan: selected.id }
+}
+
 function registerIntelligenceTools(ctx) {
   const tools = ctx.get ? ctx.get('tools') : ctx.tools
   if (!tools || typeof tools.register !== 'function') return []
@@ -3318,9 +3367,10 @@ function registerIntelligenceTools(ctx) {
             installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
+            context: planRequestContext(cwd),
             maxSkills: 5,
           })
-          plan.diagnostics = { installedCount: resolved.count, installedSource: resolved.source }
+          plan.diagnostics = { installedCount: resolved.count, installedSource: resolved.source, cwd }
           return { ok: true, plan: { ...plan, stages: plan?.stages?.slice(0, 4) } }
         },
       }),
@@ -3352,9 +3402,10 @@ function registerIntelligenceTools(ctx) {
               installedSkills: resolved.skills,
               libraryEntries: loadLibraryIndex().entries || [],
               capabilityIndex: loadCapabilityIndex(),
+              context: planRequestContext(cwd),
               maxSkills: Number(args?.maxSkills) || 5,
             }),
-            diagnostics: { installedCount: resolved.count, installedSource: resolved.source },
+            diagnostics: { installedCount: resolved.count, installedSource: resolved.source, cwd },
           }
         },
       }),
@@ -3737,9 +3788,9 @@ export function apply(ctx, config = {}) {
           const task = String(payload?.task || '').trim()
           if (!task) throw new HttpError(400, 'task is required')
           const intel = await loadIntelligence()
-          const cwd = String(payload?.cwd || config?.cwd || process.cwd())
+          const cwd = planRequestCwd(ctx, payload)
           const resolved = await resolveInstalledSkills(ctx, cwd)
-          const diagnostics = { installedCount: resolved.count, installedSource: resolved.source }
+          const diagnostics = { installedCount: resolved.count, installedSource: resolved.source, cwd }
           if (action === 'draft') {
             const draft = intel.draftSkill({
               task,
@@ -3749,18 +3800,18 @@ export function apply(ctx, config = {}) {
             sendJson(res, 200, { ok: true, diagnostics, draft })
             return
           }
-          const plan = intel.composeSkillPlan({
+          const base = {
             task,
             cwd,
-            context: String(payload?.context || ''),
+            context: String(payload?.context || planRequestContext(cwd)),
             mode: String(payload?.mode || ''),
             installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
-            maxSkills: Number(payload?.maxSkills) || (action === 'plan' ? 5 : 5),
-          })
-          plan.diagnostics = diagnostics
-          sendJson(res, 200, { ok: true, diagnostics, plan })
+          }
+          const choices = buildPlanAlternatives(intel, base)
+          choices.plan.diagnostics = diagnostics
+          sendJson(res, 200, { ok: true, diagnostics, plans: choices.plans, selectedPlan: choices.selectedPlan, plan: choices.plan })
         }),
       }),
     )

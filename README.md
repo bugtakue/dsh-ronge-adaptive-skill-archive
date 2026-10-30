@@ -31,7 +31,7 @@
   <sub>会话右侧的「技能」抽屉：推荐 / 组队计划 / 经验 / 安全与更新，都在一个面板里。</sub>
 </p>
 
-> **v5.0.4 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
+> **v5.1.0 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
 
 ## 为什么需要 v5
 
@@ -59,8 +59,8 @@ v5 的驾驶舱把这条链路补全：
 npx dsh-ronge-adaptive-skill-archive
 #    想先体检：npx dsh-ronge-adaptive-skill-archive doctor
 
-# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.0.4 发布后可用）
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.4
+# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.1.0 发布后可用）
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.1.0
 
 # 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
@@ -246,8 +246,8 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 | 方式 | 命令 | 适合 |
 |---|---|---|
 | **npx 助手** | `npx dsh-ronge-adaptive-skill-archive`（体检：`npx dsh-ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
-| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.4` | v5.0.4 发布到 npm 后可用 |
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.0.4` | 固定版本、可审源码 |
+| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.1.0` | v5.1.0 发布到 npm 后可用 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.1.0` | 固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
 > v5.0.0 打 tag / 发布 npm 之前，`@5.0.0` 会 404：请先用本地目录，或安装当时最新的已发布版本。安装后 DSH 需**重启**才会加载新的 Host 模块；浏览器刷新加载 Client。
@@ -356,7 +356,7 @@ MIT。见 [LICENSE](LICENSE)。索引中的技能元数据归原作者，边界�
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.0.4
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.1.0
 # then open any session → 「技能」 → switch Plan / Immersive
 ```
 
