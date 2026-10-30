@@ -31,7 +31,7 @@
   <sub>会话右侧的「技能」抽屉：推荐 / 组队计划 / 经验 / 安全与更新，都在一个面板里。</sub>
 </p>
 
-> **v5.2.1 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
+> **v5.3.0 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
 
 ## 为什么需要 v5
 
@@ -59,8 +59,8 @@ v5 的驾驶舱把这条链路补全：
 npx dsh-ronge-adaptive-skill-archive
 #    想先体检：npx dsh-ronge-adaptive-skill-archive doctor
 
-# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.2.1 发布后可用）
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.2.1
+# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.3.0 发布后可用）
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.0
 
 # 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
@@ -209,6 +209,7 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 |---|---|---|---|
 | **已测：推荐召回** | 30 条半人工任务，Top-4 里是否出现可用的已装技能 | [docs/eval.md](docs/eval.md) | Recall@4 = 0.9（27/30），运行于 v2.7.2 工作树，**引用需注明口径** |
 | **已测：库检索** | 24 条任务在 6,399 索引里的类目命中 | [docs/eval.md](docs/eval.md) | Category Hit@5 等指标见文档；Hit@5 偏松，不能证明技能好用 |
+| **v5：真实任务 A/B** | 12 条任务、baseline/plugin 两 arm、成功/tokens/toolCalls/wallMs | [docs/benchmark-live.md](docs/benchmark-live.md)（尚未运行，不预填） | 没有记录文件就没有数字 |
 | **v5：规划 / 组队 / 效率** | planCoverage **0.333**、compositionValidity **1.00**、capabilityCoverage **0.717**、hintRecall **0.45**、gapDetection **1.00**（宽松口径：不假装已覆盖）、contextTokens mean **131.5** / p95 **193**（延迟为单机快照，不对外作 SLA）；基线 keyword 0.083/0.217/0.25/0.532；installLoad **0.3** | [docs/benchmark.md](docs/benchmark.md)（60 条 held-out，2026-10-30） | 指标是半人工基准，不等于真实成功率；installLoad 0.3 必须一起读 |
 
 规则：
@@ -246,8 +247,8 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 | 方式 | 命令 | 适合 |
 |---|---|---|
 | **npx 助手** | `npx dsh-ronge-adaptive-skill-archive`（体检：`npx dsh-ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
-| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.2.1` | v5.2.1 发布到 npm 后可用 |
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.2.1` | 固定版本、可审源码 |
+| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.0` | v5.3.0 发布到 npm 后可用 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.0` | 固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
 > v5.0.0 打 tag / 发布 npm 之前，`@5.0.0` 会 404：请先用本地目录，或安装当时最新的已发布版本。安装后 DSH 需**重启**才会加载新的 Host 模块；浏览器刷新加载 Client。
@@ -356,7 +357,7 @@ MIT。见 [LICENSE](LICENSE)。索引中的技能元数据归原作者，边界�
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.2.1
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.0
 # then open any session → 「技能」 → switch Plan / Immersive
 ```
 

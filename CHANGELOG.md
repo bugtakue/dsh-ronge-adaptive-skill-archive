@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.3.0 — 2026-10-30
+
+- **reviewGap 补位建议**：没有独立复核技能时，plan 返回 `reviewGapSuggestions`（真实库候选），UI 显示可安装的 reviewer，不再只给一句“缺复核”。
+- **draft 质量评分**：draft 返回 `quality.score/grade`（lint、安全、evalCases、内容长度、名称具体度综合），UI 展示；不再只有 lint ok。
+- **真实任务 A/B 协议**：新增 12 条跨领域任务 fixture、`scripts/benchmark-live.mjs`（--dry-run / --record 汇总）和 `docs/benchmark-live.md`；**未运行前不产生任何数字**。
+- 测试 125/125。
+
+
 ## v5.2.1 — 2026-10-30
 
 - **Host 模块缓存修复**：智能引擎动态 import 增加版本 query，避免 DSH 热重载后仍使用旧 compose/stage 代码；新版 acceptance/reviewGap/plan 变更能在 reload 后生效。

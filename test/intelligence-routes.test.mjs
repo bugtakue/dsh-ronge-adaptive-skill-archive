@@ -77,6 +77,8 @@ test('intelligence endpoints return a plan, a draft and version/health', async (
   assert.match(draft.body.draft.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   assert.match(draft.body.draft.content, /^---/)
   assert.equal(draft.body.draft.lint.ok, true)
+  assert.ok(draft.body.draft.quality && Number.isFinite(Number(draft.body.draft.quality.score)))
+  assert.ok(['A', 'B', 'C', 'D'].includes(draft.body.draft.quality.grade))
 
   const created = await call('/dsh-ronge-adaptive-skill-archive/create', {
     method: 'POST',

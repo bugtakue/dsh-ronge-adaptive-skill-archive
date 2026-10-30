@@ -271,6 +271,8 @@ window.__ModuleLoader__.load({
       intelStages: '阶段',
       intelInstalledCount: '已安装技能',
       intelReviewGap: '缺少独立复核技能：计划未假装复核',
+      intelReviewSuggestions: '可安装的复核候选',
+      intelDraftQuality: '草稿质量',
       intelPlanOptions: '方案',
       intelPlanFast: '快速',
       intelPlanBalanced: '均衡',
@@ -565,6 +567,8 @@ window.__ModuleLoader__.load({
       intelStages: 'Stages',
       intelInstalledCount: 'Installed skills',
       intelReviewGap: 'No independent reviewer: plan does not fake a review',
+      intelReviewSuggestions: 'Reviewer candidates',
+      intelDraftQuality: 'Draft quality',
       intelPlanOptions: 'Plans',
       intelPlanFast: 'Fast',
       intelPlanBalanced: 'Balanced',
@@ -4118,7 +4122,18 @@ window.__ModuleLoader__.load({
             ),
           ),
           plan.reviewGap
-            ? h('div', { className: 'sf-intel-note' }, t('intelReviewGap'))
+            ? h(
+                'div',
+                { className: 'sf-intel-note' },
+                t('intelReviewGap'),
+                Array.isArray(plan.reviewGapSuggestions) && plan.reviewGapSuggestions.length
+                  ? h(
+                      'span',
+                      { className: 'sf-intel-suggest' },
+                      ' · ' + t('intelReviewSuggestions') + ': ' + plan.reviewGapSuggestions.join(', '),
+                    )
+                  : null,
+              )
             : null,
           intelPlans.length > 1
             ? h(
@@ -4346,6 +4361,13 @@ window.__ModuleLoader__.load({
                 )
               : null,
           ),
+          draft.quality && Number.isFinite(Number(draft.quality.score))
+            ? h(
+                'div',
+                { className: 'sf-intel-meta' },
+                h('span', { className: 'sf-badge' }, t('intelDraftQuality') + ': ' + draft.quality.score + ' (' + String(draft.quality.grade || '') + ')'),
+              )
+            : null,
           badgeRow(
             [
               h('span', { className: 'sf-intel-k', key: 'intel-safety-label' }, t('intelSafety')),

@@ -620,3 +620,16 @@ test('intelligence modules are offline: no network/process/fs imports', () => {
     }
   }
 })
+
+
+test('reviewGap exposes installable reviewer candidates instead of faking a review', () => {
+  const plan = composeSkillPlan({ task: CROSS_TASK, installedSkills: evalSkills, libraryEntries: [] })
+  assert.equal(plan.reviewGap, true)
+  assert.ok(Array.isArray(plan.reviewGapSuggestions))
+})
+
+test('draftSkill returns a quality score and grade', () => {
+  const draft = draftSkill({ task: '做一个合同条款比对技能' })
+  assert.ok(Number.isFinite(draft.quality.score))
+  assert.ok(['A', 'B', 'C', 'D'].includes(draft.quality.grade))
+})
