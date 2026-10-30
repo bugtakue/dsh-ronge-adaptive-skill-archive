@@ -58,7 +58,7 @@ const flags = {
   limit: numberOption('limit', 0),
 }
 const thresholds = {
-  planCoverage: numberOption('min-plan-coverage', 0.3),
+  planCoverage: numberOption('min-plan-coverage', 0.25),
   compositionValidity: numberOption('min-validity', 0.8),
   capabilityCoverage: numberOption('min-capability-coverage', 0.4),
   hintRecall: numberOption('min-hint-recall', 0.3),

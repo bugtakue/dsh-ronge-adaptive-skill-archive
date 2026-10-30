@@ -269,6 +269,8 @@ window.__ModuleLoader__.load({
       intelPattern: '组合模式',
       intelConfidence: '置信度',
       intelStages: '阶段',
+      intelInstalledCount: '已安装技能',
+      intelReviewGap: '缺少独立复核技能：计划未假装复核',
       intelStage: '阶段',
       intelRole: '角色',
       intelSkills: '技能',
@@ -556,6 +558,8 @@ window.__ModuleLoader__.load({
       intelPattern: 'Pattern',
       intelConfidence: 'Confidence',
       intelStages: 'Stages',
+      intelInstalledCount: 'Installed skills',
+      intelReviewGap: 'No independent reviewer: plan does not fake a review',
       intelStage: 'Stage',
       intelRole: 'Role',
       intelSkills: 'Skills',
@@ -4092,8 +4096,14 @@ window.__ModuleLoader__.load({
                   )
                 : null,
               stages.length ? h('span', { className: 'sf-badge' }, t('intelStages') + ' ' + stages.length) : null,
+              plan.diagnostics && Number.isFinite(Number(plan.diagnostics.installedCount))
+                ? h('span', { className: 'sf-badge' }, t('intelInstalledCount') + ' ' + plan.diagnostics.installedCount)
+                : null,
             ),
           ),
+          plan.reviewGap
+            ? h('div', { className: 'sf-intel-note' }, t('intelReviewGap'))
+            : null,
           stages.length
             ? h(
                 'ol',

@@ -19,11 +19,11 @@ import { fileURLToPath } from 'node:url'
 import { atomicWriteFile, atomicWriteJson, isInside, withKeyLock } from './lib/fsx.js'
 import { scanSkillText } from './lib/security.js'
 
-const PKG_NAME = 'dsh-ronge-adaptive-skill-archive'
-const PKG_VERSION = '5.0.0'
-export const inject = ['webServer', 'skills', 'tools']
-
 const PACKAGE_DIR = path.dirname(fileURLToPath(import.meta.url))
+const PKG = JSON.parse(fs.readFileSync(path.join(PACKAGE_DIR, 'package.json'), 'utf8'))
+const PKG_NAME = PKG.name
+const PKG_VERSION = PKG.version
+export const inject = ['webServer', 'skills', 'tools']
 const DEFAULT_CHIME = '/System/Library/Sounds/Glass.aiff'
 const CHIME_COOLDOWN_MS = 1500
 
@@ -3241,6 +3241,43 @@ function toolOutput() {
   }
 }
 
+async function resolveInstalledSkills(ctx, cwd) {
+  const library = loadLibraryIndex()
+  const byName = new Map((library.entries || []).filter((entry) => entry && entry.name).map((entry) => [entry.name, entry]))
+  let listed = []
+  let source = 'registry'
+  try {
+    const view = ctx.get ? ctx.get('skills') || ctx.skills : ctx.skills
+    if (view && typeof view.list === 'function') listed = await view.list(cwd ? { cwd } : undefined)
+  } catch {
+    listed = []
+  }
+  if (!Array.isArray(listed) || listed.length === 0) {
+    source = 'scan'
+    listed = scanSkills(cwd)
+  }
+  const merged = new Map()
+  for (const skill of listed) {
+    if (!skill || !skill.name) continue
+    const libraryEntry = byName.get(skill.name) || {}
+    merged.set(skill.name, {
+      ...libraryEntry,
+      ...skill,
+      name: skill.name,
+      description: skill.description || libraryEntry.description || '',
+      whenToUse: skill.whenToUse || libraryEntry.whenToUse || null,
+      quality: libraryEntry.quality,
+      rating: libraryEntry.rating,
+      stars: libraryEntry.stars,
+      trust: libraryEntry.trust,
+      weak: libraryEntry.weak,
+      duplicateRank: libraryEntry.duplicateRank,
+      installed: true,
+    })
+  }
+  return { skills: [...merged.values()], source, count: merged.size }
+}
+
 function registerIntelligenceTools(ctx) {
   const tools = ctx.get ? ctx.get('tools') : ctx.tools
   if (!tools || typeof tools.register !== 'function') return []
@@ -3263,17 +3300,18 @@ function registerIntelligenceTools(ctx) {
         output: toolOutput(),
         async execute(args) {
           const intel = await loadIntelligence()
-          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
-          const installed = Array.isArray(skills) ? skills : []
+          const cwd = String(args?.cwd || '')
+          const resolved = await resolveInstalledSkills(ctx, cwd)
           const plan = intel.composeSkillPlan({
             task: String(args?.task || ''),
-            cwd: String(args?.cwd || ''),
+            cwd,
             mode: String(args?.mode || ''),
-            installedSkills: installed,
+            installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
-            maxSkills: 3,
+            maxSkills: 5,
           })
+          plan.diagnostics = { installedCount: resolved.count, installedSource: resolved.source }
           return { ok: true, plan: { ...plan, stages: plan?.stages?.slice(0, 4) } }
         },
       }),
@@ -3295,17 +3333,19 @@ function registerIntelligenceTools(ctx) {
         output: toolOutput(),
         async execute(args) {
           const intel = await loadIntelligence()
-          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
+          const cwd = String(args?.cwd || '')
+          const resolved = await resolveInstalledSkills(ctx, cwd)
           return {
             ok: true,
             plan: intel.composeSkillPlan({
               task: String(args?.task || ''),
-              cwd: String(args?.cwd || ''),
-              installedSkills: Array.isArray(skills) ? skills : [],
+              cwd,
+              installedSkills: resolved.skills,
               libraryEntries: loadLibraryIndex().entries || [],
               capabilityIndex: loadCapabilityIndex(),
-              maxSkills: Number(args?.maxSkills) || 4,
+              maxSkills: Number(args?.maxSkills) || 5,
             }),
+            diagnostics: { installedCount: resolved.count, installedSource: resolved.source },
           }
         },
       }),
@@ -3326,13 +3366,13 @@ function registerIntelligenceTools(ctx) {
         output: toolOutput(),
         async execute(args) {
           const intel = await loadIntelligence()
-          const skills = await (ctx.skills?.list ? ctx.skills.list() : [])
+          const resolved = await resolveInstalledSkills(ctx, String(args?.cwd || ''))
           return {
             ok: true,
             draft: intel.draftSkill({
               task: String(args?.task || ''),
               missing: Array.isArray(args?.missing) ? args.missing : [],
-              existingNames: (Array.isArray(skills) ? skills : []).map((skill) => skill.name).filter(Boolean),
+              existingNames: resolved.skills.map((skill) => skill.name).filter(Boolean),
             }),
           }
         },
@@ -3688,27 +3728,30 @@ export function apply(ctx, config = {}) {
           const task = String(payload?.task || '').trim()
           if (!task) throw new HttpError(400, 'task is required')
           const intel = await loadIntelligence()
-          const listed = ctx.skills?.list ? await ctx.skills.list() : []
-          const installed = (Array.isArray(listed) ? listed : []).map((skill) => ({ ...skill, name: skill.name })).filter((skill) => skill.name)
+          const cwd = String(payload?.cwd || config?.cwd || process.cwd())
+          const resolved = await resolveInstalledSkills(ctx, cwd)
+          const diagnostics = { installedCount: resolved.count, installedSource: resolved.source }
           if (action === 'draft') {
             const draft = intel.draftSkill({
               task,
               missing: Array.isArray(payload?.missing) ? payload.missing : [],
-              existingNames: installed.map((skill) => skill.name),
+              existingNames: resolved.skills.map((skill) => skill.name),
             })
-            sendJson(res, 200, { ok: true, draft })
+            sendJson(res, 200, { ok: true, diagnostics, draft })
             return
           }
           const plan = intel.composeSkillPlan({
             task,
-            cwd: String(payload?.cwd || ''),
+            cwd,
+            context: String(payload?.context || ''),
             mode: String(payload?.mode || ''),
-            installedSkills: installed,
+            installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
-            maxSkills: Number(payload?.maxSkills) || (action === 'plan' ? 3 : 4),
+            maxSkills: Number(payload?.maxSkills) || (action === 'plan' ? 5 : 5),
           })
-          sendJson(res, 200, { ok: true, plan })
+          plan.diagnostics = diagnostics
+          sendJson(res, 200, { ok: true, diagnostics, plan })
         }),
       }),
     )
@@ -3925,4 +3968,5 @@ export {
   uniqueSkillName,
   fetchRemoteSkill,
   systemProxyUrl,
+  resolveInstalledSkills,
 }

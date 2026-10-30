@@ -299,8 +299,13 @@ test('composeSkillPlan composes the cross task with the contract stage free of v
   assert.ok(!videoNames.includes('office-docx'), 'contract skill must not be in the video stage')
 
   const review = plan.stages.find((stage) => stage.role === 'review')
-  assert.ok(review, 'review-gate plans need a review stage')
-  assert.ok(!review.skills.some((skill) => ['hyperframes', 'beat-promo-director'].includes(skill.name)))
+  if (review) {
+    assert.ok(!review.skills.some((skill) => ['hyperframes', 'beat-promo-director'].includes(skill.name)))
+    const used = new Set(plan.stages.filter((stage) => stage.role !== 'review').flatMap((stage) => stage.skills.map((skill) => skill.name)))
+    assert.ok(review.skills.every((skill) => !used.has(skill.name)), 'review must be independent from produce stages')
+  } else {
+    assert.equal(plan.reviewGap, true, 'missing independent reviewer must be explicit as reviewGap')
+  }
 })
 
 test('composeSkillPlan every stage exposes the contract fields', () => {

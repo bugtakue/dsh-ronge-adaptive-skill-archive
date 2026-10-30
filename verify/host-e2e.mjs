@@ -14,6 +14,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const PRODUCT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'index.js')
+const PKG_VERSION = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version
 const PDF = 'https://raw.githubusercontent.com/anthropics/skills/HEAD/skills/pdf/SKILL.md'
 const DOCX = 'https://raw.githubusercontent.com/anthropics/skills/HEAD/skills/docx/SKILL.md'
 
@@ -322,10 +323,10 @@ try {
     assert.equal(rollback.status, 200)
     assert.equal(rollback.body.weights.name, 8)
   })
-  await check('v5 version endpoint reports 5.0.0', async () => {
+  await check('v5 version endpoint matches package.json', async () => {
     const { status, body } = await api('/dsh-ronge-adaptive-skill-archive/version')
     assert.equal(status, 200)
-    assert.equal(body.version, '5.0.0')
+    assert.equal(body.version, PKG_VERSION)
   })
   await check('v5 intelligence plan endpoint returns a plan', async () => {
     const { status, body } = await api('/dsh-ronge-adaptive-skill-archive/intelligence/plan', {

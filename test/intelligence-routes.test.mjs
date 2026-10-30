@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+const PKG_VERSION = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ronge-intel-'))
 process.env.DSH_HOME = path.join(tmp, 'home')
@@ -61,6 +62,8 @@ test('intelligence endpoints return a plan, a draft and version/health', async (
   assert.equal(plan.body.ok, true)
   assert.ok(Array.isArray(plan.body.plan.stages) && plan.body.plan.stages.length >= 1)
   assert.ok(plan.body.plan.primaryIntent)
+  assert.ok(plan.body.diagnostics.installedCount >= 10, 'diagnostics expose installed skills')
+  assert.ok(plan.body.plan.selected.some((skill) => skill.name === 'office-docx'), 'installed office-docx wins over library-only candidates')
 
   const draft = await call('/dsh-ronge-adaptive-skill-archive/intelligence/draft', {
     method: 'POST',
@@ -74,12 +77,12 @@ test('intelligence endpoints return a plan, a draft and version/health', async (
 
   const health = await call('/dsh-ronge-adaptive-skill-archive/health', { method: 'GET', url: '/dsh-ronge-adaptive-skill-archive/health' })
   assert.equal(health.status, 200)
-  assert.equal(health.body.version, '5.0.0')
+  assert.equal(health.body.version, PKG_VERSION)
   assert.ok(health.body.libraryEntries > 0)
 
   const version = await call('/dsh-ronge-adaptive-skill-archive/version')
   assert.equal(version.status, 200)
-  assert.equal(version.body.version, '5.0.0')
+  assert.equal(version.body.version, PKG_VERSION)
 })
 
 test('DSH native tools are registered without install/force capabilities', async () => {

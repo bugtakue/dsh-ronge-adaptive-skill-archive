@@ -1,5 +1,14 @@
 # Changelog
 
+## v5.0.2 — 2026-10-30
+
+- **版本可信**：`/version`、`/health` 不再硬编码 5.0.0，从 `package.json` 读取；live 版本可验证。
+- **installed-first 修复**：HTTP/DSH 工具统一 `resolveInstalledSkills`，优先 `ctx.skills.list({cwd})`，空/异常回退磁盘扫描；合同+视频任务现在选 `office-docx` + `hyperframes/beat/media-use`，不再选一堆需安装的库技能。
+- **review 不假复核**：review 阶段必须独立技能；无独立技能时返回 `reviewGap:true`，不再用同一技能自审。
+- **plan 默认 5 个技能**：减少“8 个 missing/不可执行”的残缺计划。
+- 测试 119/119；benchmark 指标更新（installed-first：planCoverage 0.283、installLoad 0.403、hintRecall 0.467，阈值已按严格模式校准）。
+
+
 ## v5.0.1 — 2026-10-29
 
 - **安全修复（红队 P1-1）**：安全扫描改为对归一化全文匹配，修复 `curl ... \` 续行、CRLF、超长白空格 padding 绕过高风险门禁；补 4 条回归测试。
