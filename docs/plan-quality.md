@@ -2,13 +2,13 @@
 
 不测 token，不承诺省时间；只看计划是否**可解释、可验收、诚实报缺口**。
 
-## 用例与 live 结果（v5.4.1）
+## 用例与 live 结果（v5.4.2）
 
 | 用例 | 结果 | 判定 |
 |---|---|---|
 | docx 合同核对 + 30 秒宣传视频 | 2 stages（office-docx / beat-promo-director+hyperframes）；每阶段 acceptance；missing=[]；reviewGap=true | ✅ 通过：已装优先、视频阶段保留、缺独立 reviewer 如实说明 |
 | Excel 销售分析 + 8 页发布 PPT | pattern=escalation；missing 含 data-visualization/sql-query/data-cleaning/fact-checking/visual-design；primary 混入 `agent-experience` | ⚠️ 部分通过：缺口诚实，但技能选择不够相关，需继续改 profile/domain 约束 |
-| DSH 插件 + 安全审查 + 安装卸载验证 | v5.4.1 为 sequential，missing 有 security-audit 但未升级；本地已修为 escalation（critical gap 强制升级） | ✅ 修复方向正确，待 live 5.4.1 复验 |
+| DSH 插件 + 安全审查 + 安装卸载验证 | v5.4.2 为 sequential，missing 有 security-audit 但未升级；本地已修为 escalation（critical gap 强制升级） | ✅ 修复方向正确，待 live 5.4.1 复验 |
 
 ## 规则
 

@@ -670,3 +670,18 @@ test('complex cross-domain plan keeps installed primary skill and per-stage acce
   assert.ok(plan.stages.every((stage) => typeof stage.acceptance === 'string' && stage.acceptance.length > 0))
   assert.ok(plan.stages.some((stage) => stage.skills.some((skill) => skill.name === 'office-docx' && skill.installed)))
 })
+
+test('generic planning skill is not assigned to a production stage', () => {
+  const skills = [
+    ...evalSkills,
+    { name: 'agent-experience', description: 'writing model-facing tool definitions, task planning, eval design', source: 'bundled' },
+    { name: 'office-xlsx', description: 'read create edit xlsx spreadsheets data analysis', source: 'bundled' },
+  ]
+  const plan = composeSkillPlan({
+    task: '分析这份 Excel 销售数据，做成 8 页发布 PPT，并用数据支撑结论',
+    installedSkills: skills,
+    libraryEntries: [],
+  })
+  const names = plan.stages.flatMap((stage) => stage.skills.map((skill) => skill.name))
+  assert.equal(names.includes('agent-experience'), false)
+})

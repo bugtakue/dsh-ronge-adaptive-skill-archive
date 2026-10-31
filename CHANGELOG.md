@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.4.2 — 2026-10-31
+
+- **阶段技能相关性收紧**：不再把未分配/无关的 selected 技能硬塞进第一个 stage；generic `task-planning` 不再算生产阶段命中。
+- escalation 的 partial 技能只保留与 missing capability 相关的技能；无关 `agent-experience` 不再混入 Excel 任务。
+- 新增回归测试；测试 132/132。
+
+
 ## v5.4.1 — 2026-10-31
 
 - **critical 缺口强制 escalation**：任何 critical missing（如 security-audit/compliance-check）不再被 sequential 掩盖，plan 必须升级为待确认/安装。
