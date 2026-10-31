@@ -28,3 +28,17 @@
 
 当前产品定位：**可解释拆解、技能组队、缺口造技能、验收与安全**。
 不承诺 token/时间效率；真实 A/B 负面数据见 `docs/benchmark-live-artifacts.md`。
+
+## 重启后一键复验
+
+```bash
+node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.txt
+```
+
+检查项：
+- live `/version` = `package.json` 版本；
+- simple 任务 `plan.simple=true` 且 ≤1 stage；
+- Excel 计划不含 `agent-experience`、包含 `office-xlsx`；
+- 安全审查计划 pattern=`escalation`，且 `security-audit` 为 critical missing。
+
+2026-10-31 在 live 5.4.0 上预跑：版本、Excel 相关性、安全 escalation 三项失败；simple 两项通过。**必须在重启到 5.4.2 后重跑，不能把本地测试当 live 通过。**
