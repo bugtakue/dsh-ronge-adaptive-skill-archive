@@ -1,6 +1,6 @@
 {
   "name": "dsh-ronge-adaptive-skill-archive",
-  "version": "5.4.2",
+  "version": "5.5.0",
   "description": "DSH-native skill intelligence cockpit: task decomposition, cross-domain multi-skill composition, skill authoring, local recommendations and safety scans for DeepSeek Harness.",
   "type": "module",
   "repository": {
@@ -26,7 +26,9 @@
     "exploration",
     "skill-orchestration",
     "skill-authoring",
-    "skill-intelligence"
+    "skill-intelligence",
+    "dsh-skill",
+    "dsh-ecosystem"
   ],
   "exports": {
     ".": "./index.js",
@@ -61,7 +63,9 @@
     "library/capability-index.json",
     "library/skills-index.json",
     "library/NOTICE.md",
-    "library/README.md"
+    "library/README.md",
+    "skills/**",
+    "docs/dsh-ecosystem.md"
   ],
   "scripts": {
     "check": "node scripts/check.mjs",
@@ -73,7 +77,8 @@
     "eval:discover": "node scripts/eval-discover.mjs",
     "check:dsh": "node scripts/dsh-compat-check.mjs",
     "build:capability": "node scripts/build-capability-index.mjs",
-    "eval:benchmark": "node scripts/benchmark.mjs"
+    "eval:benchmark": "node scripts/benchmark.mjs",
+    "install:dsh-skill": "node scripts/install-dsh-skill.mjs --write"
   },
   "dsh": {
     "bundle": {

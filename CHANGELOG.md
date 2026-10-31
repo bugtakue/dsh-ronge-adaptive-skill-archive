@@ -1,5 +1,14 @@
 # Changelog
 
+## v5.5.0 — 2026-10-31
+
+- **DSH 生态集成**：新增可安装 DSH skill `dsh-skill-cockpit`（复杂任务才用 plan；简单任务直接执行），已出现在当前 DSH 技能目录。
+- 新增 `scripts/install-dsh-skill.mjs`（默认 dry-run，写入需 --write，覆盖需 --force）与 `docs/dsh-ecosystem.md`（bundle / 原生工具 / skill / MCP / 升级）。
+- 包内包含 `skills/**` 与生态文档；npm pack 已验证。
+- 定位不变：不承诺省 token/更快；真实 A/B 负面数据保留。
+- 测试 132/132。
+
+
 ## v5.4.2 — 2026-10-31
 
 - **阶段技能相关性收紧**：不再把未分配/无关的 selected 技能硬塞进第一个 stage；generic `task-planning` 不再算生产阶段命中。
