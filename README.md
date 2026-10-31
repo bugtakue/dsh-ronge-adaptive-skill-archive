@@ -5,7 +5,7 @@
 <h1 align="center">荣哥技能卷轴收藏馆</h1>
 <h3 align="center">Ronge's Adaptive Skill Cockpit · v5</h3>
 
-<p align="center"><b>把「该用哪个技能」升级成「拆任务 → 组队 → 造技能 → 验效率」的 DSH 原生技能驾驶舱。</b></p>
+<p align="center"><b>把「该用哪个技能」升级成「拆任务 → 组队 → 造技能 → 验质量」的 DSH 原生技能驾驶舱。</b></p>
 
 <p align="center">
   <a href="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml"><img src="https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive/actions/workflows/check.yml/badge.svg" alt="CI"></a>
@@ -22,7 +22,7 @@
   ·
   <a href="docs/eval.md">评测口径</a>
   ·
-  <a href="docs/benchmark.md">效率 benchmark</a>
+  <a href="docs/benchmark.md">规划质量 benchmark</a>
 </p>
 
 <p align="center">
@@ -31,7 +31,7 @@
   <sub>会话右侧的「技能」抽屉：推荐 / 组队计划 / 经验 / 安全与更新，都在一个面板里。</sub>
 </p>
 
-> **v5.3.5 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
+> **v5.4.0 发布说明**：本 README 是当前发布稿。三大新能力 `plan → compose → draft`（任务拆解 / 技能组队 / 按缺口造技能）与 12 领域包为本次发布新增；每条声明的证据、实测状态与未验证项统一记录在 **[docs/claims.md](docs/claims.md)**。benchmark 数字见 **[docs/benchmark.md](docs/benchmark.md)**（2026-10-30 快照）。
 
 ## 为什么需要 v5
 
@@ -45,7 +45,7 @@
 v5 的驾驶舱把这条链路补全：
 
 ```
-选（推荐）→ 拆（decompose）→ 组（compose）→ 造（draft）→ 量（efficiency estimate）
+选（推荐）→ 拆（decompose）→ 组（compose）→ 造（draft）→ 验（acceptance）
       ↑                                                        │
       └────────────── 经验 / 反馈 / 自进化 持续回流 ◄───────────┘
 ```
@@ -63,8 +63,8 @@ v5 的驾驶舱把这条链路补全：
 npx dsh-ronge-adaptive-skill-archive
 #    想先体检：npx dsh-ronge-adaptive-skill-archive doctor
 
-# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.3.5 发布后可用）
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5
+# 2) 把打印出的这一行交给任意 DSH 会话里的 Agent 执行（v5.4.0 发布后可用）
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.4.0
 
 # 3) 刷新页面 → 右上角「技能」→ 右侧抽屉；计划模式 / 沉浸模式切换
 ```
@@ -155,14 +155,14 @@ plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5
 | Plan / Immersive | skill 编排级双模式 | — | Plan 属权限模式 | — |
 | **任务拆解 + 技能组队** | **v5：decompose → compose（阶段 / 交接 / 冲突 / 缺口）** | 无用户可见能力 | 有通用 plan 模式；无 skill 组队 | 无 |
 | **按缺口造技能** | **v5：draft（SKILL.md + eval cases + lint + 安全扫描，不写盘）** | 无（作者自己写） | `skill-creator` 面向作者 | 无 |
-| **效率可证** | **v5：estimate + 可复跑 benchmark（docs/benchmark.md）** | 安装量统计 | 作者侧评估 | 无 |
+| **边界可证** | **v5：estimate + 可复跑 benchmark + 真实 A/B 负面记录（docs/benchmark-live*.md）** | 安装量统计 | 作者侧评估 | 无 |
 | 经验 → 自进化 | 经验记忆 + 👍/👎 归因 + 权重学习 + 10% 探索 | 安装量统计 | 作者侧评估 | 少数有使用记录 |
 | 安装前安全 | 本地启发式扫描 + 信任分级 + 许可证 | 合作方审计（Vercel 公布） | 市场分层 + 来源校验 | 部分有 trust score |
 | 更新 / 回滚 | 内容 diff + 备份 + 一键回滚 | lockfile + update | 市场内更新 | 部分有更新检查 |
 | 数据 / 遥测 | 全本地，无遥测 | 安装遥测默认开启（可关） | 使用数据不回传作者 | 本地 |
 | 规模口径 | 6,399 条 GitHub 公开 `SKILL.md` 元数据快照（2026-10-28） | 官方博客称 69,000+ / 站点另有 1.5M 级数字 | 官方精选，未公布总量 | 各家不同 |
 
-> 「任务拆解 / 组队 / 造技能 / 效率估算」是 v5.0.0 新增，实现状态见 [docs/claims.md](docs/claims.md)；「四项同时具备」基于我们对 28 个相关项目 2026-10 公开资料的梳理，属自报口径，欢迎 issue 指正。
+> 「任务拆解 / 组队 / 造技能 / 验收」是 v5.0.0 新增，实现状态见 [docs/claims.md](docs/claims.md)。**不承诺省 token/更快**：真实 A/B 未达双指标改善，证据在 [docs/benchmark-live-artifacts.md](docs/benchmark-live-artifacts.md)。
 
 ---
 
@@ -205,7 +205,7 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 
 ---
 
-## 效率与评测口径（必读）
+## 评测与边界（必读）
 
 三类数据严格分开，不混用：
 
@@ -213,13 +213,13 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 |---|---|---|---|
 | **已测：推荐召回** | 30 条半人工任务，Top-4 里是否出现可用的已装技能 | [docs/eval.md](docs/eval.md) | Recall@4 = 0.9（27/30），运行于 v2.7.2 工作树，**引用需注明口径** |
 | **已测：库检索** | 24 条任务在 6,399 索引里的类目命中 | [docs/eval.md](docs/eval.md) | Category Hit@5 等指标见文档；Hit@5 偏松，不能证明技能好用 |
-| **v5：真实任务 A/B** | 12 条任务 fixture；pilot 2 条已跑 | [docs/benchmark-live.md](docs/benchmark-live.md) | pilot：成功率打平，plugin token 2.1–2.6×，**不是效率胜利**；修正后待重跑 |
-| **v5：规划 / 组队 / 效率** | planCoverage **0.333**、compositionValidity **1.00**、capabilityCoverage **0.717**、hintRecall **0.45**、gapDetection **1.00**（宽松口径：不假装已覆盖）、contextTokens mean **131.5** / p95 **193**（延迟为单机快照，不对外作 SLA）；基线 keyword 0.083/0.217/0.25/0.532；installLoad **0.3** | [docs/benchmark.md](docs/benchmark.md)（60 条 held-out，2026-10-30） | 指标是半人工基准，不等于真实成功率；installLoad 0.3 必须一起读 |
+| **v5：真实任务 A/B** | 6 条任务已跑；12 条 fixture 未跑完 | [docs/benchmark-live-artifacts.md](docs/benchmark-live-artifacts.md) | **不是效率胜利**：meeting +74% token、pptx +29% token；claim = not-achieved |
+| **v5：规划 / 组队 / 质量** | planCoverage **0.333**、compositionValidity **1.00**、capabilityCoverage **0.717**、hintRecall **0.45**、gapDetection **1.00**（宽松口径：不假装已覆盖）、contextTokens mean **131.5** / p95 **193**（延迟为单机快照，不对外作 SLA）；基线 keyword 0.083/0.217/0.25/0.532；installLoad **0.3** | [docs/benchmark.md](docs/benchmark.md)（60 条 held-out，2026-10-30） | 指标是半人工基准，不等于真实成功率；installLoad 0.3 必须一起读 |
 
 规则：
 
 - **所有数字以脚本输出为准**：`node scripts/eval-real.mjs`、`node scripts/eval-discover.mjs`、`node scripts/benchmark.mjs --smoke`；文档不手改数字。
-- **效率是估算（estimate）**：`efficiencyEstimate` 输出 `method: 'estimate'`，用于规划与对比，不是实测工时或 token 账单；真实节省以 `docs/benchmark.md` 的实测口径为准。
+- **效率不是卖点**：`efficiencyEstimate` 只是 `method: 'estimate'` 的规划辅助；真实 A/B 没有达到 token/时间双改善，不对外承诺省 token 或更快。
 - **评测不是质量榜**：评测是半人工用例，不是线上遥测；Recall@4 只衡量「已装技能推荐」，不代表 6,399 条库的整体质量。v5 规划 benchmark 见 [docs/benchmark.md](docs/benchmark.md)。
 - 证据矩阵（每条声明 → 证据 → 标签）见 [docs/claims.md](docs/claims.md)。
 
@@ -251,8 +251,8 @@ v5.0.0 在 DSH 里注册三个**只读 / 只出草稿**的工具（面板与 MCP
 | 方式 | 命令 | 适合 |
 |---|---|---|
 | **npx 助手** | `npx dsh-ronge-adaptive-skill-archive`（体检：`npx dsh-ronge-adaptive-skill-archive doctor`） | 第一次用；不装东西，只体检 + 打印安装命令 |
-| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5` | v5.3.5 发布到 npm 后可用 |
-| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.5` | 固定版本、可审源码 |
+| **npm** | `plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.4.0` | v5.4.0 发布到 npm 后可用 |
+| **GitHub tag** | `plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.4.0` | 固定版本、可审源码 |
 | **本地目录** | `plugin_manager install_bundle target="/absolute/path/to/dsh-ronge-adaptive-skill-archive"` | 开发、改代码、离线 |
 
 > v5.0.0 打 tag / 发布 npm 之前，`@5.0.0` 会 404：请先用本地目录，或安装当时最新的已发布版本。安装后 DSH 需**重启**才会加载新的 Host 模块；浏览器刷新加载 Client。
@@ -306,7 +306,7 @@ Host 只依赖 Node 内置模块；Client 是 plain JS（`window.__ModuleLoader_
 
 1. **推荐 / 检索是启发式**：关键词 + 中文二元组 + 256 维哈希向量 + 信号分，不是神经模型；改写、隐喻、小语种仍会失手。
 2. **拆解 / 组队是规则引擎**：decompose / compose 基于领域词表、交付物识别与能力画像，不是 LLM 推理；多意图任务可能主次颠倒，执行前请先看 assumptions 与 conflicts。
-3. **效率是估算**：`estimate` 不等于实测节省；benchmark 是 12 领域 held-out 用例的半人工基准，不是线上遥测。
+3. **效率不是卖点**：`estimate` 不等于实测节省；真实 A/B 未达标，不写效率提升百分比。
 4. **6,399 不是质量榜**：1,001 条无描述、512 个重名、没有人工质量标注；quality 是完整度 + 仓库信号的启发式，stars 是 2026-10-29 快照，会过期。数据口径与来源见 [docs/attribution.md](docs/attribution.md)。
 5. **评测覆盖有限**：30 条已装技能、24 条库检索，以及 v5 规划 benchmark（见 [docs/benchmark.md](docs/benchmark.md)）；样本小，单条变化会影响指标。
 6. **Plan / Immersive 是 prompt 级**：模型可能忽略模式指令；不是权限级硬约束。
@@ -346,14 +346,14 @@ MIT。见 [LICENSE](LICENSE)。索引中的技能元数据归原作者，边界�
 
 ## English
 
-**Ronge's Adaptive Skill Cockpit (v5)** is a DSH-native skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive). It goes beyond listing and installing skills: it **decomposes a task, composes a skill team, drafts the missing skill, and keeps the efficiency claim auditable**.
+**Ronge's Adaptive Skill Cockpit (v5)** is a DSH-native skill cockpit for [DeepSeek Harness](https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive). It goes beyond listing and installing skills: it **decomposes a task, composes a skill team, drafts the missing skill, and makes the scope auditable**.
 
 - **Plan → compose → draft** — three read-only DSH tools (`skill_archive_plan`, `skill_archive_compose`, `skill_archive_draft_skill`) turn one task into deliverables, staged skill plans, and a `SKILL.md` draft with eval cases + lint + safety scan. Nothing is written or executed.
 - **Context-aware recommendations** — Top 4 with structured reasons (name / keyword / category / experience / affinity / exploration), local heuristic, no model calls.
 - **Live "now using"** — read from real `skill` tool calls, not inferred.
 - **Plan / Immersive modes** — ask-first orchestration, or no-ask auto-composition.
 - **Experience + self-evolution** — local feedback-weighted learning with a 10% exploration quota (0–30%), logged and rollback-able.
-- **Honest efficiency** — `method: 'estimate'` by default; measured numbers only from `docs/benchmark.md` and `docs/eval.md`. Claims matrix: [docs/claims.md](docs/claims.md).
+- **Honest scope** — no token-savings claim; real A/B is recorded even when negative. Claims matrix: [docs/claims.md](docs/claims.md).
 - **Safety boundary** — local heuristic scan (not a guarantee), high-risk installs refused by default, only `raw.githubusercontent.com/**/SKILL.md` (≤ 256 KiB), no auto-assets, backup + rollback.
 - **12 domains** — video/creative, Office, software, data, research, marketing, design, security, education, business, productivity, AI.
 - **6,399-skill metadata index** — public GitHub `SKILL.md` snapshot (2026-10-28), 14 categories; metadata only, no body redistribution ([docs/attribution.md](docs/attribution.md)).
@@ -361,7 +361,7 @@ MIT。见 [LICENSE](LICENSE)。索引中的技能元数据归原作者，边界�
 **Install** (in a DSH session):
 
 ```bash
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.4.0
 # then open any session → 「技能」 → switch Plan / Immersive
 ```
 

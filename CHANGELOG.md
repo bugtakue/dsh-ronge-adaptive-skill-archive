@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.4.0 — 2026-10-31
+
+- **定位修正**：不再承诺省 token/更快；只卖可解释拆解、技能组队、缺口造技能、验收与安全边界。
+- **planner 成本结构重做**：简单任务默认不调用 plan/直接执行；`skill_archive_plan` 对 simple 任务返回 `shouldPlan:false`，不返回 stages；复杂跨域任务才返回完整计划。
+- 工具描述明确「Plan ONLY complex multi-step or cross-domain tasks」；真实 A/B 负面数据保留在 docs/claims。
+- 测试 129/129。
+
+
 ## v5.3.5 — 2026-10-30
 
 - **修复 DSH plan 工具 lossless JSON 错误**：simple 短路计划的 skill 缺少 `why`，tool 输出含 `undefined`，DSH 报 `value is not lossless JSON`；现在 compact 输出递归剥离 undefined/非有限数，并给 skill 稳定 `why`。

@@ -124,6 +124,9 @@ test('DSH native tools are registered without install/force capabilities', async
   const result = await planTool.execute({ task: '做一份 Excel 数据分析报告' })
   assert.equal(result.ok, true)
   assert.ok(result.plan)
+  const complex = await planTool.execute({ task: '帮我把这份 docx 合同逐条核对，另外配一段 30 秒宣传视频' })
+  assert.equal(complex.plan.shouldPlan, true)
+  assert.ok(Array.isArray(complex.plan.stages))
 })
 
 test('cross-site mutating requests are rejected', async () => {
@@ -141,6 +144,8 @@ test('DSH plan tool returns lossless JSON and simple short-circuit flag', async 
   const result = await tool.execute({ task: '把会议记录整理成 docx 会议纪要' })
   assert.equal(result.ok, true)
   assert.equal(result.plan.simple, true)
+  assert.equal(result.plan.shouldPlan, false)
+  assert.equal(result.plan.stages, undefined)
   const serialized = JSON.parse(JSON.stringify(result))
   assert.equal(serialized.plan.simple, true)
   const walk = (value) => {

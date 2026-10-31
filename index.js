@@ -3370,6 +3370,18 @@ function sanitizeToolValue(value) {
 }
 
 function compactToolPlan(plan, diagnostics) {
+  if (plan.simple) {
+    const recommended = (plan.selected || []).map((skill) => skill && skill.name).filter(Boolean).slice(0, 1)
+    return sanitizeToolValue({
+      ok: true,
+      shouldPlan: false,
+      simple: true,
+      reason: '简单任务：不需要多阶段计划，直接执行即可。',
+      recommendedSkills: recommended,
+      diagnostics,
+      loadPolicy: 'do not load skills; execute directly unless output requires a specific file tool',
+    })
+  }
   const stages = (plan.stages || []).map((stage) => ({
     role: stage.role,
     intent: stage.intent,
@@ -3383,6 +3395,7 @@ function compactToolPlan(plan, diagnostics) {
   return sanitizeToolValue({
     ok: plan.ok,
     ready: plan.ready,
+    shouldPlan: true,
     simple: Boolean(plan.simple),
     pattern: plan.pattern,
     primaryIntent: plan.primaryIntent,
@@ -3411,7 +3424,7 @@ function registerIntelligenceTools(ctx) {
       tools.register({
         name: 'skill_archive_plan',
         description:
-          'Turn a task into a skill plan: deliverables, domains, primary intent and recommended installed skills. Load at most one skill at a time only when a stage actually needs it; for simple text tasks do not load skills. Does not install or change files.',
+          'Plan ONLY complex multi-step or cross-domain tasks. For simple single-deliverable tasks, do not call this tool: execute directly. When called on a simple task it returns shouldPlan=false and no stages. For complex tasks it returns stages, acceptance and at most one skill per stage; load skills only when actually needed. Does not install or change files.',
         parameters: {
           type: 'object',
           properties: {

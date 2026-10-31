@@ -286,12 +286,12 @@
   <section class="hero wrap">
     <div>
       <p class="eyebrow">DeepSeek Harness 原生插件 · <b>v5.0.0</b> · MIT · 本地优先</p>
-      <h1>拆任务 · 组队 · 造技能<br><span class="grad">效率可证</span>的驾驶舱</h1>
+      <h1>拆任务 · 组队 · 造技能<br><span class="grad">边界可证</span>的驾驶舱</h1>
       <p class="lead">
         <b>荣哥技能卷轴收藏馆</b>不只是告诉你此刻该用哪个 skill：
         它把一句话拆成交付物和子任务，给任务组一队技能，缺什么就现场造 SKILL.md 草稿，
-        再用可复跑的 benchmark 而不是感觉来谈效率。
-        <span class="en">A DSH-native cockpit that decomposes a task, composes a skill team, drafts the missing SKILL.md, and keeps efficiency auditable — locally, with no telemetry.</span>
+        再用可复跑的 benchmark 与真实 A/B（含负面结果）说明边界，不承诺省 token。
+        <span class="en">A DSH-native cockpit that decomposes a task, composes a skill team, drafts the missing SKILL.md, and keeps the scope auditable — locally, with no telemetry.</span>
       </p>
       <div class="cta">
         <a class="btn primary" href="#demo">看 3 分钟 demo →</a>
@@ -452,7 +452,7 @@
           <tr><td>正在使用</td><td><span class="yes">真实工具调用，实时</span></td><td class="no">—</td><td class="no">历史频次</td><td class="no">部分有使用记录</td></tr>
           <tr><td>任务拆解 + 组队</td><td><span class="yes">v5：阶段 / 交接 / 冲突 / 缺口</span></td><td class="no">无用户可见能力</td><td class="no">有通用 plan 模式；无 skill 组队</td><td class="no">无</td></tr>
           <tr><td>按缺口造技能</td><td><span class="yes">v5：草稿 + eval + 扫描，不落盘</span></td><td class="no">作者自己写</td><td class="no">作者侧 skill-creator</td><td class="no">无</td></tr>
-          <tr><td>效率可证</td><td><span class="yes">estimate + 可复跑 benchmark</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">无</td></tr>
+          <tr><td>边界可证</td><td><span class="yes">estimate + benchmark + 真实 A/B（含负面）</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">无</td></tr>
           <tr><td>经验 → 自进化</td><td><span class="yes">反馈归因 + 权重学习 + 10% 探索</span></td><td class="no">安装量统计</td><td class="no">作者侧评估</td><td class="no">少数有使用记录</td></tr>
           <tr><td>安装前安全</td><td><span class="yes">本地启发式扫描 + 高风险拒绝</span></td><td>合作方审计</td><td>市场分层 + 来源校验</td><td>部分有 trust score</td></tr>
           <tr><td>数据 / 遥测</td><td><span class="yes">全本地，无遥测</span></td><td>安装遥测默认开启（可关）</td><td>使用数据不回传作者</td><td>本地</td></tr>
@@ -463,7 +463,7 @@
   </section>
 
   <section class="section wrap" id="install">
-    <h2>安装（v5.3.5 发布后）</h2>
+    <h2>安装（v5.4.0 发布后）</h2>
     <p class="sub">在任意 DeepSeek Harness 会话里让 Agent 执行；profile 级安装，需要 danger-full-access 或审批。发布前请用本地目录方式。<span class="en">Install in any DSH session; before v5.0.0 is tagged, use the local-path method.</span></p>
     <div class="install-grid">
       <div class="code-card">
@@ -473,14 +473,14 @@
 # 体检：npx dsh-ronge-adaptive-skill-archive doctor</pre>
       </div>
       <div class="code-card">
-        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5">复制</button>
-        <div class="label">npm · v5.3.5 发布后可用</div>
-        <pre>plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.3.5</pre>
+        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.4.0">复制</button>
+        <div class="label">npm · v5.4.0 发布后可用</div>
+        <pre>plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.4.0</pre>
       </div>
       <div class="code-card">
-        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.5">复制</button>
+        <button class="copy" type="button" data-copy="plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.4.0">复制</button>
         <div class="label">GitHub tag · 可审源码</div>
-        <pre>plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.3.5</pre>
+        <pre>plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.4.0</pre>
       </div>
       <div class="code-card">
         <button class="copy" type="button" data-copy="plugin_manager install_bundle target=&quot;/absolute/path/to/dsh-ronge-adaptive-skill-archive&quot;">复制</button>
