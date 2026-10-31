@@ -54,7 +54,7 @@ v5 的驾驶舱把这条链路补全：
 
 ## 60 秒 Demo
 
-真实数据版拍摄脚本：[docs/demo-60s.md](docs/demo-60s.md)；录屏用 [docs/demo.html](docs/demo.html)。
+真实数据版 60 秒视频：[docs/demo-60s.mp4](docs/demo-60s.mp4)；拍摄脚本：[docs/demo-60s.md](docs/demo-60s.md)；录屏页：[docs/demo.html](docs/demo.html)。
 
 ## 30 秒安装
 

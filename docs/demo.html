@@ -21,6 +21,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .timeline{display:grid;gap:10px}.step{display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:start;border-left:2px solid #30363d;padding-left:14px}
 .step b{color:var(--accent)}.small{color:var(--muted);font-size:13px}
 a{color:var(--accent)}footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid #30363d;padding-top:18px}
+
+/* scene mode for recording: ?scene=1..4 */
+body[data-scene="1"] .card:not(.scene1),
+body[data-scene="2"] .card:not(.scene2),
+body[data-scene="3"] .card:not(.scene3),
+body[data-scene="4"] .card:not(.scene4),
+body[data-scene] .demo-usage{display:none}
+body[data-scene="4"] .grid{display:none}
 </style>
 </head>
 <body>
@@ -30,7 +38,7 @@ a{color:var(--accent)}footer{margin-top:40px;color:var(--muted);font-size:13px;b
 <p class="lead">它不承诺省 token。它把“该用哪个技能”变成可解释的计划：已装优先、阶段交接、验收标准、缺口诚实、独立复核或明确 reviewGap。</p>
 
 <div class="grid">
-  <div class="card">
+  <div class="card scene1">
     <h2>0–20s｜真实跨域任务</h2>
     <div class="k">输入</div>
     <pre>帮我把这份 docx 合同逐条核对，
@@ -44,7 +52,7 @@ a{color:var(--accent)}footer{margin-top:40px;color:var(--muted);font-size:13px;b
     <p class="small">诊断：installedCount=17，source=scan+registry；missing=[]；reviewGap=true（没有假装 review）。</p>
   </div>
 
-  <div class="card">
+  <div class="card scene2">
     <h2>20–40s｜造缺失技能</h2>
     <div class="k">输入</div>
     <pre>做一个合同条款比对技能</pre>
@@ -55,7 +63,7 @@ quality 100 / A · lint ok · safety low
     <p class="small">缺口不再丢给用户一句“去装技能”。</p>
   </div>
 
-  <div class="card">
+  <div class="card scene3">
     <h2>40–55s｜真实 A/B，不吹</h2>
     <table>
       <tr><th>任务</th><th>baseline</th><th>plugin</th></tr>
@@ -67,7 +75,7 @@ quality 100 / A · lint ok · safety low
   </div>
 </div>
 
-<div class="card">
+<div class="card boundary scene4">
   <h2>55–60s｜边界</h2>
   <div class="timeline">
     <div class="step"><b>简单任务</b><span>不调用 plan，直接执行；plan 工具返回 <code>shouldPlan=false</code>。</span></div>
@@ -77,12 +85,20 @@ quality 100 / A · lint ok · safety low
   </div>
 </div>
 
-<div class="card" style="margin-top:18px">
+<div class="card demo-usage" style="margin-top:18px">
   <h2>拍 60 秒视频用这个页面</h2>
   <p class="small">横屏 1920×1080，录屏从 hero 开始，按 0–20 / 20–40 / 40–55 / 55–60 四段切换。数字与 live 5.4.0 一致；若版本变化，重新取 plan 并更新页面，不 P 图。完整脚本：<a href="demo-60s.md">demo-60s.md</a>；质量评测：<a href="plan-quality.md">plan-quality.md</a>；负面 A/B：<a href="benchmark-live-artifacts.md">benchmark-live-artifacts.md</a>。</p>
 </div>
 
 <footer>GitHub: bugtakue/dsh-ronge-adaptive-skill-archive · MIT · 无遥测 · 所有数字有脚本/原始记录 · 不承诺效率提升</footer>
 </div>
+
+<script>
+const scene = new URLSearchParams(location.search).get('scene')
+if (scene && ['1','2','3','4'].includes(scene)) {
+  document.body.dataset.scene = scene
+  if (scene === '4') document.querySelector('.card:last-of-type')?.classList.add('boundary')
+}
+</script>
 </body>
 </html>
