@@ -20,7 +20,7 @@
 
 ## 未达标
 
-- Excel 用例的 `agent-experience` 选择不相关，说明 capability profile/domain 权重仍过宽；
+- Excel 用例的 `agent-experience` 选择不相关；v5.4.2 已移除生产阶段的 generic task-planning 命中与 unassigned 注入，待 live 复验；
 - 复杂任务缺少“计划可读性/执行顺序合理性”的自动评分；
 - 这些不影响“边界诚实”，但影响“够不够聪明”。
 
