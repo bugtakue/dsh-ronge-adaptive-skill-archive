@@ -1,6 +1,6 @@
 {
   "name": "dsh-ronge-adaptive-skill-archive",
-  "version": "5.5.0",
+  "version": "5.5.1",
   "description": "DSH-native skill intelligence cockpit: task decomposition, cross-domain multi-skill composition, skill authoring, local recommendations and safety scans for DeepSeek Harness.",
   "type": "module",
   "repository": {

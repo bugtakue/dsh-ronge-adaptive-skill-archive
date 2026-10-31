@@ -9,13 +9,13 @@
 - 安装（推荐）：
 
 ```bash
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.5.0
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.5.1
 ```
 
 - 固定 GitHub 版本：
 
 ```bash
-plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.5.0
+plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.5.1
 ```
 
 - 卸载：`plugin_manager remove_bundle target=dsh-ronge-adaptive-skill-archive`

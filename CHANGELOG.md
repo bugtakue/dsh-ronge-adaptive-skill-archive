@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.5.1 — 2026-10-31
+
+- **plan 也吃完整会话上下文**：HTTP/面板 `/intelligence/plan` 支持 `sessionId`，使用 `analyzeSession` 的有界会话文本（最多 8k 字符）+ 工作区文件上下文；诊断返回 `contextMessages/contextFiles/contextSource`。
+- 之前只有 panel 推荐使用会话上下文；现在 plan/compose 也使用，推荐与组合基于同一份上下文。
+- 不改变边界：上下文有界、规则引擎、不是 LLM；DSH 原生 plan tool 仍不自动读取会话，需显式传 context。
+- 测试 133/133。
+
+
 ## v5.5.0 — 2026-10-31
 
 - **DSH 生态集成**：新增可安装 DSH skill `dsh-skill-cockpit`（复杂任务才用 plan；简单任务直接执行），已出现在当前 DSH 技能目录。

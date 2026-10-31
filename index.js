@@ -3868,7 +3868,19 @@ export function apply(ctx, config = {}) {
           const intel = await loadIntelligence()
           const cwd = planRequestCwd(ctx, payload)
           const resolved = await resolveInstalledSkills(ctx, cwd)
-          const diagnostics = { installedCount: resolved.count, installedSource: resolved.source, cwd }
+          const sessionId = payload?.sessionId ? String(payload.sessionId) : ''
+          const analysis = sessionId ? analyzeSession(ctx, sessionId, cwd) : null
+          const explicitContext = String(payload?.context || '').trim()
+          const sessionContext = analysis?.contextText ? String(analysis.contextText).slice(0, 8000) : ''
+          const contextText = [explicitContext, sessionContext].filter(Boolean).join('\n') || planRequestContext(cwd)
+          const diagnostics = {
+            installedCount: resolved.count,
+            installedSource: resolved.source,
+            cwd,
+            contextMessages: Number(analysis?.contextMessages || 0),
+            contextFiles: Number(analysis?.contextFiles || 0),
+            contextSource: explicitContext && sessionContext ? 'request+session' : sessionContext ? 'session' : explicitContext ? 'request' : 'cwd-files',
+          }
           if (action === 'draft') {
             const draft = intel.draftSkill({
               task,
@@ -3881,7 +3893,7 @@ export function apply(ctx, config = {}) {
           const base = {
             task,
             cwd,
-            context: String(payload?.context || planRequestContext(cwd)),
+            context: contextText,
             mode: String(payload?.mode || ''),
             installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],

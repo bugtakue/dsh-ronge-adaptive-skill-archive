@@ -13,12 +13,22 @@ process.env.DSH_AGENTS_HOME = path.join(tmp, 'agents')
 const skills = JSON.parse(fs.readFileSync(new URL('./fixtures/eval-skills.json', import.meta.url), 'utf8'))
 const routes = new Map()
 const tools = new Map()
+const fakeSession = {
+  seq: 4,
+  header: { cwd: tmp, title: '合同核对会话' },
+  snapshotEvents: () => [],
+  deriveMessages: () => [
+    { role: 'user', content: [{ type: 'text', text: '帮我把这份 docx 合同逐条核对，金额和日期要小心' }] },
+    { role: 'user', content: [{ type: 'text', text: '另外配一段 30 秒宣传视频' }] },
+  ],
+}
 const ctx = {
   webServer: { register: ({ path: routePath, handler }) => { routes.set(routePath, handler); return () => routes.delete(routePath) } },
   skills: { list: async () => skills },
   get(name) {
     if (name === 'systemPrompt') return { section: () => () => {} }
     if (name === 'tools') return { register: (definition) => { tools.set(definition.name, definition); return () => tools.delete(definition.name) } }
+    if (name === 'sessions') return { get: (sessionId) => (sessionId === 'session-test' ? fakeSession : undefined) }
     return undefined
   },
   effect(fn) { const dispose = fn(); return () => { if (typeof dispose === 'function') dispose() } },
@@ -154,4 +164,16 @@ test('DSH plan tool returns lossless JSON and simple short-circuit flag', async 
     assert.notEqual(value, undefined, 'tool output must not contain undefined')
   }
   walk(result)
+})
+
+
+test('plan endpoint consumes bounded session context when sessionId is provided', async () => {
+  const plan = await call('/dsh-ronge-adaptive-skill-archive/intelligence/plan', {
+    method: 'POST',
+    body: { task: '继续', sessionId: 'session-test' },
+  })
+  assert.equal(plan.status, 200)
+  assert.equal(plan.body.diagnostics.contextSource, 'session')
+  assert.ok(plan.body.diagnostics.contextMessages >= 2)
+  assert.ok(plan.body.plan)
 })
