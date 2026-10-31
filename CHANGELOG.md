@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.4.1 — 2026-10-31
+
+- **critical 缺口强制 escalation**：任何 critical missing（如 security-audit/compliance-check）不再被 sequential 掩盖，plan 必须升级为待确认/安装。
+- 新增计划质量评测 `docs/plan-quality.md`：真实复杂任务按“可解释/可验收/诚实报缺口”评估，不测 token。
+- 新增回归测试：复杂跨域保留已装 primary + acceptance；安全缺口必须 escalation。
+- 测试 131/131。
+
+
 ## v5.4.0 — 2026-10-31
 
 - **定位修正**：不再承诺省 token/更快；只卖可解释拆解、技能组队、缺口造技能、验收与安全边界。

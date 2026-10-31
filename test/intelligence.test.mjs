@@ -656,3 +656,17 @@ test('cross-domain tasks are not short-circuited', () => {
   const plan = composeSkillPlan({ task: CROSS_TASK, installedSkills: evalSkills, libraryEntries: [] })
   assert.equal(plan.simple, false)
 })
+
+test('critical security gaps escalate instead of pretending to be ready', () => {
+  const plan = composeSkillPlan({ task: '审查第三方 SKILL.md 的安装脚本安全风险，给出审计报告', installedSkills: evalSkills, libraryEntries: [] })
+  assert.equal(plan.pattern, 'escalation')
+  assert.ok(plan.missing.some((item) => item.capability === 'security-audit' && item.critical))
+})
+
+test('complex cross-domain plan keeps installed primary skill and per-stage acceptance', () => {
+  const plan = composeSkillPlan({ task: CROSS_TASK, installedSkills: evalSkills, libraryEntries: [] })
+  assert.equal(plan.simple, false)
+  assert.ok(plan.stages.length >= 2)
+  assert.ok(plan.stages.every((stage) => typeof stage.acceptance === 'string' && stage.acceptance.length > 0))
+  assert.ok(plan.stages.some((stage) => stage.skills.some((skill) => skill.name === 'office-docx' && skill.installed)))
+})
