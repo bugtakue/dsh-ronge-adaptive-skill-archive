@@ -685,3 +685,16 @@ test('generic planning skill is not assigned to a production stage', () => {
   const names = plan.stages.flatMap((stage) => stage.skills.map((skill) => skill.name))
   assert.equal(names.includes('agent-experience'), false)
 })
+
+test('anaphoric task uses bounded context for planning signal', () => {
+  const context = '之前任务：帮我把这份 docx 合同逐条核对，另外配一段 30 秒宣传视频'
+  const plan = composeSkillPlan({
+    task: '继续，把刚才那个收尾',
+    context,
+    installedSkills: evalSkills,
+    libraryEntries: [],
+  })
+  assert.ok(plan.stages.length >= 1, 'context should give the plan usable signal')
+  const names = plan.stages.flatMap((stage) => stage.skills.map((skill) => skill.name))
+  assert.ok(names.includes('office-docx') || names.some((name) => /video|hyperframes|beat/.test(name)), names.join(','))
+})

@@ -9,13 +9,13 @@
 - 安装（推荐）：
 
 ```bash
-plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.5.2
+plugin_manager install_bundle target=dsh-ronge-adaptive-skill-archive@5.5.3
 ```
 
 - 固定 GitHub 版本：
 
 ```bash
-plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.5.2
+plugin_manager install_bundle target=git+https://github.com/bugtakue/dsh-ronge-adaptive-skill-archive.git#v5.5.3
 ```
 
 - 卸载：`plugin_manager remove_bundle target=dsh-ronge-adaptive-skill-archive`
@@ -72,3 +72,10 @@ npm test
 npm run check:dsh
 node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 ```
+
+## 6. 上下文感知（v5.5.3）
+
+- HTTP/面板 `intelligence/plan` 接受 `sessionId`：读取有界用户消息 + 工作区文件，返回 `contextMessages/contextFiles/contextSource/contextAnaphora`；
+- 短句「继续/按刚才/收尾」会用上下文补全 planning signal；只在短句时启用，不污染普通任务；
+- DSH 原生 `skill_archive_plan` 工具不自动读会话；需要时由 agent 传 context；
+- 上下文有上限（plan 8k/8k 字符），不是无限历史，也不是 LLM 推理。
