@@ -21,6 +21,7 @@ const fakeSession = {
     { role: 'user', content: [{ type: 'text', text: '帮我把这份 docx 合同逐条核对，金额和日期要小心' }] },
     { role: 'user', content: [{ type: 'text', text: '另外配一段 30 秒宣传视频' }] },
     { role: 'user', content: [{ type: 'text', text: 'Background subagent 123 finished and will do no further work.' }] },
+    { role: 'user', content: [{ type: 'text', text: 'cv cdwdsswawsaq' }] },
   ],
 }
 const ctx = {

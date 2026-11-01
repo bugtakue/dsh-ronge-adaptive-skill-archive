@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.8 — 2026-11-01
+
+- **垃圾输入过滤**：`lastSubstantiveTask` 增加 task-signal 检查（CJK 或常见任务词），乱码/无意义消息不再被当成最近任务。
+- 回归测试覆盖；测试 136/136。
+- 仍不承诺效率。
+
+
 ## v5.5.7 — 2026-11-01
 
 - **修复通知污染上下文**：`lastSubstantiveTask` 过滤 Background subagent / Agent / System / Tool result 等通知，避免「继续」计划被系统消息带偏。

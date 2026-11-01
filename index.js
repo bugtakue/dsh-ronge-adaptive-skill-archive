@@ -2625,9 +2625,11 @@ function analyzeSession(ctx, sessionId, cwd) {
     .join('\n')
     .slice(0, 16000)
   const metaTaskRe = /(设置goal|设置目标|一直验证|继续验证|重启|睡觉|睡吧|先睡|好的|可以|行|谢谢|你就|按你选的|全部通过|不承诺|目标已|先这样)/i
+  const taskSignalRe = /[\u3400-\u9fff]|\b(docx|xlsx|pptx|pdf|video|code|fix|build|write|create|analy\w*|review|audit|test|plan|deck|slide|plugin|skill|mcp)\b/i
   const lastSubstantiveTask = [...contextUserTexts]
     .reverse()
     .filter((text) => !/^(Background subagent|Agent\b|This is an automated|System\b|Tool result\b)/i.test(String(text || '').trim()))
+    .filter((text) => taskSignalRe.test(String(text || '')))
     .find((text) => text && text.length >= 8 && !metaTaskRe.test(text) && !/^(继续|好|可以|行|嗯|ok|yes|接着|按刚才|按之前|那个|收尾)$/i.test(text.trim())) || ''
   return {
     running: lastType !== 'turn/end',
