@@ -168,6 +168,11 @@ test('DSH plan tool returns lossless JSON and simple short-circuit flag', async 
 
 
 test('plan endpoint consumes bounded session context when sessionId is provided', async () => {
+  const without = await call('/dsh-ronge-adaptive-skill-archive/intelligence/plan', {
+    method: 'POST',
+    body: { task: '继续' },
+  })
+  assert.equal(without.body.diagnostics.contextAnaphora, false)
   const plan = await call('/dsh-ronge-adaptive-skill-archive/intelligence/plan', {
     method: 'POST',
     body: { task: '继续', sessionId: 'session-test' },
@@ -177,4 +182,6 @@ test('plan endpoint consumes bounded session context when sessionId is provided'
   assert.ok(plan.body.diagnostics.contextMessages >= 2)
   assert.equal(plan.body.diagnostics.contextAnaphora, true)
   assert.ok(plan.body.plan)
+  const stageNames = (plan.body.plan.stages || []).flatMap((stage) => (stage.skills || []).map((skill) => skill.name))
+  assert.ok(stageNames.some((name) => name === 'office-docx' || /video|hyperframes|beat/.test(name)), 'context should supply planning signal: ' + stageNames.join(','))
 })

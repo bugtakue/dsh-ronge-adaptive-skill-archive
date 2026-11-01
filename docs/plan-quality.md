@@ -42,3 +42,12 @@ node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.t
 - 安全审查计划 pattern=`escalation`，且 `security-audit` 为 critical missing。
 
 2026-10-31 在 live 5.4.2 上复验：**全部 7 项通过**（版本、simple、Excel 相关性、security escalation）。
+
+## 上下文端点回归（本地 5.5.4）
+
+`test/intelligence-routes.test.mjs` 用假 session 做端到端对比：
+
+- 任务「继续」（无 session）：`contextAnaphora=false`，没有可用 stage；
+- 同一任务带 `sessionId`（上文：docx 合同核对 + 30 秒视频）：`contextAnaphora=true`，计划出现 `office-docx` 和/或视频技能。
+
+这说明 HTTP plan 的上下文补全链路在代码层已通过，不等同于 live 已验证；live 需重启后跑真实主会话测试。

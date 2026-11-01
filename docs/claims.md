@@ -112,3 +112,4 @@ npm pack --dry-run --json
 
 发版前以实际输出更新 §1/§2 的日期与标签；不达标就删数字，不改阈值凑数。
 | C10 | 60 秒 demo | `docs/demo-60s.mp4`（1920×1080/60s/H.264，静音+屏上文字）、`docs/demo.html`、`docs/demo-60s.md` | **已交付**；不是真人旁白/产品 UI 录屏，不能当交互演示宣称 |
+| C11 | 上下文端点回归 | `test/intelligence-routes.test.mjs` 假 session：无 session 无相关 stage；带 session 出现 office-docx/视频 | **local-verified**；live 主会话待重启复验 |
