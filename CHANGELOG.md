@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.4 — 2026-11-01
+
+- **DSH 生态回归脚本**：新增 `scripts/check-ecosystem.mjs`，校验 bundle patch、DSH skill、installer dry-run、MCP initialize 与工具列表；新增 CI 测试。
+- 短句上下文补全已在 v5.5.3；live 仍需重启验证。
+- 测试 135/135。
+
+
 ## v5.5.3 — 2026-10-31
 
 - **短句上下文补全**：`继续/按刚才/收尾` 等任务只在短句时使用有界会话上下文补全 planning signal，普通任务不受影响。
