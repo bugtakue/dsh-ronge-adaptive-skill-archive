@@ -92,10 +92,10 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 ## 8. 发布链路（2026-11-01）
 
 - publish workflow 失败根因：`check-ecosystem` 把本机 DSH skill 安装检查当必需，Linux CI 无该 skill；v5.5.10/5.5.11 改为 optional 并修正测试断言。
-- npm latest 已到 **5.5.11**；GitHub Release v5.6.2。
+- npm latest 已到 **5.5.11**；GitHub Release v5.6.3。
 - live 若仍是 5.5.9，重启后才是 5.5.11。
 
-## 9. 未安装技能临时试用（v5.6.2）
+## 9. 未安装技能临时试用（v5.6.3）
 
 不必先安装才能试：
 
@@ -106,7 +106,7 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 
 HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
 
-## 10. 人机协同交互（v5.6.2）
+## 10. 人机协同交互（v5.6.3）
 
 计划是**建议**，不是执行结果：
 
@@ -116,3 +116,15 @@ HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
 - 明确提示：不会自动执行、不会自动安装。
 
 UI 回归：28/28。
+
+## 11. 权限/协作模式（v5.6.3）
+
+面板顶部模式选择器现在有三档：
+
+| 模式 | 行为 |
+|---|---|
+| 计划模式 | 只规划，等用户确认；不加载/执行 |
+| 协作模式 | 先给计划，用户勾选/确认阶段后再执行；不自动安装 |
+| 完全权限 | 不逐条确认，自动加载并执行；风险自负 |
+
+`POST /mode` 接受 `off / plan / collaborate / immersive`；系统提示按模式切换。

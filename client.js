@@ -66,9 +66,11 @@ window.__ModuleLoader__.load({
       recentUsed: '最近使用',
       mode: '模式',
       planMode: '计划模式',
-      immersiveMode: '沉浸模式',
-      planHint: '会先问你确认再执行',
-      immersiveHint: '不询问，自动执行',
+      collabMode: '协作模式',
+      immersiveMode: '完全权限',
+      planHint: '只规划，等你确认',
+      collabHint: '计划后勾选阶段再执行',
+      immersiveHint: '不逐条确认，自动执行（风险自负）',
       experience: '经验',
       lastTask: '上次：',
       lastOutcome: '结果：',
@@ -366,9 +368,11 @@ window.__ModuleLoader__.load({
       recentUsed: 'Recently used',
       mode: 'Mode',
       planMode: 'Plan',
-      immersiveMode: 'Immersive',
-      planHint: 'Asks for confirmation first',
-      immersiveHint: 'No ask, auto-execute',
+      collabMode: 'Collaborate',
+      immersiveMode: 'Full access',
+      planHint: 'Plan only; wait for approval',
+      collabHint: 'Approve stages after planning',
+      immersiveHint: 'No per-step confirmation; auto-execute (at your risk)',
       experience: 'Experience',
       lastTask: 'Last: ',
       lastOutcome: 'Outcome: ',
@@ -4829,6 +4833,7 @@ window.__ModuleLoader__.load({
                   onChange: changeMode,
                   options: [
                     { value: 'plan', label: t('planMode'), title: t('planHint') },
+                    { value: 'collaborate', label: t('collabMode'), title: t('collabHint') },
                     { value: 'immersive', label: t('immersiveMode'), title: t('immersiveHint') },
                   ],
                 }),
@@ -4837,9 +4842,11 @@ window.__ModuleLoader__.load({
                   { className: 'sf-mode-hint' },
                   currentMode === 'plan'
                     ? t('planHint')
-                    : currentMode === 'immersive'
-                      ? t('immersiveHint')
-                      : '',
+                    : currentMode === 'collaborate'
+                      ? t('collabHint')
+                      : currentMode === 'immersive'
+                        ? t('immersiveHint')
+                        : '',
                 ),
               ),
               recommendations.length

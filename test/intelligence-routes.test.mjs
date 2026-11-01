@@ -202,3 +202,13 @@ test('DSH plan tool accepts bounded context for anaphoric tasks', async () => {
   assert.ok(Array.isArray(result.plan.stages) && result.plan.stages.length >= 1)
   assert.equal(result.plan.diagnostics.contextSource, 'tool-argument')
 })
+
+test('mode endpoint supports plan / collaborate / full-access', async () => {
+  for (const mode of ['collaborate', 'immersive', 'plan']) {
+    const result = await call('/dsh-ronge-adaptive-skill-archive/mode', { method: 'POST', body: { mode } })
+    assert.equal(result.status, 200)
+    assert.equal(result.body.mode, mode)
+  }
+  const bad = await call('/dsh-ronge-adaptive-skill-archive/mode', { method: 'POST', body: { mode: 'root' } })
+  assert.equal(bad.status, 400)
+})

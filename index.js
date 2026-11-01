@@ -31,9 +31,12 @@ const MODE_TEXT = {
   plan: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） plan mode
 
 Plan mode is ON. Before acting, inspect the request and the installed skills, then present a short plan that names the 1–3 relevant skills and what you will do, and ask the user to confirm before proceeding. Do not execute or load skills until the user confirms. The point of the question is approval to proceed, not a choice between single and combined skills.`,
-  immersive: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） immersive mode
+  collaborate: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） collaborative mode
 
-Immersive mode is ON. Do not ask the user to confirm. Inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, execute the task, and state which skills you used and why.`,
+Collaborative mode is ON. Present a short plan with stages, acceptance and the installed skills you propose. Ask the user to select/approve the stages before acting. Execute only approved stages; load at most one skill at a time; do not install anything without explicit approval; report what was done and what was skipped.`,
+  immersive: `## 荣哥技能卷轴收藏馆（可沉浸式体验版本） full-access mode
+
+Full-access mode is ON. Do not ask the user to confirm. Inspect the available skills, load the 1–3 most relevant with the \`skill\` tool, combine their instructions, execute the task, and state which skills you used and why.`,
 }
 
 const SKILL_INTROS = {
@@ -332,7 +335,7 @@ function ensureStudioDir() {
 function loadStudioState() {
   try {
     const config = JSON.parse(fs.readFileSync(modeFile(), 'utf8'))
-    if (config && ['off', 'plan', 'immersive'].includes(config.mode)) studioMode = config.mode
+    if (config && ['off', 'plan', 'collaborate', 'immersive'].includes(config.mode)) studioMode = config.mode
   } catch {
     studioMode = 'plan'
   }
@@ -3478,7 +3481,7 @@ function registerIntelligenceTools(ctx) {
           properties: {
             task: { type: 'string', description: 'The user task in their own words.' },
             cwd: { type: 'string', description: 'Optional current working directory.' },
-            mode: { type: 'string', enum: ['off', 'plan', 'immersive'], description: 'Optional current Harness mode.' },
+            mode: { type: 'string', enum: ['off', 'plan', 'collaborate', 'immersive'], description: 'Optional current Harness mode.' },
             context: { type: 'string', description: 'Optional bounded recent conversation context (max 8000 chars); useful for short anaphoric tasks.' },
             sessionId: { type: 'string', description: 'Optional DSH session id; the Host reads bounded session context when available.' },
           },
@@ -3688,8 +3691,8 @@ export function apply(ctx, config = {}) {
         if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
         const payload = await readJson(req)
         const next = String(payload?.mode ?? '')
-        if (!['off', 'plan', 'immersive'].includes(next)) {
-          throw new HttpError(400, 'mode must be off, plan, or immersive')
+        if (!['off', 'plan', 'collaborate', 'immersive'].includes(next)) {
+          throw new HttpError(400, 'mode must be off, plan, collaborate, or immersive')
         }
         saveStudioMode(next)
         sendJson(res, 200, { ok: true, mode: next })
