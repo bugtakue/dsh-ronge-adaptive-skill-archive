@@ -103,3 +103,15 @@ v5.5.9 过滤 system-reminder / available_skills 消息；回归测试覆盖。l
   - 无 session：contextTask 空，计划使用 cordis 插件技能；
   - 带主会话：`contextTask='继续 记得把我们做出dsh生态'`，contextAnaphora=true，计划 escalation（无具体交付物）。
 - 结论：**上下文污染已修复，最近任务选对**；但这条模糊任务仍无法生成可执行 stage，属于任务本身信息不足，不写成“上下文智能已全面提升”。
+
+## live 5.5.9：显式 context 测试
+
+同一任务「继续，把刚才那个收尾」：
+
+| 输入 | 结果 |
+|---|---|
+| 无 context | `cordis-plugin-development` / `cordis-composition-reference` |
+| 显式 context：之前任务=docx 合同核对 + 30 秒视频 | `office-docx` + `hyperframes/beat-promo-director` 两阶段 |
+
+这是**真实的 API 结果改善**：有界 context 让模糊短句变成可执行的两阶段计划。  
+但这不是“自动读取完整会话已完美”：主会话的 contextTask 已选对，若该任务本身模糊仍会 escalation；显式 context 是目前最可靠的路径。
