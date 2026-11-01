@@ -143,3 +143,13 @@ v5.6.1 过滤 system-reminder / available_skills 消息；回归测试覆盖。l
 - 显式 context 的真实改善已验证；
 - 主会话能正确选到最近任务，但任务模糊时 escalation 是诚实行为；
 - 不把“完整会话语义已解决”写成通过。
+
+## 未安装技能临时试用 live 验证（5.6.1）
+
+- 调用 `/discover/try`，`name=ideogram-ci-integration`：
+  - HTTP 200
+  - `temporary=true`、`installed=false`
+  - 返回 4000 字符 bounded SKILL.md
+  - security=medium
+  - `~/.dsh/skills/ideogram-ci-integration` **不存在**（没有写盘/安装）
+- `check-live-quality` 在 5.6.1 上 7/7 通过。

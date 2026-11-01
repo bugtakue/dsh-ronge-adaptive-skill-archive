@@ -116,4 +116,4 @@ npm pack --dry-run --json
 | C12 | 复杂任务质量 live | live 5.5.9：contract+video 2 stages + acceptance + reviewGap；security escalation + critical missing | **live-verified** |
 | C13 | npm 发布链路 | GitHub Actions publish v5.6.1 成功；npm latest=5.5.11；v5.5.4–v5.5.9 因 optional check 误报失败已修复 | **fixed/verified** |
 | C14 | live 质量/生态 | live 5.5.11：quality 7/7；ecosystem 10/10；contract+video acceptance/reviewGap；security escalation | **live-verified** |
-| C14 | 未安装技能临时试用 | `skill_archive_try_skill` + `/discover/try`：bounded 内容、安全扫描、temporary/installed=false、高风险拒绝 | **implemented；需 live 网络测试** |
+| C14 | 未安装技能临时试用 | live 5.6.1 `/discover/try`：ideogram 技能返回 4000 字符、security medium、temporary=true、installed=false，未创建技能目录 | **live-verified** |
