@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.6.1 — 2026-11-01
+
+- 修复 v5.6.0 发布前 market index 未重建导致 `check:dsh` 失败；功能等同 v5.6.0（未安装技能临时试用）。
+- 测试 136/136。
+
+
 ## v5.6.0 — 2026-11-01
 
 - **未安装技能临时试用**：新增 `skill_archive_try_skill` 与 `POST /discover/try`，可按 library name / raw URL 读取 SKILL.md 的 bounded 内容与安全扫描；`temporary:true`、`installed:false`，不写盘、不安装、不执行，高风险拒绝。
