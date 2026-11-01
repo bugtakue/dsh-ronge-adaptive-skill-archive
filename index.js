@@ -3435,6 +3435,8 @@ function registerIntelligenceTools(ctx) {
             task: { type: 'string', description: 'The user task in their own words.' },
             cwd: { type: 'string', description: 'Optional current working directory.' },
             mode: { type: 'string', enum: ['off', 'plan', 'immersive'], description: 'Optional current Harness mode.' },
+            context: { type: 'string', description: 'Optional bounded recent conversation context (max 8000 chars); useful for short anaphoric tasks.' },
+            sessionId: { type: 'string', description: 'Optional DSH session id; the Host reads bounded session context when available.' },
           },
           required: ['task'],
         },
@@ -3443,6 +3445,8 @@ function registerIntelligenceTools(ctx) {
           const intel = await loadIntelligence()
           const cwd = String(args?.cwd || '')
           const resolved = await resolveInstalledSkills(ctx, cwd)
+          const analysis = args?.sessionId ? analyzeSession(ctx, String(args.sessionId), cwd) : null
+          const contextText = String(args?.context || '').trim() || (analysis?.contextText ? String(analysis.contextText).slice(0, 8000) : planRequestContext(cwd))
           const plan = intel.composeSkillPlan({
             task: String(args?.task || ''),
             cwd,
@@ -3450,10 +3454,10 @@ function registerIntelligenceTools(ctx) {
             installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
-            context: planRequestContext(cwd),
+            context: contextText,
             maxSkills: 5,
           })
-          return { ok: true, plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd }) }
+          return { ok: true, plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd, contextSource: args?.context ? 'tool-argument' : analysis?.contextText ? 'session' : 'cwd-files' }) }
         },
       }),
     )
@@ -3468,6 +3472,8 @@ function registerIntelligenceTools(ctx) {
             task: { type: 'string', description: 'The user task in their own words.' },
             cwd: { type: 'string', description: 'Optional current working directory.' },
             maxSkills: { type: 'integer', minimum: 1, maximum: 5, description: 'Maximum skills to include. Default 4.' },
+            context: { type: 'string', description: 'Optional bounded recent conversation context (max 8000 chars).' },
+            sessionId: { type: 'string', description: 'Optional DSH session id; the Host reads bounded session context when available.' },
           },
           required: ['task'],
         },
@@ -3476,18 +3482,20 @@ function registerIntelligenceTools(ctx) {
           const intel = await loadIntelligence()
           const cwd = String(args?.cwd || '')
           const resolved = await resolveInstalledSkills(ctx, cwd)
+          const analysis = args?.sessionId ? analyzeSession(ctx, String(args.sessionId), cwd) : null
+          const contextText = String(args?.context || '').trim() || (analysis?.contextText ? String(analysis.contextText).slice(0, 8000) : planRequestContext(cwd))
           const plan = intel.composeSkillPlan({
             task: String(args?.task || ''),
             cwd,
             installedSkills: resolved.skills,
             libraryEntries: loadLibraryIndex().entries || [],
             capabilityIndex: loadCapabilityIndex(),
-            context: planRequestContext(cwd),
+            context: contextText,
             maxSkills: Number(args?.maxSkills) || 5,
           })
           return {
             ok: true,
-            plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd }),
+            plan: compactToolPlan(plan, { installedCount: resolved.count, installedSource: resolved.source, cwd, contextSource: args?.context ? 'tool-argument' : analysis?.contextText ? 'session' : 'cwd-files' }),
           }
         },
       }),

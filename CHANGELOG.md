@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.5 — 2026-11-01
+
+- **DSH 工具上下文参数**：`skill_archive_plan` / `compose` 支持可选 `context` 与 `sessionId`；由调用方显式提供 bounded context，工具不自动读无限历史。
+- 新增回归测试：短句「继续」+ tool context 得到 include 视频/合同相关计划，`contextSource=tool-argument`。
+- 测试 136/136。
+
+
 ## v5.5.4 — 2026-11-01
 
 - **DSH 生态回归脚本**：新增 `scripts/check-ecosystem.mjs`，校验 bundle patch、DSH skill、installer dry-run、MCP initialize 与工具列表；新增 CI 测试。

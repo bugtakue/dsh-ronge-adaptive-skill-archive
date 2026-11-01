@@ -185,3 +185,15 @@ test('plan endpoint consumes bounded session context when sessionId is provided'
   const stageNames = (plan.body.plan.stages || []).flatMap((stage) => (stage.skills || []).map((skill) => skill.name))
   assert.ok(stageNames.some((name) => name === 'office-docx' || /video|hyperframes|beat/.test(name)), 'context should supply planning signal: ' + stageNames.join(','))
 })
+
+test('DSH plan tool accepts bounded context for anaphoric tasks', async () => {
+  const tool = tools.get('skill_archive_plan')
+  const result = await tool.execute({
+    task: '继续，把刚才那个收尾',
+    context: '之前任务：帮我把这份 docx 合同逐条核对，另外配一段 30 秒宣传视频',
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.plan.shouldPlan, true)
+  assert.ok(Array.isArray(result.plan.stages) && result.plan.stages.length >= 1)
+  assert.equal(result.plan.diagnostics.contextSource, 'tool-argument')
+})
