@@ -93,3 +93,13 @@ live 需重启后复验。
 live 5.5.8 发现 `<system-reminder> <available_skills>` 会被当成最近任务，导致「继续」计划选到视频/技能目录。
 
 v5.5.9 过滤 system-reminder / available_skills 消息；回归测试覆盖。live 需重启复验。
+
+
+## live 5.5.9 复验（2026-11-01）
+
+- `check-live-quality`：7/7 通过；
+- `check-ecosystem`：10/10 通过；
+- 同一任务「继续，把刚才那个收尾」：
+  - 无 session：contextTask 空，计划使用 cordis 插件技能；
+  - 带主会话：`contextTask='继续 记得把我们做出dsh生态'`，contextAnaphora=true，计划 escalation（无具体交付物）。
+- 结论：**上下文污染已修复，最近任务选对**；但这条模糊任务仍无法生成可执行 stage，属于任务本身信息不足，不写成“上下文智能已全面提升”。
