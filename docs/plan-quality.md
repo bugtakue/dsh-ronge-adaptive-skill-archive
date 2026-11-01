@@ -115,3 +115,14 @@ v5.5.9 过滤 system-reminder / available_skills 消息；回归测试覆盖。l
 
 这是**真实的 API 结果改善**：有界 context 让模糊短句变成可执行的两阶段计划。  
 但这不是“自动读取完整会话已完美”：主会话的 contextTask 已选对，若该任务本身模糊仍会 escalation；显式 context 是目前最可靠的路径。
+
+## live 5.5.9：复杂任务质量
+
+- contract + 30 秒视频：
+  - 2 stages：`office-docx` / `hyperframes` + `beat-promo-director`
+  - 每阶段 acceptance ✅
+  - `reviewGap=true`，`missing=[]`
+- 第三方 SKILL 安全审查：
+  - `pattern=escalation`
+  - `security-audit/compliance-check/prompt-injection-defense` critical missing
+  - escalate stage 有 acceptance ✅

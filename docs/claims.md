@@ -113,3 +113,4 @@ npm pack --dry-run --json
 发版前以实际输出更新 §1/§2 的日期与标签；不达标就删数字，不改阈值凑数。
 | C10 | 60 秒 demo | `docs/demo-60s.mp4`（1920×1080/60s/H.264，静音+屏上文字）、`docs/demo.html`、`docs/demo-60s.md` | **已交付**；不是真人旁白/产品 UI 录屏，不能当交互演示宣称 |
 | C11 | 上下文回归 | live 5.5.9：显式 context 下模糊「继续」→ office-docx + 视频两阶段；无 context → 无关插件技能；session contextTask 已选对但模糊任务仍 escalation | **explicit-context live-verified；session semantic partial** |
+| C12 | 复杂任务质量 live | live 5.5.9：contract+video 2 stages + acceptance + reviewGap；security escalation + critical missing | **live-verified** |
