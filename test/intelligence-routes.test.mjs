@@ -181,6 +181,7 @@ test('plan endpoint consumes bounded session context when sessionId is provided'
   assert.equal(plan.body.diagnostics.contextSource, 'session')
   assert.ok(plan.body.diagnostics.contextMessages >= 2)
   assert.equal(plan.body.diagnostics.contextAnaphora, true)
+  assert.match(plan.body.diagnostics.contextTask, /宣传视频/)
   assert.ok(plan.body.plan)
   const stageNames = (plan.body.plan.stages || []).flatMap((stage) => (stage.skills || []).map((skill) => skill.name))
   assert.ok(stageNames.some((name) => name === 'office-docx' || /video|hyperframes|beat/.test(name)), 'context should supply planning signal: ' + stageNames.join(','))

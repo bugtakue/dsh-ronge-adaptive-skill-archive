@@ -63,3 +63,9 @@ node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.t
 | 带主会话 sessionId | true（17 条消息） | `beat-promo-director` / `hyperframes` 视频阶段 |
 
 结论：**上下文机制真实生效**（两次计划不同），但这次带 session 的结果偏向会话里更早的视频任务，**语义相关性未证明正确**。不写成“智能上下文已通过”；下一步要验证“最近任务优先级/语义正确性”。
+
+## 最近任务优先（v5.5.6）
+
+- 短句指代不再用整段会话切片直接规划；先选**最近一条实质用户任务**（过滤“继续/好/设置goal/重启/睡觉”等元指令），只把它作为 focused context；
+- diagnostics 新增 `contextTask`，便于复核用的是哪条任务；
+- 仍需 live 5.5.6 复验“继续收尾”是否优先最近 DSH 生态任务，而不是旧视频任务。

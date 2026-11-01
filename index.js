@@ -2624,9 +2624,10 @@ function analyzeSession(ctx, sessionId, cwd) {
     .filter(Boolean)
     .join('\n')
     .slice(0, 16000)
+  const metaTaskRe = /(设置goal|设置目标|一直验证|继续验证|重启|睡觉|睡吧|先睡|好的|可以|行|谢谢|你就|按你选的|全部通过|不承诺|目标已|先这样)/i
   const lastSubstantiveTask = [...contextUserTexts]
     .reverse()
-    .find((text) => text && text.length >= 8 && !/^(继续|好|可以|行|嗯|ok|yes|接着|按刚才|按之前|那个|收尾)$/i.test(text.trim())) || ''
+    .find((text) => text && text.length >= 8 && !metaTaskRe.test(text) && !/^(继续|好|可以|行|嗯|ok|yes|接着|按刚才|按之前|那个|收尾)$/i.test(text.trim())) || ''
   return {
     running: lastType !== 'turn/end',
     contextMessages: contextMessages.length,
@@ -3884,8 +3885,11 @@ export function apply(ctx, config = {}) {
           const analysis = sessionId ? analyzeSession(ctx, sessionId, cwd) : null
           const explicitContext = String(payload?.context || '').trim()
           const sessionContext = analysis?.contextText ? String(analysis.contextText).slice(0, 8000) : ''
-          const contextText = [explicitContext, sessionContext].filter(Boolean).join('\n') || planRequestContext(cwd)
           const anaphoric = task.length <= 30 && /^(继续|接着|按刚才|按之前|那个|收尾|做完|继续做)/.test(task)
+          const focusedSessionContext = anaphoric && analysis?.lastSubstantiveTask
+            ? '最近任务：' + String(analysis.lastSubstantiveTask).slice(0, 500)
+            : sessionContext
+          const contextText = [explicitContext, focusedSessionContext].filter(Boolean).join('\n') || planRequestContext(cwd)
           const planningTask = anaphoric && analysis?.lastSubstantiveTask
             ? task + ' | 上文任务：' + String(analysis.lastSubstantiveTask).slice(0, 500)
             : task
@@ -3897,6 +3901,7 @@ export function apply(ctx, config = {}) {
             contextFiles: Number(analysis?.contextFiles || 0),
             contextSource: explicitContext && sessionContext ? 'request+session' : sessionContext ? 'session' : explicitContext ? 'request' : 'cwd-files',
             contextAnaphora: anaphoric && Boolean(analysis?.lastSubstantiveTask),
+            contextTask: analysis?.lastSubstantiveTask ? String(analysis.lastSubstantiveTask).slice(0, 160) : '',
           }
           if (action === 'draft') {
             const draft = intel.draftSkill({

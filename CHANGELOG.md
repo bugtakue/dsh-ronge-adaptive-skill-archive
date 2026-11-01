@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.6 — 2026-11-01
+
+- **最近任务优先**：短句指代先选最近一条实质用户任务（过滤继续/设置goal/重启/睡觉等元指令），只用它作为 focused context；不再直接拿整段会话切片。
+- diagnostics 新增 `contextTask`，可复核用的是哪条任务。
+- 测试 136/136。
+
+
 ## v5.5.5 — 2026-11-01
 
 - **DSH 工具上下文参数**：`skill_archive_plan` / `compose` 支持可选 `context` 与 `sessionId`；由调用方显式提供 bounded context，工具不自动读无限历史。
