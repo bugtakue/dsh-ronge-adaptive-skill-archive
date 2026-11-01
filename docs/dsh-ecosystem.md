@@ -88,3 +88,9 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 - `sessionId`：Host 尝试读取有界会话上下文。
 
 工具不会自动读无限历史；不传就仍只用 task/cwd。适合 agent 在处理「继续/按刚才」前显式带上最近任务。
+
+## 8. 发布链路（2026-11-01）
+
+- publish workflow 失败根因：`check-ecosystem` 把本机 DSH skill 安装检查当必需，Linux CI 无该 skill；v5.5.10/5.5.11 改为 optional 并修正测试断言。
+- npm latest 已到 **5.5.11**；GitHub Release v5.5.11。
+- live 若仍是 5.5.9，重启后才是 5.5.11。
