@@ -1,6 +1,9 @@
 /* eslint-disable */
 ;(function () {
   const results = []
+  const runtimeErrors = []
+  window.addEventListener('error', (event) => runtimeErrors.push(String(event.message || event.error || 'window error')))
+  window.addEventListener('unhandledrejection', (event) => runtimeErrors.push(String(event.reason && event.reason.message ? event.reason.message : event.reason)))
   const calls = []
   const clipboard = { text: null }
   function pass(name) {
@@ -477,6 +480,15 @@
         assert(previewBtn, 'preview action')
         click(previewBtn)
         await waitFor(() => document.querySelector('.sf-preview'), 'preview modal')
+        const installsBefore = calls.filter((call) => call.url.indexOf('/discover/install') >= 0).length
+        const tempBtn = await waitFor(
+          () => [...document.querySelectorAll('.sf-preview button')].find((btn) => (btn.textContent || '').includes('临时使用')),
+          'temporary use button',
+        )
+        clipboard.text = null
+        click(tempBtn)
+        await waitFor(() => clipboard.text === 'x', 'temporary content copied')
+        assert(calls.filter((call) => call.url.indexOf('/discover/install') >= 0).length === installsBefore, 'temporary use does not install')
       })
       await check('top-2 suggestion chips render', async () => {
         const chips = document.querySelectorAll('.sf-suggest .sf-chip')
@@ -710,6 +722,24 @@
         assert(text.includes('tokenSavingPct') || text.includes('预计收益'), 'estimates rendered')
         assert(text.includes('录音已在本机'), 'assumptions rendered')
       })
+      await check('plan stages can be approved individually before copying', async () => {
+        const boxes = document.querySelectorAll('.sf-intel-stage input[type=checkbox]')
+        assert(boxes.length === 2, 'expected 2 stage checkboxes, got ' + boxes.length)
+        click(boxes[1])
+        await waitFor(() => {
+          const approval = document.querySelector('.sf-intel-approval')
+          return approval && (approval.innerText || '').includes('1/2')
+        }, 'stage deselected')
+        clipboard.text = null
+        click(byText('.sf-intel-plan button', '复制为 Agent 指令'))
+        await waitFor(() => clipboard.text && clipboard.text.includes('office-docx'), 'filtered clipboard')
+        assert(!clipboard.text.includes('verify'), 'unchecked stage excluded')
+        click(boxes[1])
+        await waitFor(() => {
+          const approval = document.querySelector('.sf-intel-approval')
+          return approval && (approval.innerText || '').includes('2/2')
+        }, 'stage restored')
+      })
       await check('copy as agent instructions writes the plan to the clipboard', async () => {
         clipboard.text = null
         click(byText('.sf-intel-plan button', '复制为 Agent 指令'))
@@ -841,6 +871,7 @@
     } catch (error) {
       fail('unexpected harness error', error)
     } finally {
+      if (runtimeErrors.length) results.push({ name: 'no uncaught runtime errors', ok: false, error: runtimeErrors.join('; ') })
       const payload = { results, calls: calls.map((call) => call.url), clipboard: clipboard.text }
       document.getElementById('results').setAttribute('data-results', JSON.stringify(payload))
       document.getElementById('results').textContent = JSON.stringify(payload)

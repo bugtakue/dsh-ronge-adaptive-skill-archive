@@ -92,10 +92,10 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 ## 8. 发布链路（2026-11-01）
 
 - publish workflow 失败根因：`check-ecosystem` 把本机 DSH skill 安装检查当必需，Linux CI 无该 skill；v5.5.10/5.5.11 改为 optional 并修正测试断言。
-- npm latest 已到 **5.5.11**；GitHub Release v5.6.1。
+- npm latest 已到 **5.5.11**；GitHub Release v5.6.2。
 - live 若仍是 5.5.9，重启后才是 5.5.11。
 
-## 9. 未安装技能临时试用（v5.6.1）
+## 9. 未安装技能临时试用（v5.6.2）
 
 不必先安装才能试：
 
@@ -105,3 +105,14 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 - 只用于当前 turn 的临时指令；长期使用仍需正常安装。
 
 HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
+
+## 10. 人机协同交互（v5.6.2）
+
+计划是**建议**，不是执行结果：
+
+- 多阶段计划出现勾选框，可逐阶段确认；
+- “复制为 Agent 指令”只包含已勾选阶段；
+- 远程技能预览增加「临时使用（不安装）」：复制 SKILL.md 内容，不写技能目录；
+- 明确提示：不会自动执行、不会自动安装。
+
+UI 回归：28/28。

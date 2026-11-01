@@ -269,6 +269,10 @@ window.__ModuleLoader__.load({
       intelPattern: '组合模式',
       intelConfidence: '置信度',
       intelStages: '阶段',
+      intelApprovalHint: '计划是建议：勾选阶段后复制给 Agent；不会自动执行。',
+      intelTemporaryUse: '临时使用（不安装）',
+      intelTemporaryCopied: '临时指令已复制；未安装技能',
+      intelSelectedStages: '已选',
       intelInstalledCount: '已安装技能',
       intelReviewGap: '缺少独立复核技能：计划未假装复核',
       intelReviewSuggestions: '可安装的复核候选',
@@ -565,6 +569,10 @@ window.__ModuleLoader__.load({
       intelPattern: 'Pattern',
       intelConfidence: 'Confidence',
       intelStages: 'Stages',
+      intelApprovalHint: 'Plans are proposals: tick stages, then copy to the agent; nothing executes automatically.',
+      intelTemporaryUse: 'Use temporarily (no install)',
+      intelTemporaryCopied: 'Temporary instructions copied; skill not installed',
+      intelSelectedStages: 'selected',
       intelInstalledCount: 'Installed skills',
       intelReviewGap: 'No independent reviewer: plan does not fake a review',
       intelReviewSuggestions: 'Reviewer candidates',
@@ -1582,6 +1590,7 @@ window.__ModuleLoader__.load({
       const [intelNotice, setIntelNotice] = React.useState(null)
       const [intelPlan, setIntelPlan] = React.useState(null)
       const [intelPlans, setIntelPlans] = React.useState([])
+      const [intelStageSelection, setIntelStageSelection] = React.useState({})
       const [intelDraft, setIntelDraft] = React.useState(null)
       const [intelDraftFrom, setIntelDraftFrom] = React.useState(null)
       const [intelCreatedPath, setIntelCreatedPath] = React.useState(null)
@@ -2222,7 +2231,7 @@ window.__ModuleLoader__.load({
 
       const intelTaskValue = () => String(intelTask || '').trim()
 
-      const intelInstructionText = (plan) => {
+      const intelInstructionText = (plan, selection = {}) => {
         if (!plan || typeof plan !== 'object') return ''
         const lines = ['[' + t('intelInstructions') + ']']
         if (plan.goal) lines.push(t('intelGoal') + ': ' + String(plan.goal))
@@ -2230,7 +2239,7 @@ window.__ModuleLoader__.load({
         if (Number.isFinite(Number(plan.confidence))) {
           lines.push(t('intelConfidence') + ': ' + Math.round(Number(plan.confidence) * 100) + '%')
         }
-        const stages = Array.isArray(plan.stages) ? plan.stages.filter((stage) => stage && typeof stage === 'object') : []
+        const stages = Array.isArray(plan.stages) ? plan.stages.filter((stage, index) => stage && typeof stage === 'object' && selection[index] !== false) : []
         if (stages.length) {
           lines.push('', t('intelStages') + ':')
           stages.forEach((stage, index) => {
@@ -2322,6 +2331,7 @@ window.__ModuleLoader__.load({
             } else {
               setIntelPlan(plan)
               setIntelPlans(Array.isArray(payload.plans) ? payload.plans.filter((item) => item && item.plan) : [])
+              setIntelStageSelection(Object.fromEntries((plan.stages || []).map((_, index) => [index, true])))
               setIntelNotice({ kind: 'ok', text: t('intelPlanReady') })
             }
           }
@@ -2334,7 +2344,7 @@ window.__ModuleLoader__.load({
 
       const copyIntelInstructions = () => {
         if (!intelPlan) return
-        const text = intelInstructionText(intelPlan)
+        const text = intelInstructionText(intelPlan, intelStageSelection)
         if (!text) return
         writeClipboardText(text)
         setIntelNotice({ kind: 'ok', text: t('intelCopied') })
@@ -2378,6 +2388,14 @@ window.__ModuleLoader__.load({
         setIntelCreatedPath(null)
         setIntelError(null)
         setIntelNotice(null)
+      }
+
+      const usePreviewTemporarily = () => {
+        if (!remotePreview || remotePreview.loading || remotePreview.error) return
+        writeClipboardText(String(remotePreview.content || ''))
+        setRemotePreview(null)
+        setIntelNotice({ kind: 'ok', text: t('intelTemporaryCopied') })
+        showToast(t('intelTemporaryCopied'))
       }
 
       const renderRemotePreview = () => {
@@ -2428,6 +2446,13 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { className: 'sf-preview-actions' },
+            remotePreview.loading || remotePreview.error
+              ? null
+              : h(
+                  'button',
+                  { type: 'button', className: 'sf-secondary', onClick: usePreviewTemporarily },
+                  h('span', null, t('intelTemporaryUse')),
+                ),
             h(
               'button',
               { type: 'button', className: 'sf-primary', onClick: () => installRemote(entry) },
@@ -4147,10 +4172,22 @@ window.__ModuleLoader__.load({
                       type: 'button',
                       key: 'choice-' + choice.id,
                       className: 'sf-chip' + (choice.id === plan.variant ? ' sf-chip-active' : ''),
-                      onClick: () => setIntelPlan(choice.plan),
+                      onClick: () => { setIntelPlan(choice.plan); setIntelStageSelection(Object.fromEntries((choice.plan.stages || []).map((_, index) => [index, true]))) },
                     },
                     choice.id === 'fast' ? t('intelPlanFast') : choice.id === 'quality' ? t('intelPlanQuality') : t('intelPlanBalanced'),
                   ),
+                ),
+              )
+            : null,
+          stages.length > 1
+            ? h(
+                'div',
+                { className: 'sf-intel-approval' },
+                h('span', { className: 'sf-intel-k' }, t('intelApprovalHint')),
+                h(
+                  'span',
+                  { className: 'sf-intel-k' },
+                  t('intelSelectedStages') + ' ' + stages.filter((_, index) => intelStageSelection[index] !== false).length + '/' + stages.length,
                 ),
               )
             : null,
@@ -4165,6 +4202,17 @@ window.__ModuleLoader__.load({
                     h(
                       'div',
                       { className: 'sf-intel-stage-head' },
+                      stages.length > 1
+                        ? h('input', {
+                            type: 'checkbox',
+                            checked: intelStageSelection[index] !== false,
+                            'aria-label': t('intelSelectStages') + ' ' + String(index + 1),
+                            onChange: (event) => {
+                              const checked = Boolean(event.target.checked)
+                              setIntelStageSelection((current) => ({ ...current, [index]: checked }))
+                            },
+                          })
+                        : null,
                       h('span', { className: 'sf-intel-stage-no' }, String(index + 1)),
                       stage.role
                         ? h('span', { className: 'sf-intel-role', title: t('intelRole') }, String(stage.role))
