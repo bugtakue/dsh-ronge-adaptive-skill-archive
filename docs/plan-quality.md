@@ -64,17 +64,17 @@ node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.t
 
 结论：**上下文机制真实生效**（两次计划不同），但这次带 session 的结果偏向会话里更早的视频任务，**语义相关性未证明正确**。不写成“智能上下文已通过”；下一步要验证“最近任务优先级/语义正确性”。
 
-## 最近任务优先（v5.5.11）
+## 最近任务优先（v5.6.0）
 
 - 短句指代不再用整段会话切片直接规划；先选**最近一条实质用户任务**（过滤“继续/好/设置goal/重启/睡觉”等元指令），只把它作为 focused context；
 - diagnostics 新增 `contextTask`，便于复核用的是哪条任务；
 - 仍需 live 5.5.6 复验“继续收尾”是否优先最近 DSH 生态任务，而不是旧视频任务。
 
-## 通知污染修复（v5.5.11）
+## 通知污染修复（v5.6.0）
 
 live 5.5.6 实测发现：`lastSubstantiveTask` 会把「Background subagent ... finished」这类通知当成最近任务，导致「继续」计划选错技能。
 
-v5.5.11 过滤：
+v5.6.0 过滤：
 - `Background subagent...`
 - `Agent ...`
 - `This is an automated...`
@@ -82,17 +82,17 @@ v5.5.11 过滤：
 
 回归测试已加；live 需要重启到 5.5.7 复验。
 
-## 垃圾输入过滤（v5.5.11）
+## 垃圾输入过滤（v5.6.0）
 
-live 5.5.7 发现最新实质任务会选到 `cv cdwdsswawsaq` 这类乱码。v5.5.11 增加 task-signal 过滤：没有 CJK / 常见任务词的消息不进入 `lastSubstantiveTask`；回归测试覆盖。
+live 5.5.7 发现最新实质任务会选到 `cv cdwdsswawsaq` 这类乱码。v5.6.0 增加 task-signal 过滤：没有 CJK / 常见任务词的消息不进入 `lastSubstantiveTask`；回归测试覆盖。
 
 live 需重启后复验。
 
-## system-reminder 污染修复（v5.5.11）
+## system-reminder 污染修复（v5.6.0）
 
 live 5.5.8 发现 `<system-reminder> <available_skills>` 会被当成最近任务，导致「继续」计划选到视频/技能目录。
 
-v5.5.11 过滤 system-reminder / available_skills 消息；回归测试覆盖。live 需重启复验。
+v5.6.0 过滤 system-reminder / available_skills 消息；回归测试覆盖。live 需重启复验。
 
 
 ## live 5.5.9 复验（2026-11-01）

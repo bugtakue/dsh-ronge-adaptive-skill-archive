@@ -131,6 +131,7 @@ test('DSH native tools are registered without install/force capabilities', async
   assert.ok(tools.has('skill_archive_plan'))
   assert.ok(tools.has('skill_archive_compose'))
   assert.ok(tools.has('skill_archive_draft_skill'))
+  assert.ok(tools.has('skill_archive_try_skill'), 'temporary try tool registered')
   assert.equal([...tools.keys()].some((name) => /install|force/.test(name)), false)
   const planTool = tools.get('skill_archive_plan')
   assert.equal(planTool.parameters.required.includes('task'), true)

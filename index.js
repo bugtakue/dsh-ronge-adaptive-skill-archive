@@ -1856,6 +1856,45 @@ function assessRemoteSkill(text) {
   }
 }
 
+async function tryRemoteSkill({ name, url, maxChars } = {}) {
+  const requestedName = String(name || '').trim()
+  const requestedUrl = String(url || '').trim()
+  const library = loadLibraryIndex()
+  const entry = requestedName && Array.isArray(library?.entries)
+    ? library.entries.find((item) => item && item.name === requestedName)
+    : null
+  const rawUrl = requestedUrl || (entry && entry.rawUrl)
+  if (!rawUrl) throw new HttpError(400, 'name or url is required (and name must exist in the local library)')
+  const fetched = await fetchRemoteSkill(rawUrl)
+  const assessment = assessRemoteSkill(fetched.text)
+  if (!assessment.validName) throw new HttpError(400, 'remote SKILL.md has an invalid or missing name')
+  if (!assessment.hasDescription) throw new HttpError(400, 'remote SKILL.md has no description')
+  if (assessment.highRisk) {
+    throw new HttpError(422, 'high-risk SKILL.md refused for temporary use: ' + assessment.security.findings.map((finding) => finding.rule).join(', '))
+  }
+  const limit = Math.max(2000, Math.min(24000, Number(maxChars) || 16000))
+  return {
+    ok: true,
+    temporary: true,
+    installed: false,
+    usage: 'inline-temporary',
+    name: assessment.name,
+    description: assessment.description,
+    source: {
+      name: entry ? entry.name : null,
+      repo: entry ? entry.repo : null,
+      url: fetched.url,
+      rawUrl,
+      trust: entry ? entry.trust : null,
+      quality: entry ? entry.quality : null,
+    },
+    security: assessment.security,
+    truncated: fetched.text.length > limit,
+    content: truncate(fetched.text, limit),
+    note: 'Temporary read-only use: follow these instructions in this turn. Nothing is written to the skill directory; do not claim it is installed.',
+  }
+}
+
 function truncate(text, length) {
   return String(text || '').length > length ? String(text).slice(0, length) : String(text || '')
 }
@@ -3507,6 +3546,27 @@ function registerIntelligenceTools(ctx) {
     )
     disposers.push(
       tools.register({
+        name: 'skill_archive_try_skill',
+        description:
+          'Temporarily fetch an UNINSTALLED skill\'s SKILL.md for one-off inline use without installing it. Returns bounded content, source and safety scan; refuses high-risk content. Nothing is written to disk. Use only when the user explicitly wants to try a candidate before installing.',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'A skill name from the local library (preferred), for example video-subtitle-pro.' },
+            url: { type: 'string', description: 'Optional raw SKILL.md URL from the allowlisted remote host.' },
+            maxChars: { type: 'integer', minimum: 2000, maximum: 24000, description: 'Maximum content characters to return. Default 16000.' },
+          },
+          anyOf: [{ required: ['name'] }, { required: ['url'] }],
+        },
+        output: toolOutput(),
+        async execute(args) {
+          const result = await tryRemoteSkill(args || {})
+          return { ok: true, skill: result }
+        },
+      }),
+    )
+    disposers.push(
+      tools.register({
         name: 'skill_archive_draft_skill',
         description:
           'Draft a new SKILL.md for a missing capability in a plan. Returns a validated draft only; it never writes files. Ask the user to review before creating.',
@@ -3723,6 +3783,18 @@ export function apply(ctx, config = {}) {
           license: front.license ? String(front.license) : null,
           security: scanSkillText(text),
         })
+      }),
+    }),
+  )
+  disposers.push(
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/dsh-ronge-adaptive-skill-archive/discover/try',
+      handler: route(async (req, res) => {
+        if (req.method !== 'POST') throw new HttpError(405, 'method not allowed')
+        const payload = await readJson(req)
+        const result = await tryRemoteSkill(payload || {})
+        sendJson(res, 200, result)
       }),
     }),
   )

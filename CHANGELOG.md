@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.6.0 — 2026-11-01
+
+- **未安装技能临时试用**：新增 `skill_archive_try_skill` 与 `POST /discover/try`，可按 library name / raw URL 读取 SKILL.md 的 bounded 内容与安全扫描；`temporary:true`、`installed:false`，不写盘、不安装、不执行，高风险拒绝。
+- DSH skill 增加“先试不装”规则；长期使用仍需正常安装。
+- 测试 136/136。
+
+
 ## v5.5.11 — 2026-11-01
 
 - **修复 CI 可选检查断言**：`test/ecosystem.test.mjs` 仍把 optional 的本机 DSH skill 安装检查当必需，导致 publish workflow 继续失败。现在只断言非 optional 检查。

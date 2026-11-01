@@ -92,5 +92,16 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 ## 8. 发布链路（2026-11-01）
 
 - publish workflow 失败根因：`check-ecosystem` 把本机 DSH skill 安装检查当必需，Linux CI 无该 skill；v5.5.10/5.5.11 改为 optional 并修正测试断言。
-- npm latest 已到 **5.5.11**；GitHub Release v5.5.11。
+- npm latest 已到 **5.5.11**；GitHub Release v5.6.0。
 - live 若仍是 5.5.9，重启后才是 5.5.11。
+
+## 9. 未安装技能临时试用（v5.6.0）
+
+不必先安装才能试：
+
+- 原生工具 `skill_archive_try_skill`：按 library name 或 raw URL 读取一份 SKILL.md；
+- 返回有界内容、来源、安全扫描，`temporary:true`、`installed:false`；
+- 高风险拒绝；不写盘、不自动安装、不自动执行；
+- 只用于当前 turn 的临时指令；长期使用仍需正常安装。
+
+HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
