@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const checks = []
-const check = (name, ok, detail) => checks.push({ name, ok: Boolean(ok), detail })
+const check = (name, ok, detail, optional = false) => checks.push({ name, ok: Boolean(ok), detail, optional })
 
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 const patchPath = path.join(ROOT, pkg.dsh?.bundle?.patch || '')
@@ -28,7 +28,7 @@ try { installTarget = JSON.parse(install.stdout).target } catch {}
 check('skill installer dry-run works', install.status === 0 && Boolean(installTarget), installTarget)
 
 const homeSkill = path.join(process.env.DSH_HOME || path.join(process.env.HOME || '', '.dsh'), 'skills', 'dsh-skill-cockpit', 'SKILL.md')
-check('skill installed in DSH_HOME (optional)', fs.existsSync(homeSkill), homeSkill)
+check('skill installed in DSH_HOME (optional)', fs.existsSync(homeSkill), homeSkill, true)
 
 const requests = [
   { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'ecosystem-check', version: '1' } } },
@@ -42,5 +42,6 @@ check('MCP initializes', init?.serverInfo?.name === 'dsh-ronge-adaptive-skill-ar
 check('MCP exposes tools', tools.length > 0, tools.map((tool) => tool.name).join(','))
 check('MCP has recommend/install/experience', ['recommend_skills', 'install_skill', 'experience_summary'].every((name) => tools.some((tool) => tool.name === name)), tools.map((tool) => tool.name).join(','))
 
-console.log(JSON.stringify({ ok: checks.every((item) => item.ok), version: pkg.version, checks }, null, 2))
-process.exit(checks.every((item) => item.ok) ? 0 : 1)
+const required = checks.filter((item) => !item.optional)
+console.log(JSON.stringify({ ok: required.every((item) => item.ok), version: pkg.version, checks }, null, 2))
+process.exit(required.every((item) => item.ok) ? 0 : 1)

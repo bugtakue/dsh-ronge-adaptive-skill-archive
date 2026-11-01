@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.10 — 2026-11-01
+
+- **修复 npm publish CI**：`check-ecosystem` 把本机已装 DSH skill 的可选检查误当必需，导致 v5.5.4–v5.5.9 的 publish workflow 全部失败、npm latest 停在 5.5.3。现在 optional check 不参与失败判定。
+- 测试 136/136。
+- 这条修复用于恢复 npm 发布链路；不是功能版本。
+
+
 ## v5.5.9 — 2026-11-01
 
 - **system-reminder 污染过滤**：`lastSubstantiveTask` 排除 `<system-reminder>` / `<available_skills>` 内容，避免技能目录被当成最近任务。
