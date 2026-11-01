@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.5.11 — 2026-11-01
+
+- **修复 CI 可选检查断言**：`test/ecosystem.test.mjs` 仍把 optional 的本机 DSH skill 安装检查当必需，导致 publish workflow 继续失败。现在只断言非 optional 检查。
+- 测试 136/136；用于恢复 npm 发布。
+
+
 ## v5.5.10 — 2026-11-01
 
 - **修复 npm publish CI**：`check-ecosystem` 把本机已装 DSH skill 的可选检查误当必需，导致 v5.5.4–v5.5.9 的 publish workflow 全部失败、npm latest 停在 5.5.3。现在 optional check 不参与失败判定。

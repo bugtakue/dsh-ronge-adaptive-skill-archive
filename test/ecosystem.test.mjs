@@ -11,5 +11,5 @@ test('DSH ecosystem bundle/skill/installer/MCP regression passes', () => {
   assert.equal(result.status, 0, result.stderr || result.stdout)
   const report = JSON.parse(result.stdout)
   assert.equal(report.ok, true)
-  assert.ok(report.checks.every((item) => item.ok))
+  assert.ok(report.checks.filter((item) => !item.optional).every((item) => item.ok))
 })
