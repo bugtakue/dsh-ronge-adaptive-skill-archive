@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.5.2 — 2026-10-31
+
+- **短句指代补全**：`继续 / 按刚才 / 按之前 / 收尾` 等短任务，在提供 sessionId 时用最近一条实质用户任务补全 planning signal；诊断返回 `contextAnaphora`。
+- 仅用于 plan/compose；不改变原文 task，不读无限历史，上下文仍有界。
+- 测试 133/133。
+
+
 ## v5.5.1 — 2026-10-31
 
 - **plan 也吃完整会话上下文**：HTTP/面板 `/intelligence/plan` 支持 `sessionId`，使用 `analyzeSession` 的有界会话文本（最多 8k 字符）+ 工作区文件上下文；诊断返回 `contextMessages/contextFiles/contextSource`。

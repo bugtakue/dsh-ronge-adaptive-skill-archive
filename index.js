@@ -2624,9 +2624,13 @@ function analyzeSession(ctx, sessionId, cwd) {
     .filter(Boolean)
     .join('\n')
     .slice(0, 16000)
+  const lastSubstantiveTask = [...contextUserTexts]
+    .reverse()
+    .find((text) => text && text.length >= 8 && !/^(继续|好|可以|行|嗯|ok|yes|接着|按刚才|按之前|那个|收尾)$/i.test(text.trim())) || ''
   return {
     running: lastType !== 'turn/end',
     contextMessages: contextMessages.length,
+    lastSubstantiveTask,
     contextFiles: projectFiles.length,
     contextTitle: title,
     contextSnippets: project.snippets.map((item) => item.name),
@@ -3873,6 +3877,10 @@ export function apply(ctx, config = {}) {
           const explicitContext = String(payload?.context || '').trim()
           const sessionContext = analysis?.contextText ? String(analysis.contextText).slice(0, 8000) : ''
           const contextText = [explicitContext, sessionContext].filter(Boolean).join('\n') || planRequestContext(cwd)
+          const anaphoric = task.length <= 30 && /^(继续|接着|按刚才|按之前|那个|收尾|做完|继续做)/.test(task)
+          const planningTask = anaphoric && analysis?.lastSubstantiveTask
+            ? task + ' | 上文任务：' + String(analysis.lastSubstantiveTask).slice(0, 500)
+            : task
           const diagnostics = {
             installedCount: resolved.count,
             installedSource: resolved.source,
@@ -3880,6 +3888,7 @@ export function apply(ctx, config = {}) {
             contextMessages: Number(analysis?.contextMessages || 0),
             contextFiles: Number(analysis?.contextFiles || 0),
             contextSource: explicitContext && sessionContext ? 'request+session' : sessionContext ? 'session' : explicitContext ? 'request' : 'cwd-files',
+            contextAnaphora: anaphoric && Boolean(analysis?.lastSubstantiveTask),
           }
           if (action === 'draft') {
             const draft = intel.draftSkill({
@@ -3891,7 +3900,7 @@ export function apply(ctx, config = {}) {
             return
           }
           const base = {
-            task,
+            task: planningTask,
             cwd,
             context: contextText,
             mode: String(payload?.mode || ''),

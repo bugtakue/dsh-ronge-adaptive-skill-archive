@@ -175,5 +175,6 @@ test('plan endpoint consumes bounded session context when sessionId is provided'
   assert.equal(plan.status, 200)
   assert.equal(plan.body.diagnostics.contextSource, 'session')
   assert.ok(plan.body.diagnostics.contextMessages >= 2)
+  assert.equal(plan.body.diagnostics.contextAnaphora, true)
   assert.ok(plan.body.plan)
 })
