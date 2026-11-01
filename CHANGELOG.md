@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.5.9 — 2026-11-01
+
+- **system-reminder 污染过滤**：`lastSubstantiveTask` 排除 `<system-reminder>` / `<available_skills>` 内容，避免技能目录被当成最近任务。
+- 回归测试覆盖；测试 136/136。
+
+
 ## v5.5.8 — 2026-11-01
 
 - **垃圾输入过滤**：`lastSubstantiveTask` 增加 task-signal 检查（CJK 或常见任务词），乱码/无意义消息不再被当成最近任务。

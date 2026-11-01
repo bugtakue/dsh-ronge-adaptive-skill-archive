@@ -2629,6 +2629,7 @@ function analyzeSession(ctx, sessionId, cwd) {
   const lastSubstantiveTask = [...contextUserTexts]
     .reverse()
     .filter((text) => !/^(Background subagent|Agent\b|This is an automated|System\b|Tool result\b)/i.test(String(text || '').trim()))
+    .filter((text) => !/<system-reminder>|<available_skills>|<\/available_skills>|^# Available skills/m.test(String(text || '')))
     .filter((text) => taskSignalRe.test(String(text || '')))
     .find((text) => text && text.length >= 8 && !metaTaskRe.test(text) && !/^(继续|好|可以|行|嗯|ok|yes|接着|按刚才|按之前|那个|收尾)$/i.test(text.trim())) || ''
   return {

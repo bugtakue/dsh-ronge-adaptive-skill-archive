@@ -22,6 +22,7 @@ const fakeSession = {
     { role: 'user', content: [{ type: 'text', text: '另外配一段 30 秒宣传视频' }] },
     { role: 'user', content: [{ type: 'text', text: 'Background subagent 123 finished and will do no further work.' }] },
     { role: 'user', content: [{ type: 'text', text: 'cv cdwdsswawsaq' }] },
+    { role: 'user', content: [{ type: 'text', text: '<system-reminder> <available_skills> - agent-experience: Use when...' }] },
   ],
 }
 const ctx = {
