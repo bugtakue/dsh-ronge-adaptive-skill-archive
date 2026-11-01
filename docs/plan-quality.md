@@ -41,7 +41,7 @@ node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.t
 - Excel 计划不含 `agent-experience`、包含 `office-xlsx`；
 - 安全审查计划 pattern=`escalation`，且 `security-audit` 为 critical missing。
 
-2026-10-31 在 live 5.4.2 上复验：**全部 7 项通过**（版本、simple、Excel 相关性、security escalation）。
+2026-10-31/11-01 live 5.5.5 复验：**全部 7 项通过**（版本、simple、Excel 相关性、security escalation）。
 
 ## 上下文端点回归（本地 5.5.4）
 
@@ -51,3 +51,15 @@ node scripts/check-live-quality.mjs --port 57696 --cookie-file /tmp/dsh-cookie.t
 - 同一任务带 `sessionId`（上文：docx 合同核对 + 30 秒视频）：`contextAnaphora=true`，计划出现 `office-docx` 和/或视频技能。
 
 这说明 HTTP plan 的上下文补全链路在代码层已通过，不等同于 live 已验证；live 需重启后跑真实主会话测试。
+
+
+## 上下文 live 测试（5.5.5）
+
+同一任务「继续，把刚才那个收尾」：
+
+| 输入 | contextAnaphora | 计划 |
+|---|---|---|
+| 无 session | false | `cordis-plugin-development` 等当前 cwd/任务信号 |
+| 带主会话 sessionId | true（17 条消息） | `beat-promo-director` / `hyperframes` 视频阶段 |
+
+结论：**上下文机制真实生效**（两次计划不同），但这次带 session 的结果偏向会话里更早的视频任务，**语义相关性未证明正确**。不写成“智能上下文已通过”；下一步要验证“最近任务优先级/语义正确性”。
