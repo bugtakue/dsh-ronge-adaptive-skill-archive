@@ -126,3 +126,20 @@ v5.5.11 过滤 system-reminder / available_skills 消息；回归测试覆盖。
   - `pattern=escalation`
   - `security-audit/compliance-check/prompt-injection-defense` critical missing
   - escalate stage 有 acceptance ✅
+
+## live 5.5.11 最终复验（2026-11-01）
+
+- `check-live-quality`：**7/7 通过**
+- `check-ecosystem`：**10/10 通过**
+- 任务「继续，把刚才那个收尾」：
+
+| 输入 | contextTask | 计划 |
+|---|---|---|
+| 无 context | 空 | 无关插件技能 |
+| 显式 context（docx 合同 + 30s 视频） | 空（request） | office-docx + 视频两阶段 |
+| 主会话 session | `继续 记得把我们做出dsh生态` | escalation（任务本身没有具体交付物） |
+
+结论：
+- 显式 context 的真实改善已验证；
+- 主会话能正确选到最近任务，但任务模糊时 escalation 是诚实行为；
+- 不把“完整会话语义已解决”写成通过。
