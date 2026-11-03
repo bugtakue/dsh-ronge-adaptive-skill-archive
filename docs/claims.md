@@ -119,4 +119,4 @@ npm pack --dry-run --json
 | C14 | 未安装技能临时试用 | live 5.6.1 `/discover/try`：ideogram 技能返回 4000 字符、security medium、temporary=true、installed=false，未创建技能目录 | **live-verified** |
 | C15 | 人机协同 UI | 多阶段勾选、只复制已选阶段、临时使用不安装；UI E2E 28/28 | **implemented/verified** |
 | C16 | 三档权限/协作模式 | `/mode` 支持 plan/collaborate/immersive；UI 模式选择器；mode endpoint 测试 | **implemented/verified** |
-| C17 | HarnessMM 原则落地 | `skills/dsh-skill-cockpit/SKILL.md` 确定性执行契约；`docs/harnessmm.md` 边界；未复现论文/无固定省 token 承诺 | **integrated；needs real A/B** |
+| C17 | HarnessMM 原则落地 | skill 加实验性契约；pilot 强制在简单任务上反而 +40~91% token、更慢；文章机制需 harness 级执行器 | **negative-pilot；不声称省 token** |
