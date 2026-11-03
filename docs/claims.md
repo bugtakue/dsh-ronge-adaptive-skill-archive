@@ -114,7 +114,7 @@ npm pack --dry-run --json
 | C10 | 60 秒 demo | `docs/demo-60s.mp4`（1920×1080/60s/H.264，静音+屏上文字）、`docs/demo.html`、`docs/demo-60s.md` | **已交付**；不是真人旁白/产品 UI 录屏，不能当交互演示宣称 |
 | C11 | 上下文回归 | live 5.5.11：显式 context「继续」→ office-docx + 视频两阶段；无 context → 无关插件；主会话 contextTask 正确但模糊任务 escalation | **explicit-context live-verified；session semantic partial** |
 | C12 | 复杂任务质量 live | live 5.5.9：contract+video 2 stages + acceptance + reviewGap；security escalation + critical missing | **live-verified** |
-| C13 | npm 发布链路 | GitHub Actions publish v5.6.3 成功；npm latest=5.5.11；v5.5.4–v5.5.9 因 optional check 误报失败已修复 | **fixed/verified** |
+| C13 | npm 发布链路 | GitHub Actions publish v5.7.0 成功；npm latest=5.5.11；v5.5.4–v5.5.9 因 optional check 误报失败已修复 | **fixed/verified** |
 | C14 | live 质量/生态 | live 5.5.11：quality 7/7；ecosystem 10/10；contract+video acceptance/reviewGap；security escalation | **live-verified** |
 | C14 | 未安装技能临时试用 | live 5.6.1 `/discover/try`：ideogram 技能返回 4000 字符、security medium、temporary=true、installed=false，未创建技能目录 | **live-verified** |
 | C15 | 人机协同 UI | 多阶段勾选、只复制已选阶段、临时使用不安装；UI E2E 28/28 | **implemented/verified** |
