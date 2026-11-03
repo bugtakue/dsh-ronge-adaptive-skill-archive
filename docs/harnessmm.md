@@ -71,7 +71,7 @@ HarnessMM 拆成三部分：
 - 但 baseline 本身用了一条 bash 循环，所以这不是“跳过 7 次模型回调”的证据；`modelCallbacksAvoided` 是理论值；
 - 值得继续做**受控的** guarded executor，但不值得直接做成任意命令执行器；需要更多任务/失败重试验证。
 
-## 已吸收：`skill_archive_guarded_run`（v5.8.0）
+## 已吸收：`skill_archive_guarded_run`（v5.8.1）
 
 原型已验证长链有价值，因此作为**可选的原生工具**吸收：
 
