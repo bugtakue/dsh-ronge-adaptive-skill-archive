@@ -10,7 +10,7 @@
  * session's Agent when available, so it matches what that agent actually sees.
  * A filesystem scan is the fallback for agentless requests.
  */
-import { execFileSync, spawn } from 'node:child_process'
+import { execFileSync, spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -3420,6 +3420,38 @@ function sanitizeToolValue(value) {
   return value
 }
 
+function runGuardedTestSteps({ root, steps } = {}) {
+  const requestedRoot = String(root || '').trim()
+  if (!path.isAbsolute(requestedRoot)) throw new HttpError(400, 'root must be an absolute directory')
+  if (!fs.existsSync(requestedRoot) || !fs.statSync(requestedRoot).isDirectory()) throw new HttpError(400, 'root directory does not exist')
+  const rootReal = fs.realpathSync(requestedRoot)
+  if (rootReal === path.parse(rootReal).root) throw new HttpError(400, 'refusing filesystem root')
+  if (!Array.isArray(steps) || steps.length === 0 || steps.length > 8) throw new HttpError(400, 'steps must contain 1..8 test steps')
+  const results = []
+  let stopped = null
+  for (let index = 0; index < steps.length; index += 1) {
+    const step = steps[index] || {}
+    const relative = String(step.path || '').trim()
+    if (!/^tests\/[A-Za-z0-9_.-]+\.test\.mjs$/.test(relative)) {
+      throw new HttpError(400, 'each step.path must match tests/*.test.mjs')
+    }
+    const absolute = path.resolve(rootReal, relative)
+    let real
+    try { real = fs.realpathSync(absolute) } catch { throw new HttpError(400, 'test file does not exist: ' + relative) }
+    if (!isInside(rootReal, real)) throw new HttpError(400, 'test path escapes root: ' + relative)
+    const result = spawnSync(process.execPath, ['--test', relative], { cwd: rootReal, encoding: 'utf8', timeout: 30000 })
+    const exitCode = result.status === null ? -1 : result.status
+    const expected = Number.isFinite(Number(step.guardExitCode)) ? Number(step.guardExitCode) : 0
+    const output = String(result.stdout || '')
+    const pass = Number((output.match(/(?:pass|passes)\s+(\d+)/) || [])[1] || 0)
+    const fail = Number((output.match(/(?:fail|fails)\s+(\d+)/) || [])[1] || 0)
+    results.push({ id: String(step.id || 's' + index), path: relative, exitCode, ok: exitCode === expected, pass, fail, stderrTail: String(result.stderr || '').slice(-800) })
+    if (exitCode !== expected) { stopped = { step: index, reason: 'guard failed', expected, actual: exitCode }; break }
+  }
+  const ok = !stopped && results.every((item) => item.ok)
+  return { ok, root: rootReal, steps: results, stopped, modelCallbacksAvoided: Math.max(0, results.length - 1), note: 'Runs only node --test tests/*.test.mjs; no shell and no writes.' }
+}
+
 function compactToolPlan(plan, diagnostics) {
   if (plan.simple) {
     const recommended = (plan.selected || []).map((skill) => skill && skill.name).filter(Boolean).slice(0, 1)
@@ -3565,6 +3597,38 @@ function registerIntelligenceTools(ctx) {
         async execute(args) {
           const result = await tryRemoteSkill(args || {})
           return { ok: true, skill: result }
+        },
+      }),
+    )
+    disposers.push(
+      tools.register({
+        name: 'skill_archive_guarded_run',
+        description:
+          'Run a bounded chain of deterministic Node test files (tests/*.test.mjs) in one tool call. Only test files under an explicit root, no shell, no writes. Use only on a trusted workspace when the user wants a deterministic test chain; stops at the first guard failure.',
+        parameters: {
+          type: 'object',
+          properties: {
+            root: { type: 'string', description: 'Absolute project directory containing tests/.' },
+            steps: {
+              type: 'array',
+              maxItems: 8,
+              description: 'Ordered test steps. Each runs node --test on tests/<name>.test.mjs.',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  path: { type: 'string', description: 'tests/<name>.test.mjs' },
+                  guardExitCode: { type: 'integer', description: 'Expected exit code, default 0.' },
+                },
+                required: ['path'],
+              },
+            },
+          },
+          required: ['root', 'steps'],
+        },
+        output: toolOutput(),
+        async execute(args) {
+          return { ok: true, result: runGuardedTestSteps(args || {}) }
         },
       }),
     )

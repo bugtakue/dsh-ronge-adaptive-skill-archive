@@ -132,6 +132,7 @@ test('DSH native tools are registered without install/force capabilities', async
   assert.ok(tools.has('skill_archive_compose'))
   assert.ok(tools.has('skill_archive_draft_skill'))
   assert.ok(tools.has('skill_archive_try_skill'), 'temporary try tool registered')
+  assert.ok(tools.has('skill_archive_guarded_run'), 'guarded runner tool registered')
   assert.equal([...tools.keys()].some((name) => /install|force/.test(name)), false)
   const planTool = tools.get('skill_archive_plan')
   assert.equal(planTool.parameters.required.includes('task'), true)
@@ -211,4 +212,17 @@ test('mode endpoint supports plan / collaborate / full-access', async () => {
   }
   const bad = await call('/dsh-ronge-adaptive-skill-archive/mode', { method: 'POST', body: { mode: 'root' } })
   assert.equal(bad.status, 400)
+})
+
+
+test('guarded runner tool executes a bounded test chain', async () => {
+  const dir = fs.mkdtempSync(path.join(tmp, 'guarded-'))
+  fs.mkdirSync(path.join(dir, 'tests'))
+  fs.writeFileSync(path.join(dir, 'sum.mjs'), 'export const sum = (xs) => xs.reduce((a, b) => a + b, 0)\n')
+  fs.writeFileSync(path.join(dir, 'tests', 'a.test.mjs'), "import test from 'node:test';import assert from 'node:assert/strict';import {sum} from '../sum.mjs';test('sum',()=>assert.equal(sum([1,2]),3))\n")
+  const tool = tools.get('skill_archive_guarded_run')
+  const result = await tool.execute({ root: dir, steps: [{ id: 'a', path: 'tests/a.test.mjs' }] })
+  assert.equal(result.ok, true)
+  assert.equal(result.result.ok, true)
+  assert.equal(result.result.steps[0].exitCode, 0)
 })

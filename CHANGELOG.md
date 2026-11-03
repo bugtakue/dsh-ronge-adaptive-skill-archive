@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.8.0 — 2026-11-03
+
+- **吸收 guarded runner**：新增原生工具 `skill_archive_guarded_run`，一次调用执行最多 8 个确定性 `tests/*.test.mjs`；只允许 node --test，无 shell/写文件，guard 失败即停，返回 pass/fail 与 modelCallbacksAvoided。
+- 仅限可信工作区；不承诺固定 token 节省，不替代语义任务推理。
+- 测试 139/139。
+
+
 ## v5.7.1 — 2026-11-03
 
 - **guarded runner 原型**：`scripts/guarded-runner.mjs` 只允许 `node --test tests/*.test.mjs`，一次工具调用执行最多 8 步；无 shell、无写文件；附测试。

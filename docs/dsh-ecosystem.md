@@ -92,10 +92,10 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 ## 8. 发布链路（2026-11-01）
 
 - publish workflow 失败根因：`check-ecosystem` 把本机 DSH skill 安装检查当必需，Linux CI 无该 skill；v5.5.10/5.5.11 改为 optional 并修正测试断言。
-- npm latest 已到 **5.5.11**；GitHub Release v5.7.1。
+- npm latest 已到 **5.5.11**；GitHub Release v5.8.0。
 - live 若仍是 5.5.9，重启后才是 5.5.11。
 
-## 9. 未安装技能临时试用（v5.7.1）
+## 9. 未安装技能临时试用（v5.8.0）
 
 不必先安装才能试：
 
@@ -106,7 +106,7 @@ node scripts/check-live-quality.mjs --port <port> --cookie-file <cookie>
 
 HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
 
-## 10. 人机协同交互（v5.7.1）
+## 10. 人机协同交互（v5.8.0）
 
 计划是**建议**，不是执行结果：
 
@@ -117,7 +117,7 @@ HTTP：`POST /dsh-ronge-adaptive-skill-archive/discover/try`。
 
 UI 回归：28/28。
 
-## 11. 权限/协作模式（v5.7.1）
+## 11. 权限/协作模式（v5.8.0）
 
 面板顶部模式选择器现在有三档：
 
@@ -132,3 +132,7 @@ UI 回归：28/28。
 ## 12. HarnessMM 确定性执行原则
 
 `skills/dsh-skill-cockpit/SKILL.md` 已加入 EDG/GDR/CCS 的确定性执行契约；只用于可确定工具链。背景、边界与来源：[harnessmm.md](harnessmm.md)。不承诺固定 token 节省比例。
+
+## 13. guarded runner（v5.8.0）
+
+原生工具 `skill_archive_guarded_run`：在可信工作区一次调用执行最多 8 个 `tests/*.test.mjs`；只允许 node --test，无 shell/写文件，guard 失败即停。适合确定性测试链，不是任意命令执行器。

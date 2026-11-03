@@ -38,6 +38,18 @@ whenToUse: 复杂/跨域任务需要拆解、技能组队、阶段验收，或�
 
 需要显式组合方案时使用；同样只服务复杂任务。
 
+
+### `skill_archive_guarded_run`
+
+只用于**可信工作区**的确定性测试链：
+
+- 一次调用按顺序运行最多 8 个 `tests/*.test.mjs`；
+- 只允许 `node --test`，无 shell、无写文件；
+- 每步 guard 默认退出码 0，失败立即停；
+- 返回每步 pass/fail、stderr 摘要和 `modelCallbacksAvoided`。
+
+不要把不可信项目路径传给它；不要把它当任意命令执行器。
+
 ### `skill_archive_draft_skill`
 
 为缺口生成完整 `SKILL.md` 草稿（含输入/输出/步骤/质量检查/失败处理/evalCases）。

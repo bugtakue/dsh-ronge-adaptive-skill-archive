@@ -70,3 +70,15 @@ HarnessMM 拆成三部分：
 - 短链没有收益；长链出现约 22.6% token 下降和更快墙钟；
 - 但 baseline 本身用了一条 bash 循环，所以这不是“跳过 7 次模型回调”的证据；`modelCallbacksAvoided` 是理论值；
 - 值得继续做**受控的** guarded executor，但不值得直接做成任意命令执行器；需要更多任务/失败重试验证。
+
+## 已吸收：`skill_archive_guarded_run`（v5.8.0）
+
+原型已验证长链有价值，因此作为**可选的原生工具**吸收：
+
+- 一次工具调用执行最多 8 个 `tests/*.test.mjs`；
+- 只允许 `node --test`，无 shell、无写文件；
+- 每步 guard（默认 exit code 0），失败停止；
+- 返回 pass/fail、stderr 摘要、`modelCallbacksAvoided`；
+- 仅限可信工作区；不是任意命令执行器。
+
+边界：它减少“多次测试调用 + 中间模型回调”的开销，但不复现论文的 87.93%，也不适用于语义不确定任务。
