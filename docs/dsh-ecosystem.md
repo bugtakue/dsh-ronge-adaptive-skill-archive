@@ -128,3 +128,7 @@ UI 回归：28/28。
 | 完全权限 | 不逐条确认，自动加载并执行；风险自负 |
 
 `POST /mode` 接受 `off / plan / collaborate / immersive`；系统提示按模式切换。
+
+## 12. HarnessMM 确定性执行原则
+
+`skills/dsh-skill-cockpit/SKILL.md` 已加入 EDG/GDR/CCS 的确定性执行契约；只用于可确定工具链。背景、边界与来源：[harnessmm.md](harnessmm.md)。不承诺固定 token 节省比例。

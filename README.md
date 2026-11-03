@@ -52,6 +52,10 @@ v5 的驾驶舱把这条链路补全：
 
 ---
 
+## 确定性执行复用
+
+HarnessMM 原则与边界：[docs/harnessmm.md](docs/harnessmm.md)。
+
 ## 60 秒 Demo
 
 真实数据版 60 秒视频：[docs/demo-60s.mp4](docs/demo-60s.mp4)；拍摄脚本：[docs/demo-60s.md](docs/demo-60s.md)；录屏页：[docs/demo.html](docs/demo.html)。
