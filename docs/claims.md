@@ -15,7 +15,7 @@
 | 智能评测 | `test/fixtures/intelligence-cases.json` + `scripts/benchmark.mjs` | 60 条；数字见下 |
 | 已安装推荐评测 | `docs/eval.md` + `scripts/eval-real.mjs` | 30 条，v2.7.2 工作树；需 v5 复跑 |
 | 库检索评测 | `docs/eval.md` + `scripts/eval-discover.mjs` | 24 条，v2.8.1 工作树；需 v5 复跑 |
-| 单元/集成测试 | `npm test` | **137/137 通过**（2026-10-30） |
+| 单元/集成测试 | `npm test` | **138/138 通过**（2026-10-30） |
 | Host E2E | `verify/host-e2e.mjs` | **20/20**（含 v5 端点） |
 | UI E2E | `verify/ui-e2e.mjs` | **27/27** |
 | DSH 兼容 | `docs/dsh-compatibility.md` | DSH Desktop 0.2.1-rc.3；安装/重启/迁移 |
@@ -78,7 +78,7 @@
 
 | # | 事项 | 状态 |
 |---|---|---|
-| E1 | 测试数 55/57 旧冲突 | 已统一为 **137/137**（2026-10-30）；发布前以 `npm test` 为准 |
+| E1 | 测试数 55/57 旧冲突 | 已统一为 **138/138**（2026-10-30）；发布前以 `npm test` 为准 |
 | E2 | README 版本 3.0.0 | 已改为 v5.0.0；发布前与 package/tag 同步 |
 | E3 | 技能条数 vs 仓库数 | 已分开写：6,399 条技能 / 4,007 仓库 |
 | E4 | 索引 vs stars 快照日期 | 已分别标注 2026-10-28 / 2026-10-30 |
@@ -114,9 +114,10 @@ npm pack --dry-run --json
 | C10 | 60 秒 demo | `docs/demo-60s.mp4`（1920×1080/60s/H.264，静音+屏上文字）、`docs/demo.html`、`docs/demo-60s.md` | **已交付**；不是真人旁白/产品 UI 录屏，不能当交互演示宣称 |
 | C11 | 上下文回归 | live 5.5.11：显式 context「继续」→ office-docx + 视频两阶段；无 context → 无关插件；主会话 contextTask 正确但模糊任务 escalation | **explicit-context live-verified；session semantic partial** |
 | C12 | 复杂任务质量 live | live 5.5.9：contract+video 2 stages + acceptance + reviewGap；security escalation + critical missing | **live-verified** |
-| C13 | npm 发布链路 | GitHub Actions publish v5.7.0 成功；npm latest=5.5.11；v5.5.4–v5.5.9 因 optional check 误报失败已修复 | **fixed/verified** |
+| C13 | npm 发布链路 | GitHub Actions publish v5.7.1 成功；npm latest=5.5.11；v5.5.4–v5.5.9 因 optional check 误报失败已修复 | **fixed/verified** |
 | C14 | live 质量/生态 | live 5.5.11：quality 7/7；ecosystem 10/10；contract+video acceptance/reviewGap；security escalation | **live-verified** |
 | C14 | 未安装技能临时试用 | live 5.6.1 `/discover/try`：ideogram 技能返回 4000 字符、security medium、temporary=true、installed=false，未创建技能目录 | **live-verified** |
 | C15 | 人机协同 UI | 多阶段勾选、只复制已选阶段、临时使用不安装；UI E2E 28/28 | **implemented/verified** |
 | C16 | 三档权限/协作模式 | `/mode` 支持 plan/collaborate/immersive；UI 模式选择器；mode endpoint 测试 | **implemented/verified** |
 | C17 | HarnessMM 原则落地 | skill 加实验性契约；pilot 强制在简单任务上反而 +40~91% token、更慢；文章机制需 harness 级执行器 | **negative-pilot；不声称省 token** |
+| C18 | guarded runner 原型 | `scripts/guarded-runner.mjs` + test；8 步确定性测试链 82,326 tok vs baseline 106,392（-22.6%）；短链无收益；baseline 用循环，不能当“跳过 7 次回调”证据 | **prototype；需更多任务/失败重试** |

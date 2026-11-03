@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.7.1 — 2026-11-03
+
+- **guarded runner 原型**：`scripts/guarded-runner.mjs` 只允许 `node --test tests/*.test.mjs`，一次工具调用执行最多 8 步；无 shell、无写文件；附测试。
+- 8 步确定性测试链 A/B：82,326 token vs baseline 106,392（-22.6%），但短链无收益，baseline 用 bash 循环，不能当“跳过 7 次模型回调”证据。
+- 结论：值得继续做受控 executor，不值得直接做任意命令执行器。
+- 测试 138/138。
+
+
 ## v5.7.0 — 2026-11-03
 
 - **HarnessMM 原则加入 DSH skill**：`dsh-skill-cockpit` 增加确定性执行契约（EDG/GDR/CCS）：guard 成立时直接执行缓存下一步，不重复问模型；不确定立即回模型；参数不可变；记录跳过审计。

@@ -56,3 +56,17 @@ HarnessMM 拆成三部分：
 - 仅把论文原则写成 skill 指令**无法复现 87.93%**；真正的跳过模型回调需要 harness 级执行器，不是技能提示；
 - 目前只作为**实验性指导**保留，简单任务不要用；
 - 下一步若要做，应实现插件级 guarded executor，并在复杂确定性任务上做 A/B。
+
+## guarded runner 原型 A/B（2026-11-03）
+
+`scripts/guarded-runner.mjs`：只允许 `node --test tests/*.test.mjs`，无 shell、无写文件，最多 8 步；一次工具调用执行整条确定性测试链。
+
+| 任务 | baseline（一条 bash 循环/多步） | guarded runner |
+|---|---|---|
+| 3 个测试文件 | 79,130 tok / 4 calls / 5.1s | 81,456 tok / 2 calls / 7.7s（+3%） |
+| 8 个测试文件 | 106,392 tok / 3 calls / 6.7s | 82,326 tok / 2 calls / 5.1s（**-22.6%**） |
+
+结论：
+- 短链没有收益；长链出现约 22.6% token 下降和更快墙钟；
+- 但 baseline 本身用了一条 bash 循环，所以这不是“跳过 7 次模型回调”的证据；`modelCallbacksAvoided` 是理论值；
+- 值得继续做**受控的** guarded executor，但不值得直接做成任意命令执行器；需要更多任务/失败重试验证。
